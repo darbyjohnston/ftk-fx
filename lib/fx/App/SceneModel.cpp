@@ -185,8 +185,33 @@ namespace fx
             _cacheUpdate();
         }
 
+        int64_t SceneModel::getSimTime() const
+        {
+            return _simTime;
+        }
+
+        size_t SceneModel::getParticleCount() const
+        {
+            const auto& frame = _frame->get();
+            return frame ? frame->pool.size() : 0;
+        }
+
+        size_t SceneModel::getCachedFrameCount() const
+        {
+            size_t out = 0;
+            for (auto state : _cache.getStates())
+            {
+                if (state != core::FrameState::Empty)
+                {
+                    ++out;
+                }
+            }
+            return out;
+        }
+
         void SceneModel::_simulate(int frame)
         {
+            const auto startTime = std::chrono::steady_clock::now();
             const RangeI& range = _range->get();
 
             // Start from the last frame the cache still holds, or from nothing
@@ -211,6 +236,8 @@ namespace fx
             }
 
             _cache.evict(frame);
+            _simTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - startTime).count();
             _frame->setIfChanged(state);
             _cacheUpdate();
         }

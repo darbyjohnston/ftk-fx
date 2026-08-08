@@ -8,6 +8,7 @@
 #include <ftk/UI/MainWindow.h>
 
 #include <map>
+#include <string>
 
 namespace ftk
 {
@@ -20,7 +21,7 @@ namespace fx
     namespace app
     {
         class App;
-        class ParametersPanel;
+        class Panels;
         class SceneModel;
         class TimelineBar;
         class Views;
@@ -51,20 +52,28 @@ namespace fx
                 const ftk::Size2I& = ftk::Size2I(1280, 800));
 
             const std::shared_ptr<Views>& getViews() const;
+            const std::shared_ptr<Panels>& getPanels() const;
+
+            //! Set where the panels column starts, as a fraction of the width.
+            void setSplit(float);
 
             void keyPressEvent(ftk::KeyEvent&) override;
 
         private:
             void _createViewMenu(const std::shared_ptr<ftk::Context>&);
+            void _createPanelsMenu(const std::shared_ptr<ftk::Context>&);
 
             std::weak_ptr<SceneModel> _model;
             std::shared_ptr<Views> _views;
-            std::shared_ptr<ParametersPanel> _parametersPanel;
+            std::shared_ptr<Panels> _panels;
             std::shared_ptr<TimelineBar> _timelineBar;
             std::shared_ptr<ftk::Splitter> _splitter;
 
             std::map<ViewLayout, std::shared_ptr<ftk::Action> > _layoutActions;
             std::shared_ptr<ftk::Observer<ViewLayout> > _layoutObserver;
+
+            std::map<std::string, std::shared_ptr<ftk::Action> > _panelActions;
+            std::shared_ptr<ftk::ListObserver<std::string> > _openPanelsObserver;
         };
     }
 }

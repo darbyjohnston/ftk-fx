@@ -4,7 +4,7 @@
 #include <fx/App/MainWindow.h>
 
 #include <fx/App/App.h>
-#include <fx/App/ParametersPanel.h>
+#include <fx/App/Panels.h>
 #include <fx/App/SceneModel.h>
 #include <fx/App/TimelineBar.h>
 #include <fx/App/Viewport.h>
@@ -34,13 +34,13 @@ namespace fx
             _model = model;
 
             _views = Views::create(context, model);
-            _parametersPanel = ParametersPanel::create(context, model, _views);
-            setScreenshotTag(_parametersPanel, "MainWindow.Parameters");
+            _panels = Panels::create(context, model, _views);
+            setScreenshotTag(_panels, "MainWindow.Panels");
 
             _splitter = Splitter::create(context, Orientation::Horizontal);
             _splitter->setSplit(.78F);
             _views->setParent(_splitter);
-            _parametersPanel->setParent(_splitter);
+            _panels->setParent(_splitter);
 
             auto layout = VerticalLayout::create(context);
             layout->setSpacingRole(SizeRole::None);
@@ -51,6 +51,7 @@ namespace fx
             setWidget(layout);
 
             _createViewMenu(context);
+            _createPanelsMenu(context);
         }
 
         MainWindow::~MainWindow()
@@ -70,6 +71,16 @@ namespace fx
         const std::shared_ptr<Views>& MainWindow::getViews() const
         {
             return _views;
+        }
+
+        const std::shared_ptr<Panels>& MainWindow::getPanels() const
+        {
+            return _panels;
+        }
+
+        void MainWindow::setSplit(float value)
+        {
+            _splitter->setSplit(value);
         }
 
         void MainWindow::_createViewMenu(const std::shared_ptr<Context>& context)
@@ -154,6 +165,40 @@ namespace fx
                     for (const auto& i : _layoutActions)
                     {
                         i.second->setChecked(i.first == value);
+                    }
+                });
+        }
+
+        void MainWindow::_createPanelsMenu(const std::shared_ptr<Context>& context)
+        {
+            auto menu = getMenuBar()->addMenu("Panels");
+            std::weak_ptr<Panels> panelsWeak(_panels);
+            for (const auto& name : _panels->getPanelNames())
+            {
+                auto action = Action::create(
+                    name,
+                    [panelsWeak, name](bool value)
+                    {
+                        if (auto panels = panelsWeak.lock())
+                        {
+                            panels->setOpen(name, value);
+                        }
+                    });
+                _panelActions[name] = action;
+                menu->addAction(action);
+            }
+
+            // The panel's own close button changes the same list, so the ticks
+            // follow what is open rather than what was last picked from here.
+            _openPanelsObserver = ListObserver<std::string>::create(
+                _panels->observeOpen(),
+                [this](const std::vector<std::string>& value)
+                {
+                    for (const auto& i : _panelActions)
+                    {
+                        i.second->setChecked(
+                            std::find(value.begin(), value.end(), i.first) !=
+                            value.end());
                     }
                 });
         }

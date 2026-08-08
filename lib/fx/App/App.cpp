@@ -9,6 +9,8 @@
 
 #include <fx/Core/Version.h>
 
+#include <ftk/Core/DiagSystem.h>
+
 using namespace ftk;
 
 namespace fx
@@ -73,9 +75,54 @@ namespace fx
             return _exitCode;
         }
 
+        void App::_diagInit()
+        {
+            // feather-tk already samples frame time, triangles, glyphs and
+            // widget counts. These are the numbers on this side of it: what the
+            // solve costs, and what the cache is holding.
+            auto diagSystem = _context->getSystem<DiagSystem>();
+            std::weak_ptr<SceneModel> weak(_sceneModel);
+            diagSystem->addSampler(
+                "fx Sim/Particles: {0}",
+                [weak]
+                {
+                    auto model = weak.lock();
+                    return model ?
+                        static_cast<int64_t>(model->getParticleCount()) :
+                        0;
+                });
+            diagSystem->addSampler(
+                "fx Sim/Time: {0}ms",
+                [weak]
+                {
+                    auto model = weak.lock();
+                    return model ? model->getSimTime() : 0;
+                });
+            diagSystem->addSampler(
+                "fx Cache/Memory: {0}MB",
+                [weak]
+                {
+                    auto model = weak.lock();
+                    return model ?
+                        static_cast<int64_t>(
+                            model->observeCacheByteCount()->get() / (1024 * 1024)) :
+                        0;
+                });
+            diagSystem->addSampler(
+                "fx Cache/Frames: {0}",
+                [weak]
+                {
+                    auto model = weak.lock();
+                    return model ?
+                        static_cast<int64_t>(model->getCachedFrameCount()) :
+                        0;
+                });
+        }
+
         void App::run()
         {
             _sceneModel = SceneModel::create(_context);
+            _diagInit();
             _mainWindow = MainWindow::create(
                 _context,
                 std::dynamic_pointer_cast<App>(shared_from_this()),

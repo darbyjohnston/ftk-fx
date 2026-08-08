@@ -16,7 +16,7 @@ whole thing scrubs and plays back. Everything the artist can reach is already a
 |---|---|
 | `lib/fx/Core` | Pool, frame, cache, curve, parameter, keyed randomness |
 | `lib/fx/Sim` | Emitters, forces, rules, the solver |
-| `lib/fx/App` | Scene model, viewport, timeline, panels |
+| `lib/fx/App` | Scene model, viewports, timeline, panel column |
 | `lib/fx/CoreTest` | Tests for the above |
 | `bin/ftk-fx` | The application |
 | `tests/fx-test` | The test runner |
@@ -71,6 +71,11 @@ day a movie plate has to load behind the sim.
 
 Space plays and stops, the arrow keys step a frame, Home and End jump to the
 ends. Clicking or dragging on the cache bar scrubs.
+
+The Panels menu opens the panels in the right hand column: the emitter, force
+and display parameters, and a diagnostics panel graphing feather-tk's frame time
+and object counts alongside this application's particle count, solve time and
+cache size.
 
 The View menu arranges one, two, three or four viewports, and each viewport's
 own menu picks what it looks through: perspective, front, side or top, the axis

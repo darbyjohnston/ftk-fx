@@ -101,6 +101,17 @@ namespace fx
             //! Freeze or release the frame at the playhead.
             void setCurrentLocked(bool);
 
+            //! Get how long the last call to simulate took, in milliseconds.
+            //! Zero when the playhead landed on a frame the cache already had,
+            //! which is the number worth seeing: it says the scrub was free.
+            int64_t getSimTime() const;
+
+            //! Get the number of particles at the playhead.
+            size_t getParticleCount() const;
+
+            //! Get the number of frames the cache is holding.
+            size_t getCachedFrameCount() const;
+
             ///@}
 
         private:
@@ -123,6 +134,7 @@ namespace fx
             std::shared_ptr<ftk::ObservableList<core::FrameState> > _cacheStates;
             std::shared_ptr<ftk::Observable<size_t> > _cacheByteCount;
             std::shared_ptr<ftk::Timer> _playbackTimer;
+            int64_t _simTime = 0;
         };
     }
 }

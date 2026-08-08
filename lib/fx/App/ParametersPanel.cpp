@@ -11,7 +11,6 @@
 #include <ftk/UI/FormLayout.h>
 #include <ftk/UI/IntEditSlider.h>
 #include <ftk/UI/RowLayout.h>
-#include <ftk/UI/ScrollWidget.h>
 
 using namespace ftk;
 
@@ -51,7 +50,12 @@ namespace fx
             const std::shared_ptr<Views>& views,
             const std::shared_ptr<IWidget>& parent)
         {
-            IWidget::_init(context, "fx::app::ParametersPanel", parent);
+            IPanel::_init(
+                context,
+                "Parameters",
+                "Settings",
+                "fx::app::ParametersPanel",
+                parent);
             _model = model;
 
             auto layout = VerticalLayout::create(context);
@@ -133,11 +137,7 @@ namespace fx
             displayBellows->setWidget(displayLayout);
             displayBellows->setOpen(true);
 
-            _scrollWidget = ScrollWidget::create(
-                context,
-                ScrollType::Both,
-                shared_from_this());
-            _scrollWidget->setWidget(layout);
+            _setWidget(layout);
         }
 
         ParametersPanel::~ParametersPanel()
@@ -152,17 +152,6 @@ namespace fx
             auto out = std::shared_ptr<ParametersPanel>(new ParametersPanel);
             out->_init(context, model, views, parent);
             return out;
-        }
-
-        Size2I ParametersPanel::getSizeHint() const
-        {
-            return _scrollWidget->getSizeHint();
-        }
-
-        void ParametersPanel::setGeometry(const Box2I& value)
-        {
-            IWidget::setGeometry(value);
-            _scrollWidget->setGeometry(value);
         }
     }
 }

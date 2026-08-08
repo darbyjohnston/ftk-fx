@@ -3,14 +3,13 @@
 
 #pragma once
 
-#include <fx/Core/Parameter.h>
+#include <fx/App/IPanel.h>
 
-#include <ftk/UI/IWidget.h>
+#include <fx/Core/Parameter.h>
 
 namespace ftk
 {
     class FormLayout;
-    class ScrollWidget;
 }
 
 namespace fx
@@ -21,7 +20,7 @@ namespace fx
         class Views;
 
         //! The parameter panel.
-        class ParametersPanel : public ftk::IWidget
+        class ParametersPanel : public IPanel
         {
         protected:
             void _init(
@@ -41,9 +40,6 @@ namespace fx
                 const std::shared_ptr<Views>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
-            ftk::Size2I getSizeHint() const override;
-            void setGeometry(const ftk::Box2I&) override;
-
         private:
             //! Add a slider driving a parameter's constant value.
             //!
@@ -60,7 +56,6 @@ namespace fx
                 float max);
 
             std::weak_ptr<SceneModel> _model;
-            std::shared_ptr<ftk::ScrollWidget> _scrollWidget;
         };
     }
 }

@@ -18,6 +18,11 @@ Setup steps a shot may use:
 * {"current": 1}                             make a viewport the current one
 * {"lock": true}                             lock the frame at the playhead
 * {"playing": true}                          start playback
+* {"panel": {"name": "Diagnostics", "open": true}}   open or close a panel
+
+A shot may also set "settle" in seconds to wait longer before capturing, and
+"splitter" in its window block to move the panel column, which is how a shot of
+a wide panel gets room for it.
 
 The view type names are the labels in the viewport's own menu: Persp, Front,
 Side, Top. An unknown one fails the shot rather than capturing the wrong view.

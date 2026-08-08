@@ -2,7 +2,10 @@ set(HEADERS
     App.h
     CacheBar.h
     Capture.h
+    DiagPanel.h
+    IPanel.h
     MainWindow.h
+    Panels.h
     ParametersPanel.h
     SceneModel.h
     TimelineBar.h
@@ -14,7 +17,10 @@ set(SOURCE
     App.cpp
     CacheBar.cpp
     Capture.cpp
+    DiagPanel.cpp
+    IPanel.cpp
     MainWindow.cpp
+    Panels.cpp
     ParametersPanel.cpp
     SceneModel.cpp
     TimelineBar.cpp

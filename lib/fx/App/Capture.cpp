@@ -5,6 +5,7 @@
 
 #include <fx/App/App.h>
 #include <fx/App/MainWindow.h>
+#include <fx/App/Panels.h>
 #include <fx/App/SceneModel.h>
 #include <fx/App/Viewport.h>
 #include <fx/App/Views.h>
@@ -21,6 +22,7 @@
 #include <ftk/Core/String.h>
 #include <ftk/Core/Timer.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -206,6 +208,17 @@ namespace fx
             }
             auto window = app->getWindows().front();
 
+            // A shot may widen the settle window, in seconds. The diagnostics
+            // graphs fill from a timer, so a shot of them needs longer than a
+            // shot of a viewport that is finished as soon as it is drawn.
+            const double settleSeconds = p.shot.value("settle", 0.0);
+            if (settleSeconds > 0.0)
+            {
+                p.settleLeft = std::max(
+                    settleTicks,
+                    static_cast<int>(settleSeconds * 1000.0 / tickInterval.count()));
+            }
+
             // The same presentation every time. Capture runs should also pass
             // -resetSettings, so saved state cannot override this.
             app->setColorStyle(ftk::ColorStyle::Dark);
@@ -222,6 +235,11 @@ namespace fx
                 if (w.contains("scale"))
                 {
                     app->setDisplayScale(w.at("scale").get<float>());
+                }
+                if (w.contains("splitter"))
+                {
+                    app->getMainWindow()->setSplit(
+                        w.at("splitter").get<float>());
                 }
             }
 
@@ -303,6 +321,17 @@ namespace fx
             if (step.contains("lock"))
             {
                 model->setCurrentLocked(step.at("lock").get<bool>());
+            }
+            if (step.contains("panel"))
+            {
+                const auto& panel = step.at("panel");
+                auto panels = app->getMainWindow()->getPanels();
+                const std::string name = panel.at("name").get<std::string>();
+                const auto& names = panels->getPanelNames();
+                if (std::find(names.begin(), names.end(), name) == names.end())
+                    throw std::runtime_error(ftk::Format(
+                        "unknown panel \"{0}\"").arg(name));
+                panels->setOpen(name, panel.value("open", true));
             }
             if (step.contains("playing"))
             {

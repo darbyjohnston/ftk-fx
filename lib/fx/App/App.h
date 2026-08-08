@@ -44,6 +44,8 @@ namespace fx
             void run() override;
 
         private:
+            void _diagInit();
+
             //! Command line options.
             //!
             //! Screenshots are described by a manifest rather than by an option

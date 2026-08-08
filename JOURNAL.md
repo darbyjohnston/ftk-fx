@@ -7,6 +7,59 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-08 — The panel column, and what it found on its first day
+
+The right hand column from the previous entry, built: `IPanel` provides a
+coloured header with a title and a close button, `Panels` stacks them, and
+Parameters and Diagnostics are the first two.
+
+A stack rather than tabs, because the whole reason these are a column and not
+one of the panes is that they are wanted at the same time as each other --
+watching frame time while dragging a slider is the point, and tabs would make it
+one or the other. One scroll area for the whole stack rather than one per panel,
+so a panel takes the height its contents need instead of an equal share.
+
+Panels are made up front and shown or hidden. There are two, both cheap. The
+lazy creation the previous entry called for is what to write when one of them is
+not, and not before.
+
+### Diagnostics earned its place immediately
+
+`ftk::DiagWidget` does the work; the panel is a wrapper. What this side adds is
+four samplers on `ftk::DiagSystem` -- particles, solve time, cache memory, cache
+frames -- alongside feather-tk's own frame time, triangle, glyph and object
+counts.
+
+Three things it said on the first run, none of which anyone was going to notice
+by looking at the application:
+
+**The viewport colour buffer was full float.** `gl::offscreenColorDefault` is
+`RGBA_F32` on desktop GL, sixteen bytes a pixel, and the viewport buffers are
+the largest thing this application allocates. Now `RGBA_F16`: the viewport
+blends additively so it does want headroom above one, but not four bytes a
+channel to hold it, and §10 had already settled on half float for everything
+that leaves the application. A 1600x1000 window on a retina display went from
+52MB of viewport buffer to 26MB, with no visible difference.
+
+**Four viewports cost the same as one.** 101MB of offscreen buffers in a
+single-view layout, 100MB in a four-up. It scales with total pixel area, not
+with viewport count, because four quarter-size buffers are one full-size one.
+That is the reassurance the previous entry's design needed and did not have.
+
+**A seventy frame re-simulation takes 3ms** at 549 particles. That is the number
+that decides whether dragging a slider feels alive, and it is now on screen
+instead of being a thing to wonder about.
+
+### What the graphs do not do
+
+`DiagSystem` samples every three seconds. The graphs are a trend over minutes,
+not a meter -- a screenshot of them shows the readouts and empty plots, and
+watching one to catch a hitch will not work. If a per-frame meter is ever wanted
+that is a different widget, not a faster tick on this one: sampling every frame
+would make the diagnostics part of what they are measuring.
+
+---
+
 ## 2026-08-08 — Where the panels go (decided, not built)
 
 Nothing was written for this. It is here because the answer shapes what the

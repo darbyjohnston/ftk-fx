@@ -26,6 +26,22 @@ namespace fx
         namespace
         {
             const size_t vertexByteCount = 16;
+
+            // Half float rather than the full float the offscreen default asks
+            // for. The viewport blends additively, so it does want headroom
+            // above one -- but not four bytes a channel to hold it, and §10 has
+            // already settled on half float for everything that leaves the
+            // application. The colour buffers are the largest thing the
+            // viewports allocate, and this halves them.
+            //
+            // GLES has no half float offscreen target, so there it keeps
+            // whatever the default is.
+#if defined(FTK_API_GL_4_1)
+            const gl::TextureType offscreenColorType = gl::TextureType::RGBA_F16;
+#else
+            const gl::TextureType offscreenColorType = gl::offscreenColorDefault;
+#endif // FTK_API_GL_4_1
+
             const float gridExtent = 12.F;
             const int gridLines = 25;
 
@@ -414,11 +430,11 @@ namespace fx
 #elif defined(FTK_API_GLES_2)
                 options.stencil = gl::OffscreenStencil::_8;
 #endif // FTK_API_GL_4_1
-                if (gl::doCreate(_buffer, size, gl::offscreenColorDefault, options))
+                if (gl::doCreate(_buffer, size, offscreenColorType, options))
                 {
                     _buffer = gl::OffscreenBuffer::create(
                         size,
-                        gl::offscreenColorDefault,
+                        offscreenColorType,
                         options);
                     _doRender = true;
                 }

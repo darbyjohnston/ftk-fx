@@ -2,76 +2,199 @@
   "shots": [
     {
       "id": "main-window",
-      "window": { "w": 1000, "h": 640 },
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
       "setup": [
-        { "frame": 70 }
+        {
+          "frame": 70
+        }
       ],
       "annotate": [
-        { "id": "MainWindow.Viewport0", "caption": "Viewport" },
-        { "id": "MainWindow.Parameters", "caption": "Parameters" },
-        { "id": "MainWindow.Timeline", "caption": "Timeline" },
-        { "id": "MainWindow.CacheBar", "caption": "Cache bar" }
+        {
+          "id": "MainWindow.Viewport0",
+          "caption": "Viewport"
+        },
+        {
+          "id": "MainWindow.Parameters",
+          "caption": "Parameters"
+        },
+        {
+          "id": "MainWindow.Timeline",
+          "caption": "Timeline"
+        },
+        {
+          "id": "MainWindow.CacheBar",
+          "caption": "Cache bar"
+        }
       ]
     },
     {
       "id": "views-single",
-      "window": { "w": 1000, "h": 640 },
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
       "setup": [
-        { "frame": 70 },
-        { "layout": 1 }
+        {
+          "frame": 70
+        },
+        {
+          "layout": 1
+        }
       ]
     },
     {
       "id": "views-two",
-      "window": { "w": 1000, "h": 640 },
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
       "setup": [
-        { "frame": 70 },
-        { "layout": 2 }
+        {
+          "frame": 70
+        },
+        {
+          "layout": 2
+        }
       ]
     },
     {
       "id": "views-three",
-      "window": { "w": 1000, "h": 640 },
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
       "setup": [
-        { "frame": 70 },
-        { "layout": 3 }
+        {
+          "frame": 70
+        },
+        {
+          "layout": 3
+        }
       ]
     },
     {
       "id": "views-four",
-      "window": { "w": 1000, "h": 640 },
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
       "setup": [
-        { "frame": 70 },
-        { "layout": 4 }
+        {
+          "frame": 70
+        },
+        {
+          "layout": 4
+        }
       ],
       "annotate": [
-        { "id": "MainWindow.Viewport0", "caption": "Perspective" },
-        { "id": "MainWindow.Viewport1", "caption": "Top" },
-        { "id": "MainWindow.Viewport2", "caption": "Front" },
-        { "id": "MainWindow.Viewport3", "caption": "Side" }
+        {
+          "id": "MainWindow.Viewport0",
+          "caption": "Perspective"
+        },
+        {
+          "id": "MainWindow.Viewport1",
+          "caption": "Top"
+        },
+        {
+          "id": "MainWindow.Viewport2",
+          "caption": "Front"
+        },
+        {
+          "id": "MainWindow.Viewport3",
+          "caption": "Side"
+        }
       ]
     },
     {
       "id": "views-ortho",
-      "window": { "w": 1000, "h": 640 },
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
       "setup": [
-        { "frame": 70 },
-        { "layout": 2 },
-        { "view": { "index": 0, "type": "Front" } },
-        { "view": { "index": 1, "type": "Side" } },
-        { "current": 1 }
+        {
+          "frame": 70
+        },
+        {
+          "layout": 2
+        },
+        {
+          "view": {
+            "index": 0,
+            "type": "Front"
+          }
+        },
+        {
+          "view": {
+            "index": 1,
+            "type": "Side"
+          }
+        },
+        {
+          "current": 1
+        }
       ]
     },
     {
       "id": "cache-locked",
-      "window": { "w": 1000, "h": 640 },
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
       "setup": [
-        { "frame": 70 },
-        { "frame": 40 },
-        { "lock": true }
+        {
+          "frame": 70
+        },
+        {
+          "frame": 40
+        },
+        {
+          "lock": true
+        }
       ],
       "annotate": [
-        { "id": "MainWindow.CacheBar", "caption": "The locked frame" }
+        {
+          "id": "MainWindow.CacheBar",
+          "caption": "The locked frame"
+        }
+      ]
+    },
+    {
+      "id": "panel-diagnostics",
+      "window": {
+        "w": 1200,
+        "h": 900,
+        "splitter": 0.58
+      },
+      "settle": 3.0,
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "panel": {
+            "name": "Diagnostics",
+            "open": true
+          }
+        },
+        {
+          "playing": true
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Panel.Diagnostics",
+          "caption": "Diagnostics"
+        }
       ]
     }
   ]
