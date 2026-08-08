@@ -1,0 +1,6 @@
+add_subdirectory(Core)
+add_subdirectory(Sim)
+add_subdirectory(App)
+if(FX_TESTS)
+    add_subdirectory(CoreTest)
+endif()

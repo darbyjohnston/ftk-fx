@@ -1,0 +1,7 @@
+ftk-*/
+tl-*/
+build-*/
+install-*/
+sbuild-*/
+etc/Config/local.cmake
+.DS_Store
