@@ -6,8 +6,10 @@
 # application uses. Personal settings go in etc/Config/local.cmake, which is
 # not tracked. For the number of build jobs, export CMAKE_BUILD_PARALLEL_LEVEL.
 #
-# The build and install directories are made in the current directory, so
-# running this from inside the checkout keeps them there, and running it from a
-# directory above puts them beside the checkout.
+# Run this from the directory holding the checkout, not from inside it: the
+# build and install directories are made in the current directory, and the
+# point of the layout is to keep them out of the source tree.
+#
+#     cd ~/Dev/ftk-fx && sh ftk-fx/sbuild-linux.sh ftk-fx Debug
 
-sh ${1:-.}/etc/Linux/sbuild.sh ${1:-.} ${2:-Release} ${3:-default}
+sh ${1:-ftk-fx}/etc/Linux/sbuild.sh ${1:-ftk-fx} ${2:-Release} ${3:-default}

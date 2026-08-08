@@ -28,12 +28,23 @@ whole thing scrubs and plays back. Everything the artist can reach is already a
 tlRender is a submodule and brings feather-tk with it, so the whole stack
 builds from source and a debugger can step all the way down it.
 
-The superbuild builds the third party dependencies, then feather-tk and
-tlRender, then this. Run it from inside the checkout and everything lands in
-`ftk-<type>`, `tl-<type>`, `build-<type>` and `install-<type>` here:
+The checkout lives inside a working directory that also holds the build, so
+that nothing built ends up in the source tree:
+
+```
+ftk-fx/            the working directory
+    ftk-fx/        this checkout
+    ftk-Debug/     feather-tk's dependencies
+    tl-Debug/      tlRender's dependencies
+    build-Debug/   this
+    install-Debug/ everything installed
+```
+
+The superbuild builds the dependencies, then feather-tk and tlRender, then
+this. Run it from the working directory, naming the checkout:
 
 ```bash
-sh sbuild-macos.sh . Debug
+cd ~/Dev/ftk-fx && sh ftk-fx/sbuild-macos.sh ftk-fx Debug
 ```
 
 `sbuild-linux.sh` and `sbuild-win.bat` take the same arguments. The first run

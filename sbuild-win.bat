@@ -4,14 +4,16 @@ rem The config names a file in etc/Config; "default" builds everything this
 rem application uses. Personal settings go in etc/Config/local.cmake, which is
 rem not tracked. For the number of build jobs, set CMAKE_BUILD_PARALLEL_LEVEL.
 rem
-rem The build and install directories are made in the current directory, so
-rem running this from inside the checkout keeps them there, and running it from
-rem a directory above puts them beside the checkout.
+rem Run this from the directory holding the checkout, not from inside it: the
+rem build and install directories are made in the current directory, and the
+rem point of the layout is to keep them out of the source tree.
+rem
+rem     cd %USERPROFILE%\Dev\ftk-fx && ftk-fx\sbuild-win.bat ftk-fx Debug
 
 set SOURCE_DIR=%1
 set BUILD_TYPE=%2
 set CONFIG=%3
-IF "%SOURCE_DIR%"=="" set SOURCE_DIR=.
+IF "%SOURCE_DIR%"=="" set SOURCE_DIR=ftk-fx
 IF "%BUILD_TYPE%"=="" set BUILD_TYPE=Release
 IF "%CONFIG%"=="" set CONFIG=default
 
