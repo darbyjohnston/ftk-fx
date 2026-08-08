@@ -7,6 +7,87 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-08 — Where the panels go (decided, not built)
+
+Nothing was written for this. It is here because the answer shapes what the
+curve editor can be, and because the reasoning is worth more now than it will be
+after somebody has to re-derive it.
+
+The question was whether panels should be panes that can hold either a view or
+an editor, or their own thing in a column on the right.
+
+**Both, split by shape.** Panes in the main region hold a view or an editor. The
+parameters column on the right stays its own fixed thing and is not a pane type.
+
+### Why the split
+
+The panels §4a, §9, §10a and §12 call for are two different shapes, and trying
+to make one mechanism serve both is what would go wrong.
+
+*Viewport-shaped* — wants the big area, wants to be one of two or four: the
+curve editor, the particle spreadsheet, the expression editor, diagnostic plots,
+the compositor layer stack.
+
+*Column-shaped* — wants to be visible **at the same time as** whatever else is
+on screen: emitter, field and rule parameters, the systems list, render layers.
+
+If panels only exist as a right-hand column, the curve editor has nowhere to go,
+and it gets a bottom dock or a window of its own -- two panel systems instead of
+one, which is the failure mode worth avoiding.
+
+The other half is just as load bearing. Parameters must not compete for pane
+space. Rate gets dialled while watching the sim; a value gets keyed while
+looking at its curve. If parameters were a pane type, a curve editor layout
+would cost the artist the parameters they were keying.
+
+### It is mostly built already
+
+`Views` holds a fixed number of persistent children, re-parents them into a tree
+of splitters per arrangement, tracks a current one, and gives each a type
+selector in its corner. That is a pane system. What is view-specific is the
+array's type, `setPointSize` fanning out, and the corner menu listing view
+types -- not the layout.
+
+So the widening is a panel interface and a longer menu, not a docking framework,
+and fixed arrangements with adjustable splitters survive it intact.
+
+Two things do change:
+
+- **Making them all up front stops working.** Four slots times several panel
+  types is a lot of widgets, and some are expensive -- a spreadsheet over a
+  million particles is not something to build and keep four of on the chance
+  somebody looks at it. It becomes lazy creation per slot, cached: a slot builds
+  a panel the first time it is asked for and keeps it.
+- **Frame and Zoom only mean something to a viewport.** Rather than a menu bar
+  that changes with the current pane, each panel gets its own controls in a
+  header strip beside its type menu. A menu whose contents depend on which pane
+  was last clicked is a menu nobody can learn.
+
+### Scope boundary -- a hard rule
+
+**Fixed arrangements only. No drag-to-split, no tear-off, no floating windows,
+no user-saved layouts.**
+
+Written down for the same reason §10a's boundary is: every one of those will
+sound reasonable on the day it is asked for, and accepting them in order is how
+a quarter goes into writing a window manager instead of a particle tool.
+
+### Not yet
+
+There is one panel type today, and §2a says to write the specific thing before
+abstracting it. An interface with one implementation is a guess; the curve
+editor is the second implementation and the first one that is genuinely not a
+viewport, so it is what should pull the interface into existence.
+
+Build the curve editor as a panel type, and let `Views` become the panel system
+at that moment. Deciding the shape now is what keeps that cheap. Building it now
+would be guessing at what the curve editor needs.
+
+Until then the only thing worth protecting is that `Views` does not accumulate
+viewport assumptions in its layout code.
+
+---
+
 ## 2026-08-08 — Multiple viewports, and a manifest instead of options
 
 One, two, three or four viewports, each looking through a perspective or an
