@@ -4,7 +4,7 @@
 #include <fx/App/ParametersPanel.h>
 
 #include <fx/App/SceneModel.h>
-#include <fx/App/Viewport.h>
+#include <fx/App/Views.h>
 
 #include <ftk/UI/Bellows.h>
 #include <ftk/UI/FloatEditSlider.h>
@@ -48,7 +48,7 @@ namespace fx
         void ParametersPanel::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Viewport>& viewport,
+            const std::shared_ptr<Views>& views,
             const std::shared_ptr<IWidget>& parent)
         {
             IWidget::_init(context, "fx::app::ParametersPanel", parent);
@@ -118,14 +118,14 @@ namespace fx
             displayLayout->setMarginRole(SizeRole::MarginSmall);
             auto pointSizeSlider = FloatEditSlider::create(context);
             pointSizeSlider->setRange(1.F, 16.F);
-            pointSizeSlider->setValue(viewport->getPointSize());
-            std::weak_ptr<Viewport> viewportWeak(viewport);
+            pointSizeSlider->setValue(3.F);
+            std::weak_ptr<Views> viewsWeak(views);
             pointSizeSlider->setCallback(
-                [viewportWeak](float value)
+                [viewsWeak](float value)
                 {
-                    if (auto viewport = viewportWeak.lock())
+                    if (auto views = viewsWeak.lock())
                     {
-                        viewport->setPointSize(value);
+                        views->setPointSize(value);
                     }
                 });
             displayLayout->addRow("Point size:", pointSizeSlider);
@@ -146,11 +146,11 @@ namespace fx
         std::shared_ptr<ParametersPanel> ParametersPanel::create(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Viewport>& viewport,
+            const std::shared_ptr<Views>& views,
             const std::shared_ptr<IWidget>& parent)
         {
             auto out = std::shared_ptr<ParametersPanel>(new ParametersPanel);
-            out->_init(context, model, viewport, parent);
+            out->_init(context, model, views, parent);
             return out;
         }
 

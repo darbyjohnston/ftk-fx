@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <fx/App/ViewOptions.h>
+
 #include <fx/Core/Frame.h>
 
 #include <ftk/UI/IWidget.h>
@@ -11,23 +13,34 @@
 #include <ftk/GL/OffscreenBuffer.h>
 #include <ftk/GL/Shader.h>
 
+namespace ftk
+{
+    class ComboBox;
+}
+
 namespace fx
 {
     namespace app
     {
         class SceneModel;
 
-        //! The viewport.
+        //! A viewport.
         //!
         //! Particles are drawn as points, coloured by how far through their
         //! life they are, over a ground grid that gives the fall somewhere to
         //! fall to.
+        //!
+        //! Each viewport owns its camera, and there is one viewport per slot
+        //! whether or not the current arrangement shows it -- see Views. That
+        //! is what lets an artist switch to four-up and find the perspective
+        //! camera where they left it.
         class Viewport : public ftk::IWidget
         {
         protected:
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
+                ViewType,
                 const std::shared_ptr<ftk::IWidget>& parent);
 
             Viewport() = default;
@@ -38,20 +51,40 @@ namespace fx
             static std::shared_ptr<Viewport> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
+                ViewType = ViewType::Perspective,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
             //! \name View
             ///@{
 
+            ViewType getViewType() const;
+            void setViewType(ViewType);
+
+            //! Put the camera back where a new view of this type starts.
             void frameView();
+
             void zoomIn();
             void zoomOut();
+
+            ///@}
+
+            //! \name Display
+            ///@{
 
             float getPointSize() const;
             void setPointSize(float);
 
+            //! Set whether this is the viewport actions apply to. The current
+            //! viewport draws a border so that it is obvious which one that is.
+            void setCurrent(bool);
+
+            //! Set the callback for the viewport being clicked in, which is how
+            //! it becomes the current one.
+            void setPressCallback(const std::function<void(void)>&);
+
             ///@}
 
+            void sizeHintEvent(const ftk::SizeHintEvent&) override;
             void setGeometry(const ftk::Box2I&) override;
             void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void mouseMoveEvent(ftk::MouseMoveEvent&) override;
@@ -61,8 +94,15 @@ namespace fx
 
         private:
             void _setOrbit(const ftk::V2F&);
-            void _setDistance(float);
-            ftk::M44F _getMVP() const;
+            void _setZoom(float);
+            void _pan(const ftk::V2I& delta);
+
+            ftk::M44F _getProjection() const;
+            ftk::M44F _getView() const;
+
+            //! Get the world distance one pixel covers, which is what makes a
+            //! pan follow the cursor rather than merely go the right way.
+            float _getWorldPerPixel() const;
 
             //! Build the point vertex buffer from the frame. Rebuilt whole each
             //! frame: at these counts it costs less than tracking what changed,
@@ -73,12 +113,29 @@ namespace fx
 
             std::shared_ptr<const core::Frame> _frame;
             float _pointSize = 3.F;
+            bool _current = false;
+            std::function<void(void)> _pressCallback;
 
+            ViewType _viewType = ViewType::Perspective;
             ftk::V2F _orbit = ftk::V2F(35.F, 20.F);
-            float _distance = 30.F;
             ftk::V3F _center = ftk::V3F(0.F, 5.F, 0.F);
+
+            //! Distance from the camera to the centre, in perspective.
+            float _distance = 30.F;
+
+            //! How much of the world the viewport covers vertically, in an
+            //! orthographic view. This is the ortho equivalent of _distance,
+            //! and each is kept while the other is in use so that switching
+            //! back and forth does not lose the framing.
+            float _orthoHeight = 30.F;
+
             float _fov = 45.F;
             ftk::MouseButton _mouseButton = ftk::MouseButton::None;
+            int _mouseModifiers = 0;
+
+            std::shared_ptr<ftk::ComboBox> _viewTypeComboBox;
+            int _margin = 0;
+            int _border = 0;
 
             bool _doRender = true;
             bool _pointsDirty = true;

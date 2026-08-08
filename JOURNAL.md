@@ -7,6 +7,64 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-08 — Multiple viewports, and a manifest instead of options
+
+One, two, three or four viewports, each looking through a perspective or an
+orthographic axis view, with pan and zoom.
+
+### The viewports are made once and kept
+
+`Views` builds all four up front and re-parents them into a new tree of
+splitters when the arrangement changes, rather than making and destroying them
+to match. Two things fall out of that: a camera is where it was left when an
+arrangement comes back, and the shaders, vertex buffers and offscreen buffer
+behind a viewport are not thrown away and rebuilt every time somebody changes
+their mind. Four is a fixed limit, which §2a explicitly allows, and it is a real
+one rather than a hint -- `viewCountMax` is what sizes the array.
+
+Rebuilding means detaching the viewports *before* dropping the splitters, or the
+splitters take them down with them.
+
+### Ortho and perspective share one camera
+
+One `_center`, one `_orbit`, and then `_distance` for perspective and
+`_orthoHeight` for orthographic. Both are kept while the other is in use, so
+switching a viewport from top to perspective and back does not lose the framing.
+The axis views are the same code path with the orbit pinned and the projection
+swapped; they do not orbit, because orbiting the front view would leave it
+something that is no longer the front.
+
+Panning turns a screen direction back into a world one by undoing the view
+rotation, and scales it by how much world one pixel covers -- `_orthoHeight` over
+the height in orthographic, and the frustum height at the centre in perspective.
+That is what makes the scene stay under the cursor rather than merely move the
+right way.
+
+### Screenshots come from a manifest, not from options
+
+There was a `-frame` and then a `-layout`, and it was obvious where that road
+goes: an option per thing worth putting in a picture, each one describing a
+state somebody happened to need once, all of them a second way of setting
+something the application can already set.
+
+`Capture` (ported down from DJV's) reads `etc/Screenshots/screenshots.json`,
+applies a shot's setup, lets the window settle, and writes a PNG plus a JSON
+sidecar. One process per shot, so nothing a shot leaves behind can reach the
+next one.
+
+The sidecar is the part worth having. It carries the bounding box and the
+visible text of every widget tagged with `ftk::setScreenshotTag`, so a shot can
+be checked without anyone looking at the image: the four-up sidecar says the
+viewports read "Persp", "Top", "Front", "Side" and tile the window, and the lock
+shot says the checkbox reads `Lock [checked]` at frame 40. That is an assertion.
+A picture is not.
+
+DJV's `make_svg.py` step, which turns a sidecar into an annotated SVG for the
+documentation, is not ported -- there are no documentation pages yet. The
+`annotate` entries pass through to the sidecar ready for it.
+
+---
+
 ## 2026-08-08 — Leaving GL state changed draws every glyph as a box
 
 The viewport's offscreen pass turned blending off after drawing its points and

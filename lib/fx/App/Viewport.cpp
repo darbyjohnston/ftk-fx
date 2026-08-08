@@ -5,6 +5,9 @@
 
 #include <fx/App/SceneModel.h>
 
+#include <ftk/UI/ComboBox.h>
+#include <ftk/UI/DrawUtil.h>
+
 #include <ftk/GL/GL.h>
 
 #include <ftk/Core/Context.h>
@@ -97,11 +100,27 @@ namespace fx
         void Viewport::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
+            ViewType viewType,
             const std::shared_ptr<IWidget>& parent)
         {
             IWidget::_init(context, "fx::app::Viewport", parent);
             setHStretch(Stretch::Expanding);
             setVStretch(Stretch::Expanding);
+
+            _viewType = viewType;
+            _orbit = getViewOrbit(viewType);
+
+            _viewTypeComboBox = ComboBox::create(
+                context,
+                getViewTypeLabels(),
+                shared_from_this());
+            _viewTypeComboBox->setCurrentIndex(static_cast<int>(viewType));
+            _viewTypeComboBox->setTooltip("The view this viewport looks through");
+            _viewTypeComboBox->setIndexCallback(
+                [this](int value)
+                {
+                    setViewType(static_cast<ViewType>(value));
+                });
 
             _frameObserver = Observer<std::shared_ptr<const core::Frame> >::create(
                 model->observeFrame(),
@@ -120,30 +139,53 @@ namespace fx
         std::shared_ptr<Viewport> Viewport::create(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
+            ViewType viewType,
             const std::shared_ptr<IWidget>& parent)
         {
             auto out = std::shared_ptr<Viewport>(new Viewport);
-            out->_init(context, model, parent);
+            out->_init(context, model, viewType, parent);
             return out;
+        }
+
+        ViewType Viewport::getViewType() const
+        {
+            return _viewType;
+        }
+
+        void Viewport::setViewType(ViewType value)
+        {
+            if (value == _viewType)
+                return;
+            _viewType = value;
+            _viewTypeComboBox->setCurrentIndex(static_cast<int>(value));
+
+            // Snap to the new view's orientation, but keep where the camera is
+            // pointed and how far out it is. Switching from perspective to top
+            // should look at the same part of the scene from above, not jump
+            // back to the origin.
+            _orbit = getViewOrbit(value);
+            _doRender = true;
+            setDrawUpdate();
         }
 
         void Viewport::frameView()
         {
-            _orbit = V2F(35.F, 20.F);
+            _orbit = getViewOrbit(_viewType);
             _center = V3F(0.F, 5.F, 0.F);
-            _setDistance(30.F);
+            _distance = 30.F;
+            _orthoHeight = 30.F;
             _doRender = true;
             setDrawUpdate();
         }
 
         void Viewport::zoomIn()
         {
-            _setDistance(_distance * .9F);
+            _setZoom(.9F);
         }
 
         void Viewport::zoomOut()
         {
-            _setDistance(_distance * 1.1F);
+            _setZoom(1.1F);
         }
 
         float Viewport::getPointSize() const
@@ -160,6 +202,19 @@ namespace fx
             setDrawUpdate();
         }
 
+        void Viewport::setCurrent(bool value)
+        {
+            if (value == _current)
+                return;
+            _current = value;
+            setDrawUpdate();
+        }
+
+        void Viewport::setPressCallback(const std::function<void(void)>& value)
+        {
+            _pressCallback = value;
+        }
+
         void Viewport::_setOrbit(const V2F& value)
         {
             V2F tmp;
@@ -172,30 +227,88 @@ namespace fx
             setDrawUpdate();
         }
 
-        void Viewport::_setDistance(float value)
+        void Viewport::_setZoom(float scale)
         {
-            const float tmp = clamp(value, 1.F, 500.F);
-            if (tmp == _distance)
-                return;
-            _distance = tmp;
+            if (isOrtho(_viewType))
+            {
+                _orthoHeight = clamp(_orthoHeight * scale, .01F, 10000.F);
+            }
+            else
+            {
+                _distance = clamp(_distance * scale, .1F, 10000.F);
+            }
             _doRender = true;
             setDrawUpdate();
         }
 
-        M44F Viewport::_getMVP() const
+        float Viewport::_getWorldPerPixel() const
+        {
+            const int h = getGeometry().h();
+            if (h <= 0)
+                return 0.F;
+            const float height = isOrtho(_viewType) ?
+                _orthoHeight :
+                2.F * _distance * std::tan(deg2rad(_fov) / 2.F);
+            return height / static_cast<float>(h);
+        }
+
+        void Viewport::_pan(const V2I& delta)
+        {
+            // The camera's right and up axes in world space. The view rotates
+            // the world by pitch then yaw, so undoing it in the other order
+            // turns a screen direction back into a world one.
+            const M44F inverse = rotateY(-_orbit.x) * rotateX(-_orbit.y);
+            const V3F right = inverse * V3F(1.F, 0.F, 0.F);
+            const V3F up = inverse * V3F(0.F, 1.F, 0.F);
+
+            // The scene follows the cursor, so the camera goes the other way.
+            // Screen y counts downwards, which is why up is added rather than
+            // subtracted.
+            const float scale = _getWorldPerPixel();
+            _center = _center -
+                right * (delta.x * scale) +
+                up * (delta.y * scale);
+            _doRender = true;
+            setDrawUpdate();
+        }
+
+        M44F Viewport::_getProjection() const
         {
             const Size2I size = getGeometry().size();
-            const M44F projection = perspective(
-                _fov,
-                aspectRatio(size),
-                .1F,
-                10000.F);
-            const M44F view =
-                translate(V3F(0.F, 0.F, -_distance)) *
+            const float aspect = aspectRatio(size);
+            if (isOrtho(_viewType))
+            {
+                // The clip planes are wide open rather than fitted to the
+                // scene: an orthographic view has no perspective to lose to a
+                // sloppy depth range, and nothing here needs the precision.
+                const float h = _orthoHeight / 2.F;
+                const float w = h * aspect;
+                return ortho(-w, w, -h, h, -10000.F, 10000.F);
+            }
+            return perspective(_fov, aspect, .1F, 10000.F);
+        }
+
+        M44F Viewport::_getView() const
+        {
+            // Orthographic views sit at the centre and let the clip planes do
+            // the work, so there is no distance to pull back by.
+            const float distance = isOrtho(_viewType) ? 0.F : _distance;
+            return
+                translate(V3F(0.F, 0.F, -distance)) *
                 rotateX(_orbit.y) *
                 rotateY(_orbit.x) *
                 translate(-_center);
-            return projection * view;
+        }
+
+        void Viewport::sizeHintEvent(const SizeHintEvent& event)
+        {
+            IWidget::sizeHintEvent(event);
+            _margin = event.style->getSizeRole(
+                SizeRole::MarginSmall,
+                event.displayScale);
+            _border = event.style->getSizeRole(
+                SizeRole::Border,
+                event.displayScale);
         }
 
         void Viewport::setGeometry(const Box2I& value)
@@ -203,6 +316,13 @@ namespace fx
             const bool changed = value != getGeometry();
             IWidget::setGeometry(value);
             _doRender |= changed;
+
+            const Size2I hint = _viewTypeComboBox->getSizeHint();
+            _viewTypeComboBox->setGeometry(Box2I(
+                value.min.x + _margin,
+                value.min.y + _margin,
+                hint.w,
+                hint.h));
         }
 
         void Viewport::_gridUpdate()
@@ -320,7 +440,7 @@ namespace fx
                     glClearColor(.11F, .11F, .12F, 1.F);
                     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                    const M44F mvp = _getMVP();
+                    const M44F mvp = _getProjection() * _getView();
                     _shader->bind();
                     _shader->setUniform("mvp", mvp);
 
@@ -373,14 +493,36 @@ namespace fx
             {
                 event.render->drawTexture(_buffer->getColorID(), g, true);
             }
+
+            // Mark the viewport the menu actions and the keyboard apply to.
+            // With four of them on screen this is the difference between an
+            // arrangement and a guess.
+            if (_current)
+            {
+                event.render->drawMesh(
+                    border(g, _border),
+                    event.style->getColorRole(ColorRole::KeyFocus));
+            }
         }
 
         void Viewport::mouseMoveEvent(MouseMoveEvent& event)
         {
             event.accept = true;
-            if (MouseButton::Left == _mouseButton)
+            const V2I d = event.pos - event.prev;
+
+            // Middle drag pans, and so does the left button with the alt key,
+            // for the sake of anyone on a trackpad with no middle button.
+            const bool alt = _mouseModifiers & static_cast<int>(KeyModifier::Alt);
+            if (MouseButton::Middle == _mouseButton ||
+                (MouseButton::Left == _mouseButton && alt))
             {
-                const V2I d = event.pos - event.prev;
+                _pan(d);
+            }
+            else if (MouseButton::Left == _mouseButton &&
+                !isOrtho(_viewType))
+            {
+                // Orbiting an axis view would turn it into something that is
+                // no longer the front, so the axis views do not orbit at all.
                 _setOrbit(_orbit + V2F(d.x * .25F, d.y * .25F));
             }
         }
@@ -390,18 +532,26 @@ namespace fx
             event.accept = true;
             takeKeyFocus();
             _mouseButton = event.button;
+            _mouseModifiers = event.modifiers;
+            if (_pressCallback)
+            {
+                _pressCallback();
+            }
         }
 
         void Viewport::mouseReleaseEvent(MouseClickEvent& event)
         {
             event.accept = true;
             _mouseButton = MouseButton::None;
+            _mouseModifiers = 0;
         }
 
         void Viewport::scrollEvent(ScrollEvent& event)
         {
             event.accept = true;
-            _setDistance(_distance - event.value.y * _distance * .1F);
+            // Scaled rather than stepped, so that zooming in and back out
+            // returns to where it started instead of drifting.
+            _setZoom(std::pow(.9F, event.value.y));
         }
     }
 }

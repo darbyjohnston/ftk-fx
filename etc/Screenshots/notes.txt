@@ -1,0 +1,28 @@
+Screenshots are described by screenshots.json and captured by the application
+itself, one process per shot. Each shot writes a PNG and a JSON sidecar giving
+the bounding box and the visible text of every widget tagged with
+ftk::setScreenshotTag.
+
+Example:
+% python3 etc/Screenshots/build_screenshots.py etc/Screenshots/screenshots.json \
+    --ftk-fx ../build-Debug/bin/ftk-fx/ftk-fx --out /tmp/shots
+
+A single shot, which is the useful form while working on one:
+% python3 etc/Screenshots/build_screenshots.py etc/Screenshots/screenshots.json \
+    --ftk-fx ../build-Debug/bin/ftk-fx/ftk-fx --out /tmp/shots --only views-four
+
+Setup steps a shot may use:
+* {"frame": 70}                              go to a frame
+* {"layout": 4}                              arrange that many viewports
+* {"view": {"index": 1, "type": "Top"}}      set a viewport's view
+* {"current": 1}                             make a viewport the current one
+* {"lock": true}                             lock the frame at the playhead
+* {"playing": true}                          start playback
+
+The view type names are the labels in the viewport's own menu: Persp, Front,
+Side, Top. An unknown one fails the shot rather than capturing the wrong view.
+
+DJV turns its sidecars into annotated SVGs for the documentation with a
+make_svg.py step. There are no documentation pages here yet, so that step does
+not exist; the "annotate" entries in the manifest are carried through to the
+sidecar ready for it.

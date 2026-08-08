@@ -1,20 +1,26 @@
 set(HEADERS
     App.h
     CacheBar.h
+    Capture.h
     MainWindow.h
     ParametersPanel.h
     SceneModel.h
     TimelineBar.h
-    Viewport.h)
+    ViewOptions.h
+    Viewport.h
+    Views.h)
 
 set(SOURCE
     App.cpp
     CacheBar.cpp
+    Capture.cpp
     MainWindow.cpp
     ParametersPanel.cpp
     SceneModel.cpp
     TimelineBar.cpp
-    Viewport.cpp)
+    ViewOptions.cpp
+    Viewport.cpp
+    Views.cpp)
 
 add_library(fxApp ${HEADERS} ${SOURCE})
 

@@ -18,7 +18,7 @@ namespace fx
     namespace app
     {
         class SceneModel;
-        class Viewport;
+        class Views;
 
         //! The parameter panel.
         class ParametersPanel : public ftk::IWidget
@@ -27,7 +27,7 @@ namespace fx
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
-                const std::shared_ptr<Viewport>&,
+                const std::shared_ptr<Views>&,
                 const std::shared_ptr<ftk::IWidget>& parent);
 
             ParametersPanel() = default;
@@ -38,7 +38,7 @@ namespace fx
             static std::shared_ptr<ParametersPanel> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
-                const std::shared_ptr<Viewport>&,
+                const std::shared_ptr<Views>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
             ftk::Size2I getSizeHint() const override;

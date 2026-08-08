@@ -11,6 +11,7 @@ namespace fx
 {
     namespace app
     {
+        class Capture;
         class MainWindow;
         class SceneModel;
 
@@ -34,21 +35,32 @@ namespace fx
             const std::shared_ptr<SceneModel>& getSceneModel() const;
             const std::shared_ptr<MainWindow>& getMainWindow() const;
 
+            //! Get the process exit code. Non-zero when a screenshot capture
+            //! was asked for and did not produce its outputs -- a capture that
+            //! quietly failed would leave the documentation showing the last
+            //! run's pictures.
+            int getExitCode() const;
+
             void run() override;
 
         private:
             //! Command line options.
+            //!
+            //! Screenshots are described by a manifest rather than by an option
+            //! per thing worth capturing: those options multiply, and they end
+            //! up a second way of setting what the manifest already covers.
             struct CmdLine
             {
-                //! The frame to start on. There to make the application
-                //! checkable without a person at the keyboard: a screenshot of
-                //! frame one shows a handful of particles and proves nothing.
-                std::shared_ptr<ftk::CmdLineOption<int> > frame;
+                std::shared_ptr<ftk::CmdLineOption<std::string> > captureManifest;
+                std::shared_ptr<ftk::CmdLineOption<std::string> > captureShot;
+                std::shared_ptr<ftk::CmdLineOption<std::string> > captureOutput;
             };
             CmdLine _cmdLine;
 
             std::shared_ptr<SceneModel> _sceneModel;
             std::shared_ptr<MainWindow> _mainWindow;
+            std::shared_ptr<Capture> _capture;
+            int _exitCode = 0;
         };
     }
 }

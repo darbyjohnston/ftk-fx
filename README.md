@@ -70,14 +70,27 @@ day a movie plate has to load behind the sim.
 ```
 
 Space plays and stops, the arrow keys step a frame, Home and End jump to the
-ends, and Backspace reframes the view. Dragging in the viewport orbits and the
-scroll wheel zooms. Clicking or dragging on the cache bar scrubs.
+ends. Clicking or dragging on the cache bar scrubs.
 
-`-frame N` starts on a frame, which is what makes `-screenshot` worth taking:
+The View menu arranges one, two, three or four viewports, and each viewport's
+own menu picks what it looks through: perspective, front, side or top, the axis
+views orthographic. Dragging orbits a perspective view; the middle button, or
+alt and the left button, pans any of them; the wheel zooms. Backspace reframes
+the viewport with the highlighted border, which is whichever one was last
+clicked in.
+
+## Screenshots
+
+`etc/Screenshots/screenshots.json` describes the shots and the application
+captures them itself, one process per shot:
 
 ```bash
-./build-Debug/bin/ftk-fx/ftk-fx -frame 70 -screenshot fx.png
+python3 etc/Screenshots/build_screenshots.py etc/Screenshots/screenshots.json --ftk-fx ../build-Debug/bin/ftk-fx/ftk-fx --out /tmp/shots
 ```
+
+Each shot writes a PNG and a JSON sidecar holding the bounding box and the
+visible text of every tagged widget, so what was on screen can be checked
+without anyone looking at the picture. See `etc/Screenshots/notes.txt`.
 
 ## Tests
 

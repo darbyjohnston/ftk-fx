@@ -3,10 +3,15 @@
 
 #pragma once
 
+#include <fx/App/ViewOptions.h>
+
 #include <ftk/UI/MainWindow.h>
+
+#include <map>
 
 namespace ftk
 {
+    class Action;
     class Splitter;
 }
 
@@ -18,9 +23,9 @@ namespace fx
         class ParametersPanel;
         class SceneModel;
         class TimelineBar;
-        class Viewport;
+        class Views;
 
-        //! The main window: the viewport, the parameters beside it, and the
+        //! The main window: the viewports, the parameters beside them, and the
         //! timeline under both.
         //!
         //! A fixed layout rather than dockable panels. That is a decision that
@@ -45,16 +50,21 @@ namespace fx
                 const std::shared_ptr<SceneModel>&,
                 const ftk::Size2I& = ftk::Size2I(1280, 800));
 
-            const std::shared_ptr<Viewport>& getViewport() const;
+            const std::shared_ptr<Views>& getViews() const;
 
             void keyPressEvent(ftk::KeyEvent&) override;
 
         private:
+            void _createViewMenu(const std::shared_ptr<ftk::Context>&);
+
             std::weak_ptr<SceneModel> _model;
-            std::shared_ptr<Viewport> _viewport;
+            std::shared_ptr<Views> _views;
             std::shared_ptr<ParametersPanel> _parametersPanel;
             std::shared_ptr<TimelineBar> _timelineBar;
             std::shared_ptr<ftk::Splitter> _splitter;
+
+            std::map<ViewLayout, std::shared_ptr<ftk::Action> > _layoutActions;
+            std::shared_ptr<ftk::Observer<ViewLayout> > _layoutObserver;
         };
     }
 }
