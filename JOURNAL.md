@@ -7,6 +7,33 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-08 — Leaving GL state changed draws every glyph as a box
+
+The viewport's offscreen pass turned blending off after drawing its points and
+never put it back. `gl::Render::begin()` enables `GL_BLEND` once for the whole
+frame and its primitives only ever set the blend *function*, so from then on
+every glyph drew as an opaque quad. The tell in the screenshot was that the menu
+bar was fine and everything below it was boxes: the menu bar is drawn before the
+viewport.
+
+Two things worth keeping from it.
+
+**It was invisible to `-screenshot`.** The viewport only re-renders when
+`_doRender` is set, so only frames where it actually ran are affected, and the
+buffer that got captured was not one of them. Reproducing it took forcing
+`_doRender = true` on every draw. A widget that renders conditionally can hide a
+state bug from exactly the check meant to catch it, and the A/B — force the
+condition, capture with and without the fix — is the way to be sure.
+
+**The rule this establishes:** a widget that touches raw GL puts back what
+`Render::begin()` set up. ftk has state helpers for the render's own state
+(`ViewportState`, `ClipRectState` and the rest) but nothing for raw GL, so this
+is a convention rather than something the compiler will hold us to. If a second
+widget ends up needing it, that is the point to write the scoped guard rather
+than repeat the comment.
+
+---
+
 ## 2026-08-08 — The first vertical slice
 
 A pool that emits from a point, falls under gravity, draws as points, and
