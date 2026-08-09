@@ -7,6 +7,69 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Measuring the four-up, and the ruler being wrong
+
+A screenshot of four viewports under load: 5926 particles, 48MB of GL buffers,
+14ms a frame. The question was whether any of that is out of proportion.
+
+Two of the three answer themselves. `ftk GL Memory/Buffers` counts offscreen
+buffers, not vertex buffers -- the 48MB is the `RGBA_F16` viewport targets, and
+`Meshes: 0MB` beside it says the particle geometry is nothing (six thousand
+particles across four panes is under 400KB). And `fx Sim/Time` at zero with the
+cache full says playback is simulating nothing, so the frame time is all
+drawing.
+
+Measured at 1840x1240:
+
+| | GL buffers | offscreen objects |
+|---|---|---|
+| one pane | 115 MB | 2 |
+| four panes | 113 MB | 5 |
+
+Splitting one viewport into four is free. It is the same pixels cut up
+differently, which is the answer to "should the four-up worry me" and also the
+reason the F16 decision in §10 is the only lever that moves this number.
+
+### The frame time could not answer anything
+
+Five captures of the same scene, one pane and then four:
+
+```
+one pane    3  6  8  8  9   ms
+four panes  5  5  6 11 12   ms
+```
+
+Overlapping completely, with the medians the wrong way round. `RenderDiag::time`
+was one frame's `begin()` to `end()`, cast to whole milliseconds, read by a
+sampler that fires every few seconds -- so both the quantisation and the choice
+of which single frame to look at varied by more than the difference being
+looked for. Fine for catching a five-fold regression, useless for comparing two
+configurations, which is most of what a diagnostics panel is for.
+
+It is the mean over the last sixty frames now, in microseconds, and there is a
+peak beside it over the same window: the mean says what a frame costs, the peak
+says whether it hitches. The same ten captures:
+
+| | mean | peak |
+|---|---|---|
+| one pane | 9.8 ms | 12.2 ms |
+| four panes | 11.1 ms | 13.3 ms |
+
+Four viewports cost about 13% more than one, and the peak sits a couple of
+milliseconds above the mean in both, so the extra panes do not introduce a
+hitch. That is a sentence the old readout could not have supported.
+
+`fx Sim/Time` had the same rounding and is microseconds too. It read zero for
+every scrub inside the cache; it reads 50387 for a jump of fifty frames at six
+thousand particles, which is a millisecond a frame and worth knowing.
+
+The harness needed two things to run this: a `rate` step, because frame time is
+only meaningful against a known particle count, and a settle timeout that
+scales instead of a fixed six seconds, which was killing an eight second shot
+before it captured.
+
+---
+
 ## 2026-08-09 — Reading the screenshot back
 
 A screenshot of the four-up, looked at as a stranger would. Five things were
