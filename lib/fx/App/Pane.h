@@ -120,10 +120,11 @@ namespace fx
             //! Set when the menus need rebuilding, acted on at the next tick.
             //!
             //! The rebuild destroys the menu, and what asks for it is usually
-            //! an action inside that menu: ftk::Menu calls the action's
-            //! callback and then closes itself, so freeing it in the callback
-            //! leaves it reading its own freed members. Waiting a tick puts the
-            //! rebuild after the click has finished with it.
+            //! an action inside that menu. feather-tk survives that now -- the
+            //! menu holds itself alive across the callback -- but rebuilding a
+            //! menu while it is still dispatching a click is a confusing thing
+            //! to do even when it is safe. Waiting a tick puts the rebuild
+            //! after the click has finished.
             bool _menuDirty = true;
 
             std::shared_ptr<ftk::MenuBar> _menuBar;

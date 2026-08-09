@@ -118,10 +118,10 @@ namespace fx
             //! tick.
             //!
             //! Rebuilding destroys the tab bar's buttons, and closing a tab is
-            //! one of the things that asks for it. ftk::IButton reads its own
-            //! members after calling the clicked callback, so freeing the
-            //! button from inside that callback leaves it reading freed memory.
-            //! Waiting a tick puts the rebuild after the click is done.
+            //! one of the things that asks for it. feather-tk survives that now
+            //! -- a button holds itself alive across its callbacks -- but the
+            //! rebuild still waits a tick, because taking a widget apart while
+            //! it is dispatching is worth not doing whether or not it crashes.
             bool _panelsDirty = false;
 
             std::vector<std::string> _names;

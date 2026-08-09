@@ -7,6 +7,36 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — The crash, fixed where it belonged
+
+The menu crash got two fixes. The first, here, was to stop rebuilding a menu
+from inside its own callback. The second, which is the one that matters, is in
+feather-tk: the dispatch sites now hold on to what they are about to touch.
+
+* `Menu` keeps a weak reference to itself and locks it before `_accept()`.
+* `IButton::click()` holds itself alive across both of its callbacks, since it
+  reads its own checkable flag after them.
+* `ButtonGroup` does the same across its checked callback, which walks its
+  buttons afterwards.
+
+None of this was the caller's fault. A callback is user code and may do
+anything, including closing the thing the widget belongs to. A toolkit that
+reads its own members after handing control away has to survive that, and an
+application that has to know which callbacks are safe to act in has been handed
+a rule it will forget.
+
+Verified by putting the application's bad code back: rebuilding a pane's menu
+bar from inside that menu's own callback used to segfault on the first click and
+now does what it says. That is a better test than the regression shot, because
+it exercises the toolkit fix rather than the workaround.
+
+The workaround stays. Deferring the rebuild to the next tick is still the right
+thing for an application to do -- taking a widget apart while it is dispatching
+is confusing whether or not it crashes -- but it is no longer load bearing, and
+the comments saying so have been corrected.
+
+---
+
 ## 2026-08-09 — The harness can click, and two suggestions that did not survive
 
 ### Clicking
