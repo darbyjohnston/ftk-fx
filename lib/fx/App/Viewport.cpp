@@ -47,10 +47,9 @@ namespace fx
             const float gridExtent = 12.F;
             const int gridLines = 25;
 
-            //! The corner tripod, in points: how long an axis is and how far
-            //! its origin sits from the corner.
-            const float axisLength = 22.F;
-            const float axisMargin = 26.F;
+            //! How far the faint negative stub runs, as a fraction of the
+            //! positive axis.
+            const float axisStub = .4F;
 
             std::string vertexSource()
             {
@@ -394,10 +393,13 @@ namespace fx
             // The camera's rotation and nothing else: the tripod says which
             // way the scene is facing, not where it is or how far away.
             const M44F rotation = rotateX(_orbit.y) * rotateY(_orbit.x);
-            const float length = axisLength * _displayScale;
+            const float length = _size.length;
+            // Inset by the stub as well as the margin, since the origin is not
+            // the bottom left of the tripod -- three of the six arms run the
+            // other way.
             const V2F origin(
-                g.min.x + axisMargin * _displayScale,
-                g.max.y - axisMargin * _displayScale);
+                g.min.x + _size.margin + length * axisStub,
+                g.max.y - _size.margin - length * axisStub);
 
             struct Axis
             {
@@ -424,10 +426,8 @@ namespace fx
                 order.end(),
                 [&dir](size_t a, size_t b) { return dir[a].z < dir[b].z; });
 
-            const float width = std::max(1.F, _displayScale);
             LineOptions lineOptions;
-            lineOptions.width = width;
-            const int radius = static_cast<int>(std::max(2.F, 2.F * _displayScale));
+            lineOptions.width = _size.line;
             for (size_t i : order)
             {
                 // Screen y runs the other way to the camera's.
@@ -435,8 +435,8 @@ namespace fx
                     origin.x + dir[i].x * length,
                     origin.y - dir[i].y * length);
                 const V2F stub(
-                    origin.x - dir[i].x * length * .4F,
-                    origin.y + dir[i].y * length * .4F);
+                    origin.x - dir[i].x * length * axisStub,
+                    origin.y + dir[i].y * length * axisStub);
                 Color4F faint = axes[i].color;
                 faint.a = .35F;
                 event.render->drawLine(origin, stub, faint, lineOptions);
@@ -446,17 +446,36 @@ namespace fx
                         V2I(
                             static_cast<int>(tip.x),
                             static_cast<int>(tip.y)),
-                        radius),
+                        _size.dot),
                     axes[i].color);
+            }
+        }
+
+        void Viewport::styleEvent(const StyleEvent& event)
+        {
+            IWidget::styleEvent(event);
+            if (event.hasChanges())
+            {
+                _size.init = true;
             }
         }
 
         void Viewport::sizeHintEvent(const SizeHintEvent& event)
         {
             IWidget::sizeHintEvent(event);
-            // Kept because the draw needs it and a draw event does not carry
-            // it: the tripod is sized in points, not in buffer pixels.
-            _displayScale = event.displayScale;
+            if (_size.init)
+            {
+                _size.init = false;
+                // Resolved here because a draw event carries neither the style
+                // nor the display scale.
+                _size.line = event.style->getSizeRole(
+                    SizeRole::Border, event.displayScale);
+                _size.dot = _size.line * 2;
+                _size.length = event.style->getSizeRole(
+                    SizeRole::Swatch, event.displayScale);
+                _size.margin = event.style->getSizeRole(
+                    SizeRole::Margin, event.displayScale);
+            }
         }
 
         void Viewport::drawEvent(const Box2I& drawRect, const DrawEvent& event)

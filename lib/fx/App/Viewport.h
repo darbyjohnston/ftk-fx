@@ -75,6 +75,7 @@ namespace fx
             ///@}
 
             void setGeometry(const ftk::Box2I&) override;
+            void styleEvent(const ftk::StyleEvent&) override;
             void sizeHintEvent(const ftk::SizeHintEvent&) override;
             void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void mouseMoveEvent(ftk::MouseMoveEvent&) override;
@@ -132,7 +133,18 @@ namespace fx
             std::shared_ptr<ftk::gl::VBO> _gridVbo;
             std::shared_ptr<ftk::gl::VAO> _gridVao;
             size_t _gridCount = 0;
-            float _displayScale = 1.F;
+            //! Resolved from the style, the way every other widget does it,
+            //! so the tripod follows the display scale and anything the theme
+            //! changes about these roles.
+            struct SizeData
+            {
+                bool init = true;
+                int line = 0;
+                int dot = 0;
+                int length = 0;
+                int margin = 0;
+            };
+            SizeData _size;
             std::shared_ptr<ftk::gl::OffscreenBuffer> _buffer;
 
             std::shared_ptr<ftk::Observer<std::shared_ptr<const core::Frame> > >

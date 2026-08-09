@@ -92,12 +92,16 @@ namespace fx
                         0;
                 });
             diagSystem->addSampler(
-                "fx Sim/Time: {0}us",
+                "fx Sim/Time: {0}ms",
                 [weak]
                 {
                     auto model = weak.lock();
                     return model ? model->getSimTime() : 0;
-                });
+                },
+                // Microseconds into the graph, milliseconds onto the label:
+                // a scrub inside the cache is well under a millisecond and
+                // still worth seeing move.
+                DiagFormat{ 1000.0, 2 });
             diagSystem->addSampler(
                 "fx Cache/Memory: {0}MB",
                 [weak]
