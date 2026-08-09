@@ -30,7 +30,7 @@ namespace fx
 
             p.diagWidget = DiagWidget::create(context);
             p.diagWidget->setMarginRole(SizeRole::MarginSmall);
-            _setWidget(p.diagWidget);
+            _setContent(p.diagWidget);
         }
 
         DiagPanel::DiagPanel() :

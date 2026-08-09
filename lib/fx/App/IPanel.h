@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <ftk/UI/IWidget.h>
+#include <ftk/UI/IContainer.h>
 
 namespace ftk
 {
@@ -27,7 +27,7 @@ namespace fx
         //!
         //! The panel provides the header and the frame; what goes inside is the
         //! subclass's business.
-        class IPanel : public ftk::IWidget
+        class IPanel : public ftk::IContainer
         {
             FTK_NON_COPYABLE(IPanel);
 
@@ -55,11 +55,11 @@ namespace fx
             //! column keeps track of what is open, so it asks.
             void setCloseCallback(const std::function<void(void)>&);
 
-            ftk::Size2I getSizeHint() const override;
-            void setGeometry(const ftk::Box2I&) override;
-
         protected:
-            void _setWidget(const std::shared_ptr<ftk::IWidget>&);
+            //! Set the panel's contents, which go below the header. Named
+            //! apart from IContainer::_setWidget, which is the frame this puts
+            //! them in.
+            void _setContent(const std::shared_ptr<ftk::IWidget>&);
 
         private:
             FTK_PRIVATE();

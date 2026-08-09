@@ -5,13 +5,7 @@
 
 #include <fx/App/PaneOptions.h>
 
-#include <ftk/UI/IWidget.h>
-
-namespace ftk
-{
-    class Label;
-    class VerticalLayout;
-}
+#include <ftk/UI/IContainer.h>
 
 namespace fx
 {
@@ -27,13 +21,13 @@ namespace fx
         //!
         //! Each of these is meant to be deleted, one at a time, as the editor
         //! it stands for arrives.
-        class PanePlaceholder : public ftk::IWidget
+        class PanePlaceholder : public ftk::IContainer
         {
         protected:
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 PaneType,
-                const std::shared_ptr<IWidget>& parent);
+                const std::shared_ptr<ftk::IWidget>& parent);
 
             PanePlaceholder() = default;
 
@@ -43,13 +37,7 @@ namespace fx
             static std::shared_ptr<PanePlaceholder> create(
                 const std::shared_ptr<ftk::Context>&,
                 PaneType,
-                const std::shared_ptr<IWidget>& parent = nullptr);
-
-            ftk::Size2I getSizeHint() const override;
-            void setGeometry(const ftk::Box2I&) override;
-
-        private:
-            std::shared_ptr<ftk::VerticalLayout> _layout;
+                const std::shared_ptr<ftk::IWidget>& parent = nullptr);
         };
     }
 }

@@ -36,7 +36,7 @@ namespace fx
             const std::string& objectName,
             const std::shared_ptr<IWidget>& parent)
         {
-            IWidget::_init(context, objectName, parent);
+            IContainer::_init(context, objectName, parent);
             FTK_P();
             p.name = name;
 
@@ -62,7 +62,7 @@ namespace fx
                     }
                 });
 
-            p.layout = VerticalLayout::create(context, shared_from_this());
+            p.layout = VerticalLayout::create(context);
             p.layout->setSpacingRole(SizeRole::None);
             auto hLayout = HorizontalLayout::create(context, p.layout);
             hLayout->setSpacingRole(SizeRole::None);
@@ -80,6 +80,7 @@ namespace fx
             p.panelLayout = VerticalLayout::create(context, p.layout);
             p.panelLayout->setSpacingRole(SizeRole::None);
             p.panelLayout->setHStretch(Stretch::Expanding);
+            _setWidget(p.layout);
         }
 
         IPanel::IPanel() :
@@ -106,20 +107,9 @@ namespace fx
             _p->closeCallback = value;
         }
 
-        void IPanel::_setWidget(const std::shared_ptr<IWidget>& value)
+        void IPanel::_setContent(const std::shared_ptr<IWidget>& value)
         {
             value->setParent(_p->panelLayout);
-        }
-
-        Size2I IPanel::getSizeHint() const
-        {
-            return _p->layout->getSizeHint();
-        }
-
-        void IPanel::setGeometry(const Box2I& value)
-        {
-            IWidget::setGeometry(value);
-            _p->layout->setGeometry(value);
         }
     }
 }

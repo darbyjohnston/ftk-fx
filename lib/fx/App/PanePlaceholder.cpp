@@ -17,16 +17,16 @@ namespace fx
             PaneType paneType,
             const std::shared_ptr<IWidget>& parent)
         {
-            IWidget::_init(context, "fx::app::PanePlaceholder", parent);
+            IContainer::_init(context, "fx::app::PanePlaceholder", parent);
             setHStretch(Stretch::Expanding);
             setVStretch(Stretch::Expanding);
             setBackgroundRole(ColorRole::Well);
 
-            _layout = VerticalLayout::create(context, shared_from_this());
-            _layout->setSpacingRole(SizeRole::SpacingSmall);
-            _layout->addSpacer(Stretch::Expanding);
+            auto layout = VerticalLayout::create(context);
+            layout->setSpacingRole(SizeRole::SpacingSmall);
+            layout->addSpacer(Stretch::Expanding);
 
-            auto label = Label::create(context, getLabel(paneType), _layout);
+            auto label = Label::create(context, getLabel(paneType), layout);
             label->setFont(FontType::Bold);
             label->setTextRole(ColorRole::TextDisabled);
             label->setHAlign(HAlign::Center);
@@ -34,11 +34,12 @@ namespace fx
             auto description = Label::create(
                 context,
                 getPaneTypeDescription(paneType),
-                _layout);
+                layout);
             description->setTextRole(ColorRole::TextDisabled);
             description->setHAlign(HAlign::Center);
 
-            _layout->addSpacer(Stretch::Expanding);
+            layout->addSpacer(Stretch::Expanding);
+            _setWidget(layout);
         }
 
         PanePlaceholder::~PanePlaceholder()
@@ -54,15 +55,5 @@ namespace fx
             return out;
         }
 
-        Size2I PanePlaceholder::getSizeHint() const
-        {
-            return _layout->getSizeHint();
-        }
-
-        void PanePlaceholder::setGeometry(const Box2I& value)
-        {
-            IWidget::setGeometry(value);
-            _layout->setGeometry(value);
-        }
     }
 }

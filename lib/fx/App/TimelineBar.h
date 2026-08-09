@@ -5,6 +5,7 @@
 
 #include <fx/Core/Cache.h>
 
+#include <ftk/UI/IContainer.h>
 #include <ftk/UI/RowLayout.h>
 
 #include <ftk/Core/ObservableList.h>
@@ -25,7 +26,7 @@ namespace fx
         class SceneModel;
 
         //! The transport controls and the cache bar.
-        class TimelineBar : public ftk::IWidget
+        class TimelineBar : public ftk::IContainer
         {
         protected:
             void _init(
@@ -43,8 +44,6 @@ namespace fx
                 const std::shared_ptr<SceneModel>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
-            ftk::Size2I getSizeHint() const override;
-            void setGeometry(const ftk::Box2I&) override;
 
         private:
             void _statusUpdate();

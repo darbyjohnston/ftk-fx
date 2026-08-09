@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <ftk/UI/IWidget.h>
+#include <ftk/UI/IContainer.h>
 
 #include <ftk/Core/Observable.h>
 #include <ftk/Core/ObservableList.h>
@@ -57,7 +57,7 @@ namespace fx
         //! Every panel is made up front and shown or hidden. There are few of
         //! them and they are cheap; making them on demand is machinery to be
         //! written when one of them is not.
-        class Panels : public ftk::IWidget
+        class Panels : public ftk::IContainer
         {
         protected:
             void _init(
@@ -98,8 +98,6 @@ namespace fx
 
             ///@}
 
-            ftk::Size2I getSizeHint() const override;
-            void setGeometry(const ftk::Box2I&) override;
             void tickEvent(bool, bool, const ftk::TickEvent&) override;
 
         private:

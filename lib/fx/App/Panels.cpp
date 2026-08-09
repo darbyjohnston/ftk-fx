@@ -40,7 +40,7 @@ namespace fx
             const std::shared_ptr<Panes>& panes,
             const std::shared_ptr<IWidget>& parent)
         {
-            IWidget::_init(context, "fx::app::Panels", parent);
+            IContainer::_init(context, "fx::app::Panels", parent);
 
             _open = ObservableList<std::string>::create();
             _style = Observable<PanelStyle>::create(PanelStyle::Column);
@@ -49,14 +49,11 @@ namespace fx
             _columnLayout->setMarginRole(SizeRole::None);
             _columnLayout->setSpacingRole(SizeRole::None);
 
-            _columnScroll = ScrollWidget::create(
-                context,
-                ScrollType::Both,
-                shared_from_this());
+            _columnScroll = ScrollWidget::create(context, ScrollType::Both);
             _columnScroll->setBorder(false);
             _columnScroll->setWidget(_columnLayout);
 
-            _tabWidget = TabWidget::create(context, shared_from_this());
+            _tabWidget = TabWidget::create(context);
             _tabWidget->setClosable(true);
             std::weak_ptr<Panels> weak(
                 std::dynamic_pointer_cast<Panels>(shared_from_this()));
@@ -219,8 +216,11 @@ namespace fx
                 }
             }
 
-            _columnScroll->setVisible(!tabs);
-            _tabWidget->setVisible(tabs);
+            // One or the other fills the column. IContainer detaches whichever
+            // is on the way out, so there is no hiding to keep track of.
+            _setWidget(tabs ?
+                std::static_pointer_cast<IWidget>(_tabWidget) :
+                std::static_pointer_cast<IWidget>(_columnScroll));
 
             // With nothing open the column has nothing to say, so it gets out
             // of the way and the splitter hands the whole width to the panes.
@@ -241,18 +241,6 @@ namespace fx
             }
         }
 
-        Size2I Panels::getSizeHint() const
-        {
-            return PanelStyle::Tabs == _style->get() ?
-                _tabWidget->getSizeHint() :
-                _columnScroll->getSizeHint();
-        }
 
-        void Panels::setGeometry(const Box2I& value)
-        {
-            IWidget::setGeometry(value);
-            _columnScroll->setGeometry(value);
-            _tabWidget->setGeometry(value);
-        }
     }
 }

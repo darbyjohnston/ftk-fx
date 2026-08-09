@@ -137,7 +137,7 @@ namespace fx
             displayBellows->setWidget(displayLayout);
             displayBellows->setOpen(true);
 
-            _setWidget(layout);
+            _setContent(layout);
         }
 
         ParametersPanel::~ParametersPanel()

@@ -5,7 +5,7 @@
 
 #include <fx/App/PaneOptions.h>
 
-#include <ftk/UI/IWidget.h>
+#include <ftk/UI/IContainer.h>
 
 #include <map>
 
@@ -34,7 +34,7 @@ namespace fx
         //! Content is made the first time the pane is asked for it and then
         //! kept, so switching away and back finds a camera where it was left
         //! without every pane paying for every kind of content up front.
-        class Pane : public ftk::IWidget
+        class Pane : public ftk::IContainer
         {
         protected:
             void _init(
@@ -87,8 +87,6 @@ namespace fx
             //! becomes the current one.
             void setPressCallback(const std::function<void(void)>&);
 
-            ftk::Size2I getSizeHint() const override;
-            void setGeometry(const ftk::Box2I&) override;
             void sizeHintEvent(const ftk::SizeHintEvent&) override;
             void drawOverlayEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void tickEvent(bool, bool, const ftk::TickEvent&) override;

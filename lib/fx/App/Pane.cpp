@@ -24,15 +24,17 @@ namespace fx
             ViewType viewType,
             const std::shared_ptr<IWidget>& parent)
         {
-            IWidget::_init(context, "fx::app::Pane", parent);
+            IContainer::_init(context, "fx::app::Pane", parent);
             setHStretch(Stretch::Expanding);
             setVStretch(Stretch::Expanding);
 
             _model = model;
             _viewType = viewType;
 
-            _layout = VerticalLayout::create(context, shared_from_this());
+            _layout = VerticalLayout::create(context);
             _layout->setSpacingRole(SizeRole::None);
+
+            _setWidget(_layout);
 
             _menuBar = MenuBar::create(context, _layout);
 
@@ -230,10 +232,6 @@ namespace fx
             _pressCallback = value;
         }
 
-        Size2I Pane::getSizeHint() const
-        {
-            return _layout->getSizeHint();
-        }
 
         void Pane::sizeHintEvent(const SizeHintEvent& event)
         {
@@ -243,11 +241,6 @@ namespace fx
                 event.displayScale);
         }
 
-        void Pane::setGeometry(const Box2I& value)
-        {
-            IWidget::setGeometry(value);
-            _layout->setGeometry(value);
-        }
 
         void Pane::drawOverlayEvent(const Box2I& drawRect, const DrawEvent& event)
         {

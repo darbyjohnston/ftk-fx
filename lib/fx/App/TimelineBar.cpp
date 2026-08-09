@@ -44,12 +44,13 @@ namespace fx
             const std::shared_ptr<SceneModel>& model,
             const std::shared_ptr<IWidget>& parent)
         {
-            IWidget::_init(context, "fx::app::TimelineBar", parent);
+            IContainer::_init(context, "fx::app::TimelineBar", parent);
             _model = model;
 
-            _layout = VerticalLayout::create(context, shared_from_this());
+            _layout = VerticalLayout::create(context);
             _layout->setSpacingRole(SizeRole::SpacingSmall);
             _layout->setMarginRole(SizeRole::MarginInside);
+            _setWidget(_layout);
 
             auto hLayout = HorizontalLayout::create(context, _layout);
             hLayout->setSpacingRole(SizeRole::SpacingTool);
@@ -157,16 +158,7 @@ namespace fx
             return out;
         }
 
-        Size2I TimelineBar::getSizeHint() const
-        {
-            return _layout->getSizeHint();
-        }
 
-        void TimelineBar::setGeometry(const Box2I& value)
-        {
-            IWidget::setGeometry(value);
-            _layout->setGeometry(value);
-        }
 
         void TimelineBar::_statusUpdate()
         {
