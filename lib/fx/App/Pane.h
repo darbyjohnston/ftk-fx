@@ -12,6 +12,7 @@
 namespace ftk
 {
     class Action;
+    class Menu;
     class MenuBar;
     class VerticalLayout;
 }
@@ -127,7 +128,11 @@ namespace fx
             //! after the click has finished.
             bool _menuDirty = true;
 
+            //! Held rather than looked up by title, because the titles are the
+            //! current selections and change as the pane does.
             std::shared_ptr<ftk::MenuBar> _menuBar;
+            std::shared_ptr<ftk::Menu> _paneMenu;
+            std::shared_ptr<ftk::Menu> _viewMenu;
             std::map<PaneType, std::shared_ptr<ftk::Action> > _paneTypeActions;
             std::map<ViewType, std::shared_ptr<ftk::Action> > _viewTypeActions;
             std::shared_ptr<ftk::VerticalLayout> _layout;

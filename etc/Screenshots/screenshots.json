@@ -349,6 +349,33 @@
           "caption": "Both divisions moved at once"
         }
       ]
+    },
+    {
+      "id": "points-round",
+      "window": {
+        "w": 700,
+        "h": 520
+      },
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "pointSize": 14
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "Points at 14, drawn as discs"
+        }
+      ]
     }
   ]
 }

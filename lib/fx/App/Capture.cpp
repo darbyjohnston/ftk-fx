@@ -402,6 +402,10 @@ namespace fx
                     throw std::runtime_error(ftk::Format(
                         "unknown panel style \"{0}\"").arg(name));
             }
+            if (step.contains("pointSize"))
+            {
+                panes->setPointSize(step.at("pointSize").get<float>());
+            }
             if (step.contains("playing"))
             {
                 model->setPlaying(step.at("playing").get<bool>());

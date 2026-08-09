@@ -72,9 +72,26 @@ namespace fx
                     "in vec4 fColor;\n"
                     "out vec4 outColor;\n"
                     "\n"
+                    "uniform float pointSize;\n"
+                    "uniform float round;\n"
+                    "\n"
                     "void main()\n"
                     "{\n"
-                    "    outColor = fColor;\n"
+                    // A point is a square, which is plain to see by the time it
+                    // is a few pixels across. Cut it back to the disc inside,
+                    // and fade the last pixel of the edge rather than stepping
+                    // it: unsoftened, the disc looks worse than the square did.
+                    // gl_PointCoord means nothing outside a point, hence the
+                    // switch for the grid lines sharing this shader.
+                    "    float a = 1.0;\n"
+                    "    if (round > 0.0)\n"
+                    "    {\n"
+                    "        float d = length(gl_PointCoord - vec2(0.5));\n"
+                    "        float aa = 1.0 / max(pointSize, 1.0);\n"
+                    "        a = 1.0 - smoothstep(0.5 - aa, 0.5, d);\n"
+                    "        if (a <= 0.0) discard;\n"
+                    "    }\n"
+                    "    outColor = vec4(fColor.rgb, fColor.a * a);\n"
                     "}\n";
             }
 
@@ -430,6 +447,7 @@ namespace fx
                     if (_gridVao && _gridCount > 0)
                     {
                         _shader->setUniform("pointSize", 1.F);
+                        _shader->setUniform("round", 0.F);
                         glEnable(GL_DEPTH_TEST);
                         _gridVao->bind();
                         _gridVao->draw(GL_LINES, 0, _gridCount);
@@ -441,6 +459,7 @@ namespace fx
                         // embers read as light rather than as surfaces, and it
                         // means the points do not have to be sorted.
                         _shader->setUniform("pointSize", _pointSize);
+                        _shader->setUniform("round", 1.F);
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                         glDepthMask(GL_FALSE);

@@ -69,12 +69,14 @@ namespace fx
                     });
             }
 
-            // The Pane menu is built once here; only the View menu is added
-            // and removed as the content changes.
-            auto paneMenu = _menuBar->addMenu("Pane");
+            // Built once here; only the view menu comes and goes. Both titles
+            // are the current selection rather than a fixed word, so the header
+            // says what the pane is showing without being opened -- which is
+            // what the combo boxes these replaced did for free.
+            _paneMenu = _menuBar->addMenu(getLabel(_paneType));
             for (const auto& i : _paneTypeActions)
             {
-                paneMenu->addAction(i.second);
+                _paneMenu->addAction(i.second);
             }
 
             _contentUpdate();
@@ -210,19 +212,25 @@ namespace fx
             // removed. The Pane menu is built once and left alone, which is
             // also the menu an action is usually being picked from when this
             // runs.
+            _menuBar->setMenuText(_paneMenu, getLabel(_paneType));
+
             const bool view = PaneType::View == _paneType;
-            const bool has = _menuBar->getMenu("View").get();
-            if (view && !has)
+            if (view && !_viewMenu)
             {
-                auto viewMenu = _menuBar->addMenu("View");
+                _viewMenu = _menuBar->addMenu(getLabel(_viewType));
                 for (const auto& i : _viewTypeActions)
                 {
-                    viewMenu->addAction(i.second);
+                    _viewMenu->addAction(i.second);
                 }
             }
-            else if (!view && has)
+            else if (view)
             {
-                _menuBar->removeMenu("View");
+                _menuBar->setMenuText(_viewMenu, getLabel(_viewType));
+            }
+            else if (_viewMenu)
+            {
+                _menuBar->removeMenu(getLabel(_viewType));
+                _viewMenu.reset();
             }
         }
 

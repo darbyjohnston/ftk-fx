@@ -21,6 +21,7 @@ Setup steps a shot may use:
 * {"playing": true}                          start playback
 * {"panel": {"name": "Diagnostics", "open": true}}   open or close a panel
 * {"panelStyle": "Tabs"}                     stack the panels or tab them
+* {"pointSize": 12}                          how big the particles draw
 * {"click": [60, 80]}                        click there, with an optional
                                              "modifier" beside it
 * {"drag": [[776, 619], [500, 400]]}         press there, move, release

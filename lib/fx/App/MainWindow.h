@@ -75,7 +75,7 @@ namespace fx
             void keyPressEvent(ftk::KeyEvent&) override;
 
         private:
-            void _createViewMenu(const std::shared_ptr<ftk::Context>&);
+            void _createLayoutMenu(const std::shared_ptr<ftk::Context>&);
             void _createPanelsMenu(const std::shared_ptr<ftk::Context>&);
 
             std::weak_ptr<SceneModel> _model;

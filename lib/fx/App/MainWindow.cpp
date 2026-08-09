@@ -51,7 +51,7 @@ namespace fx
             setScreenshotTag(_timelineBar, "MainWindow.Timeline");
             setWidget(layout);
 
-            _createViewMenu(context);
+            _createLayoutMenu(context);
             _createPanelsMenu(context);
         }
 
@@ -101,11 +101,11 @@ namespace fx
             _mouseButton(MouseButton::Left, false, modifiers);
         }
 
-        void MainWindow::_createViewMenu(const std::shared_ptr<Context>& context)
+        void MainWindow::_createLayoutMenu(const std::shared_ptr<Context>& context)
         {
             // Added to the menu bar the base window already made, rather than
             // replacing it, so the File and Window menus it provides stay.
-            auto menu = getMenuBar()->addMenu("View");
+            auto menu = getMenuBar()->addMenu("Layout");
 
             std::weak_ptr<Panes> panesWeak(_panes);
             const std::vector<KeyShortcut> shortcuts =
