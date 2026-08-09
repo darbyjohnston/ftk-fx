@@ -292,6 +292,30 @@
           "caption": "The column is gone"
         }
       ]
+    },
+    {
+      "id": "click-pane-menu",
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "click": [
+            60,
+            80
+          ]
+        },
+        {
+          "click": [
+            128,
+            242
+          ]
+        }
+      ]
     }
   ]
 }

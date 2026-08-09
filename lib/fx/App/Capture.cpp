@@ -127,7 +127,15 @@ namespace fx
 
             std::shared_ptr<ftk::Timer> timer;
             int ticks = 0;
+            int settleTicksShot = settleTicks;
             int settleLeft = settleTicks;
+
+            // Steps that need the window laid out before they mean anything.
+            // A click is a position, and until the first layout there is
+            // nothing at any position.
+            std::vector<nlohmann::json> lateSteps;
+            size_t lateNext = 0;
+
             bool done = false;
             bool success = false;
         };
@@ -214,9 +222,10 @@ namespace fx
             const double settleSeconds = p.shot.value("settle", 0.0);
             if (settleSeconds > 0.0)
             {
-                p.settleLeft = std::max(
+                p.settleTicksShot = std::max(
                     settleTicks,
                     static_cast<int>(settleSeconds * 1000.0 / tickInterval.count()));
+                p.settleLeft = p.settleTicksShot;
             }
 
             // The same presentation every time. Capture runs should also pass
@@ -253,6 +262,11 @@ namespace fx
             {
                 for (const auto& step : p.shot.value("setup", nlohmann::json::array()))
                 {
+                    if (step.contains("click"))
+                    {
+                        p.lateSteps.push_back(step);
+                        continue;
+                    }
                     _applyStep(step);
                 }
             }
@@ -346,6 +360,26 @@ namespace fx
                         "unknown panel \"{0}\"").arg(name));
                 panels->setOpen(name, panel.value("open", true));
             }
+            if (step.contains("click"))
+            {
+                const auto& v = step.at("click");
+                if (!v.is_array() || v.size() < 2)
+                    throw std::runtime_error("click needs an x and a y");
+                int modifiers = 0;
+                if (step.contains("modifier"))
+                {
+                    ftk::KeyModifier modifier = ftk::KeyModifier::None;
+                    const std::string name =
+                        step.at("modifier").get<std::string>();
+                    if (!ftk::from_string(name, modifier))
+                        throw std::runtime_error(ftk::Format(
+                            "unknown modifier \"{0}\"").arg(name));
+                    modifiers = static_cast<int>(modifier);
+                }
+                app->getMainWindow()->click(
+                    ftk::V2I(v[0].get<int>(), v[1].get<int>()),
+                    modifiers);
+            }
             if (step.contains("panelStyle"))
             {
                 const std::string name = step.at("panelStyle").get<std::string>();
@@ -378,6 +412,26 @@ namespace fx
             }
             if (--p.settleLeft > 0)
                 return;
+
+            if (p.lateNext < p.lateSteps.size())
+            {
+                // One per settle rather than all at once, so each is drawn
+                // before the next runs: a click on what a previous click
+                // opened needs the popup to have reached the screen.
+                const nlohmann::json step = p.lateSteps[p.lateNext++];
+                try
+                {
+                    _applyStep(step);
+                }
+                catch (const std::exception& e)
+                {
+                    note(p.shotId, ftk::Format("setup: {0}").arg(e.what()));
+                    _finish(false);
+                    return;
+                }
+                p.settleLeft = p.settleTicksShot;
+                return;
+            }
 
             std::error_code ec;
             std::filesystem::create_directories(p.outputDir, ec);

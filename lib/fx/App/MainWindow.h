@@ -58,6 +58,14 @@ namespace fx
             //! Set where the panels column starts, as a fraction of the width.
             void setSplit(float);
 
+            //! Click at a position, the way a person would.
+            //!
+            //! For the screenshot harness. Everything else it can do drives the
+            //! models directly, which is how a crash in the interface -- a
+            //! callback that took apart the widget calling it -- passed every
+            //! shot while the application fell over on the first click.
+            void click(const ftk::V2I& pos, int modifiers = 0);
+
             void keyPressEvent(ftk::KeyEvent&) override;
 
         private:

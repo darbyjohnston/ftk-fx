@@ -7,6 +7,54 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — The harness can click, and two suggestions that did not survive
+
+### Clicking
+
+`IWindow::_cursorEnter`, `_cursorPos` and `_mouseButton` are protected, so a
+window can offer a `click()` that goes through the same path a person's mouse
+does. DJV has had one for its documentation shots all along. Ported.
+
+Clicks wait until the window has been laid out and then run one per settle,
+because a click is a position and until the first layout there is nothing at any
+position -- and because a click on what a previous click opened needs the popup
+to have reached the screen first.
+
+The `click-pane-menu` shot opens a pane's menu and picks Spreadsheet from it,
+which is the path that crashed. Putting the crash back makes the shot fail and
+taking it out makes it pass, which is the difference between a screenshot and a
+regression test. The coordinates come from the boxes in a sidecar.
+
+This narrows what the previous entry said about the harness. It drives the model
+by default, and that is still where most of its steps live, but the interface is
+now reachable when a shot needs it.
+
+### Two suggestions withdrawn
+
+Six improvements to feather-tk came out of building this. Three landed. Checking
+the other two before writing them killed both, which is the entry.
+
+**Font roles.** The complaint was that `Label::setFontSize()` takes raw pixels
+while colours and sizes go through roles that scale. It does not: `Style::getFont(font, size, scale)`
+multiplies by the display scale, and `Label` passes `event.displayScale` in. The
+premise was simply wrong. What is left -- no *named* size for a heading, so each
+application picks its own -- is real and tiny, and nobody has asked to theme
+one. Not written.
+
+**A shared header strip.** The claim was three implementations. There are two:
+DJV's `IToolWidget` and this application's `IPanel`, which was written by
+copying it. The third was `FilesTool` using `ColorRole::Header` as a row
+background, which is not the same widget at all. Two is under §2a's bar, the two
+already differ in how they close, and there is no way to check a shared version
+against DJV from here. Not written.
+
+Two of six claims did not survive being checked, and a third -- that
+`IMouseWidget` cannot take any button -- was already wrong. The ones that did
+survive were the ones with a bug or a line count behind them rather than a
+recollection.
+
+---
+
 ## 2026-08-08 — Three changes to feather-tk, on a widget-api branch
 
 Building this application turned up things the toolkit could do rather than

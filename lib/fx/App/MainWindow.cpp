@@ -84,6 +84,14 @@ namespace fx
             _splitter->setSplit(value);
         }
 
+        void MainWindow::click(const V2I& pos, int modifiers)
+        {
+            _cursorEnter(true);
+            _cursorPos(pos);
+            _mouseButton(MouseButton::Left, true, modifiers);
+            _mouseButton(MouseButton::Left, false, modifiers);
+        }
+
         void MainWindow::_createViewMenu(const std::shared_ptr<Context>& context)
         {
             // Added to the menu bar the base window already made, rather than
