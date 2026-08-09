@@ -92,6 +92,15 @@ namespace fx
             _mouseButton(MouseButton::Left, false, modifiers);
         }
 
+        void MainWindow::drag(const V2I& from, const V2I& to, int modifiers)
+        {
+            _cursorEnter(true);
+            _cursorPos(from);
+            _mouseButton(MouseButton::Left, true, modifiers);
+            _cursorPos(to);
+            _mouseButton(MouseButton::Left, false, modifiers);
+        }
+
         void MainWindow::_createViewMenu(const std::shared_ptr<Context>& context)
         {
             // Added to the menu bar the base window already made, rather than

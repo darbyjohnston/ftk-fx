@@ -316,6 +316,39 @@
           ]
         }
       ]
+    },
+    {
+      "id": "panes-four-dragged",
+      "window": {
+        "w": 1000,
+        "h": 640
+      },
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "layout": 4
+        },
+        {
+          "drag": [
+            [
+              776,
+              619
+            ],
+            [
+              500,
+              400
+            ]
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "Both divisions moved at once"
+        }
+      ]
     }
   ]
 }

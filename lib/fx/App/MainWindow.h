@@ -66,6 +66,12 @@ namespace fx
             //! shot while the application fell over on the first click.
             void click(const ftk::V2I& pos, int modifiers = 0);
 
+            //! Drag from one position to another, the way a person would.
+            void drag(
+                const ftk::V2I& from,
+                const ftk::V2I& to,
+                int modifiers = 0);
+
             void keyPressEvent(ftk::KeyEvent&) override;
 
         private:

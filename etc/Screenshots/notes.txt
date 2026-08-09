@@ -23,6 +23,7 @@ Setup steps a shot may use:
 * {"panelStyle": "Tabs"}                     stack the panels or tab them
 * {"click": [60, 80]}                        click there, with an optional
                                              "modifier" beside it
+* {"drag": [[776, 619], [500, 400]]}         press there, move, release
 
 Clicks go through the window the way a person's do, so they reach the parts a
 setup step cannot: the click-pane-menu shot opens a pane's menu and picks an

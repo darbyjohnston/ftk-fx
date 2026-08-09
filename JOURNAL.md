@@ -7,6 +7,43 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — A splitter that divides both ways
+
+The four-up was two splitters ganged together with a callback keeping the rows
+in step. It worked, and it was still two splitters: the place where the
+divisions cross belonged to neither of them, so there was nothing there to grab.
+`ftk::Splitter2D` has one division each way and one crossing, and dragging the
+crossing moves both.
+
+The hit test asks about the crossing first, because it is part of both
+divisions; the upright one moves the split across, the flat one moves it down.
+
+### Dragging, in the harness
+
+Verifying this needed the harness to drag, not just click, so `MainWindow` grew
+a `drag()` beside its `click()` and the manifest a `drag` step. Both are three
+lines on top of the protected window hooks.
+
+What that buys is an assertion rather than a look. Four shots at the same
+window size, reading the pane boxes out of the sidecars:
+
+| | pane 0 |
+|---|---|
+| untouched | 768 x 560 |
+| drag the crossing | 492 x 340 |
+| drag the upright division | 492 x 560 |
+| drag the flat division | 768 x 340 |
+
+Both dimensions change for the crossing, one each for the single divisions.
+That is the whole feature, stated in numbers, and `panes-four-dragged` keeps it
+that way.
+
+This is the second time the answer to "how do I test this" was that ftk already
+allowed it and the harness had not caught up. Worth remembering that the
+harness's limits have mostly been mine rather than the toolkit's.
+
+---
+
 ## 2026-08-09 — The rest of the feather-tk list
 
 Four more, all of them things another application would hit.

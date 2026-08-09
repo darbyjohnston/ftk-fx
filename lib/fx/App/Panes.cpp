@@ -8,6 +8,7 @@
 
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/Splitter.h>
+#include <ftk/UI/Splitter2D.h>
 
 #include <ftk/Core/Format.h>
 #include <ftk/Core/Math.h>
@@ -152,33 +153,12 @@ namespace fx
             }
             case PaneLayout::Four:
             {
-                // Two rows, each split in two, with the two divisions tied
-                // together so the four panes stay a grid rather than drifting
-                // into a ragged pair of rows.
-                auto top = Splitter::create(context, Orientation::Horizontal);
-                top->setWidgets({ _panes[0], _panes[1] });
-                auto bottom = Splitter::create(context, Orientation::Horizontal);
-                bottom->setWidgets({ _panes[2], _panes[3] });
-                std::weak_ptr<Splitter> topWeak(top);
-                std::weak_ptr<Splitter> bottomWeak(bottom);
-                top->setSplitCallback(
-                    [bottomWeak](float value)
-                    {
-                        if (auto bottom = bottomWeak.lock())
-                        {
-                            bottom->setSplit(value);
-                        }
-                    });
-                bottom->setSplitCallback(
-                    [topWeak](float value)
-                    {
-                        if (auto top = topWeak.lock())
-                        {
-                            top->setSplit(value);
-                        }
-                    });
-                auto splitter = Splitter::create(context, Orientation::Vertical);
-                splitter->setWidgets({ top, bottom });
+                // One splitter that divides both ways, rather than two ganged
+                // together: the crossing in the middle belongs to it, so
+                // dragging there moves both divisions at once.
+                auto splitter = Splitter2D::create(context);
+                splitter->setWidgets(
+                    { _panes[0], _panes[1], _panes[2], _panes[3] });
                 _root = splitter;
                 break;
             }

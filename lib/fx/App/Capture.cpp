@@ -262,7 +262,7 @@ namespace fx
             {
                 for (const auto& step : p.shot.value("setup", nlohmann::json::array()))
                 {
-                    if (step.contains("click"))
+                    if (step.contains("click") || step.contains("drag"))
                     {
                         p.lateSteps.push_back(step);
                         continue;
@@ -379,6 +379,16 @@ namespace fx
                 app->getMainWindow()->click(
                     ftk::V2I(v[0].get<int>(), v[1].get<int>()),
                     modifiers);
+            }
+            if (step.contains("drag"))
+            {
+                const auto& v = step.at("drag");
+                if (!v.is_array() || v.size() != 2 ||
+                    !v[0].is_array() || !v[1].is_array())
+                    throw std::runtime_error("drag needs a from and a to");
+                app->getMainWindow()->drag(
+                    ftk::V2I(v[0][0].get<int>(), v[0][1].get<int>()),
+                    ftk::V2I(v[1][0].get<int>(), v[1][1].get<int>()));
             }
             if (step.contains("panelStyle"))
             {
