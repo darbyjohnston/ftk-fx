@@ -477,13 +477,13 @@ namespace fx
 
             // Middle drag pans, and so does the left button with the alt key,
             // for the sake of anyone on a trackpad with no middle button.
-            const bool alt = _mouseModifiers & static_cast<int>(KeyModifier::Alt);
-            if (MouseButton::Middle == _mouseButton ||
-                (MouseButton::Left == _mouseButton && alt))
+            const bool alt = event.modifiers & static_cast<int>(KeyModifier::Alt);
+            if (MouseButton::Middle == event.button ||
+                (MouseButton::Left == event.button && alt))
             {
                 _pan(d);
             }
-            else if (MouseButton::Left == _mouseButton &&
+            else if (MouseButton::Left == event.button &&
                 !isOrtho(_viewType))
             {
                 // Orbiting an axis view would turn it into something that is
@@ -496,19 +496,10 @@ namespace fx
         {
             event.accept = true;
             takeKeyFocus();
-            _mouseButton = event.button;
-            _mouseModifiers = event.modifiers;
             if (_pressCallback)
             {
                 _pressCallback();
             }
-        }
-
-        void Viewport::mouseReleaseEvent(MouseClickEvent& event)
-        {
-            event.accept = true;
-            _mouseButton = MouseButton::None;
-            _mouseModifiers = 0;
         }
 
         void Viewport::scrollEvent(ScrollEvent& event)

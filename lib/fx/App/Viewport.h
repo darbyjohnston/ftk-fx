@@ -78,7 +78,6 @@ namespace fx
             void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void mouseMoveEvent(ftk::MouseMoveEvent&) override;
             void mousePressEvent(ftk::MouseClickEvent&) override;
-            void mouseReleaseEvent(ftk::MouseClickEvent&) override;
             void scrollEvent(ftk::ScrollEvent&) override;
 
         private:
@@ -118,8 +117,6 @@ namespace fx
             float _orthoHeight = 30.F;
 
             float _fov = 45.F;
-            ftk::MouseButton _mouseButton = ftk::MouseButton::None;
-            int _mouseModifiers = 0;
 
 
             bool _doRender = true;
