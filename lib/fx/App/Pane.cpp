@@ -68,6 +68,11 @@ namespace fx
             }
 
             _contentUpdate();
+            // Built here rather than left to the tick: this is not inside a
+            // menu callback, and the header should have its menus before it is
+            // first laid out.
+            _menuDirty = false;
+            _menuUpdate();
         }
 
         Pane::~Pane()
@@ -107,7 +112,7 @@ namespace fx
             if (value == _viewType)
                 return;
             _viewType = value;
-            _menuUpdate();
+            _menuDirty = true;
             if (_viewport)
             {
                 _viewport->setViewType(value);
@@ -164,7 +169,20 @@ namespace fx
                 // its layout at a time and the rest cost nothing to lay out.
                 i.second->setParent(i.second == content ? _layout : nullptr);
             }
-            _menuUpdate();
+            _menuDirty = true;
+        }
+
+        void Pane::tickEvent(
+            bool parentsVisible,
+            bool parentsEnabled,
+            const TickEvent& event)
+        {
+            IWidget::tickEvent(parentsVisible, parentsEnabled, event);
+            if (_menuDirty)
+            {
+                _menuDirty = false;
+                _menuUpdate();
+            }
         }
 
         void Pane::_menuUpdate()

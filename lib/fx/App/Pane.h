@@ -91,6 +91,7 @@ namespace fx
             void setGeometry(const ftk::Box2I&) override;
             void sizeHintEvent(const ftk::SizeHintEvent&) override;
             void drawOverlayEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
+            void tickEvent(bool, bool, const ftk::TickEvent&) override;
             void mousePressEvent(ftk::MouseClickEvent&) override;
 
         private:
@@ -103,6 +104,8 @@ namespace fx
             //! rather than hidden: ftk::MenuBar adds and clears menus but does
             //! not take one away, and a View menu left on a spreadsheet would
             //! be a menu that does nothing.
+            //!
+            //! Never called from an action's callback -- see _menuDirty.
             void _menuUpdate();
 
             std::weak_ptr<SceneModel> _model;
@@ -115,6 +118,15 @@ namespace fx
             std::function<void(void)> _pressCallback;
             int _border = 0;
             float _pointSize = 3.F;
+
+            //! Set when the menus need rebuilding, acted on at the next tick.
+            //!
+            //! The rebuild destroys the menu, and what asks for it is usually
+            //! an action inside that menu: ftk::Menu calls the action's
+            //! callback and then closes itself, so freeing it in the callback
+            //! leaves it reading its own freed members. Waiting a tick puts the
+            //! rebuild after the click has finished with it.
+            bool _menuDirty = true;
 
             std::shared_ptr<ftk::MenuBar> _menuBar;
             std::map<PaneType, std::shared_ptr<ftk::Action> > _paneTypeActions;

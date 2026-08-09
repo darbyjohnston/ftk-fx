@@ -100,17 +100,31 @@ namespace fx
 
             ftk::Size2I getSizeHint() const override;
             void setGeometry(const ftk::Box2I&) override;
+            void tickEvent(bool, bool, const ftk::TickEvent&) override;
 
         private:
             void _add(const std::shared_ptr<IPanel>&);
 
             //! Put the open panels into whichever container the style calls
             //! for, and take the column away when there are none.
+            //!
+            //! Never called from a callback belonging to something it takes
+            //! apart -- see _panelsDirty.
             void _panelsUpdate();
 
             //! Get a panel's scroll area for tabs, making it the first time.
             const std::shared_ptr<ftk::ScrollWidget>& _getScroll(
                 const std::string&);
+
+            //! Set when the containers need rebuilding, acted on at the next
+            //! tick.
+            //!
+            //! Rebuilding destroys the tab bar's buttons, and closing a tab is
+            //! one of the things that asks for it. ftk::IButton reads its own
+            //! members after calling the clicked callback, so freeing the
+            //! button from inside that callback leaves it reading freed memory.
+            //! Waiting a tick puts the rebuild after the click is done.
+            bool _panelsDirty = false;
 
             std::vector<std::string> _names;
             std::map<std::string, std::shared_ptr<IPanel> > _panels;

@@ -7,6 +7,57 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-08 — Never take apart the thing that is calling you
+
+Switching a pane to the spreadsheet crashed. The pane menu's action rebuilt the
+pane's menu bar, which destroyed the `ftk::Menu` that was in the middle of
+dispatching the click:
+
+```
+Menu::addAction(...)::$_2::operator()   // the menu's own button callback
+  action->doCheckedCallback(value)      // ours: setPaneType, rebuilds the bar,
+                                        // frees this Menu
+Menu::_accept(this=...)                 // reads p.parentMenu on freed memory
+```
+
+`ftk::Menu` calls the action's callback and *then* closes itself. `IButton` is
+the same shape: `click()` reads its own `checkable` after the clicked callback
+has returned. So the rule is not about menus:
+
+**A callback must not destroy the widget that is calling it.** Anything that
+takes widgets apart -- rebuilding a menu bar, clearing a tab bar, swapping a
+container -- has to wait until the event that asked for it has finished.
+
+The fix is a dirty flag acted on in `tickEvent`. `Pane::_menuDirty` and
+`Panels::_panelsDirty`, both set by the things that used to rebuild directly,
+both cleared on the next tick. `_tickRecursive` ticks every widget whether it is
+visible or not, so a panel column that has hidden itself still gets the tick
+that brings it back -- which was the thing to check before relying on this.
+
+The same hazard was already latent in the tab bar: closing a tab called
+`setOpen`, which called `_tabWidget->clear()`, which destroyed the close button
+that was mid-click. It had not been clicked yet.
+
+Both rebuilds still run directly from a constructor, which is not a callback and
+is the one place it is safe. The header would otherwise be laid out once with no
+menus in it.
+
+### What this says about the harness
+
+The capture harness drives the model: it calls `setPaneType` the same way the
+menu does, and it never crashed, because the crash needed a real `Menu` to be
+mid-dispatch. Every screenshot was green while the application would fall over
+on the first click.
+
+That is worth knowing about what the harness is for. It checks what the
+application *shows*, given a state it was put into directly. It says nothing
+about what happens when a person puts it into that state, and it never will
+without input injection. The last three bugs -- the phantom splitters, the
+border under the content, and this -- were all found by looking at the running
+application or by clicking in it.
+
+---
+
 ## 2026-08-08 — A menu bar per pane, and two bugs it made visible
 
 Three changes, and the two bugs they surfaced are worth more than the changes.

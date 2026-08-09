@@ -148,7 +148,7 @@ namespace fx
                 }
             }
             _open->setIfChanged(open);
-            _panelsUpdate();
+            _panelsDirty = true;
         }
 
         PanelStyle Panels::getStyle() const
@@ -165,7 +165,7 @@ namespace fx
         {
             if (!_style->setIfChanged(value))
                 return;
-            _panelsUpdate();
+            _panelsDirty = true;
         }
 
         const std::shared_ptr<ScrollWidget>& Panels::_getScroll(
@@ -226,6 +226,19 @@ namespace fx
             // of the way and the splitter hands the whole width to the panes.
             // The Panels menu is how it comes back.
             setVisible(!_open->get().empty());
+        }
+
+        void Panels::tickEvent(
+            bool parentsVisible,
+            bool parentsEnabled,
+            const TickEvent& event)
+        {
+            IWidget::tickEvent(parentsVisible, parentsEnabled, event);
+            if (_panelsDirty)
+            {
+                _panelsDirty = false;
+                _panelsUpdate();
+            }
         }
 
         Size2I Panels::getSizeHint() const
