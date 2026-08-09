@@ -5,8 +5,6 @@
 
 #include <fx/App/SceneModel.h>
 
-#include <ftk/UI/ComboBox.h>
-#include <ftk/UI/DrawUtil.h>
 
 #include <ftk/GL/GL.h>
 
@@ -126,18 +124,6 @@ namespace fx
             _viewType = viewType;
             _orbit = getViewOrbit(viewType);
 
-            _viewTypeComboBox = ComboBox::create(
-                context,
-                getViewTypeLabels(),
-                shared_from_this());
-            _viewTypeComboBox->setCurrentIndex(static_cast<int>(viewType));
-            _viewTypeComboBox->setTooltip("The view this viewport looks through");
-            _viewTypeComboBox->setIndexCallback(
-                [this](int value)
-                {
-                    setViewType(static_cast<ViewType>(value));
-                });
-
             _frameObserver = Observer<std::shared_ptr<const core::Frame> >::create(
                 model->observeFrame(),
                 [this](const std::shared_ptr<const core::Frame>& value)
@@ -173,7 +159,6 @@ namespace fx
             if (value == _viewType)
                 return;
             _viewType = value;
-            _viewTypeComboBox->setCurrentIndex(static_cast<int>(value));
 
             // Snap to the new view's orientation, but keep where the camera is
             // pointed and how far out it is. Switching from perspective to top
@@ -215,14 +200,6 @@ namespace fx
                 return;
             _pointSize = value;
             _doRender = true;
-            setDrawUpdate();
-        }
-
-        void Viewport::setCurrent(bool value)
-        {
-            if (value == _current)
-                return;
-            _current = value;
             setDrawUpdate();
         }
 
@@ -306,7 +283,7 @@ namespace fx
 
         M44F Viewport::_getView() const
         {
-            // Orthographic views sit at the centre and let the clip planes do
+            // Orthographic panes sit at the centre and let the clip planes do
             // the work, so there is no distance to pull back by.
             const float distance = isOrtho(_viewType) ? 0.F : _distance;
             return
@@ -316,29 +293,11 @@ namespace fx
                 translate(-_center);
         }
 
-        void Viewport::sizeHintEvent(const SizeHintEvent& event)
-        {
-            IWidget::sizeHintEvent(event);
-            _margin = event.style->getSizeRole(
-                SizeRole::MarginSmall,
-                event.displayScale);
-            _border = event.style->getSizeRole(
-                SizeRole::Border,
-                event.displayScale);
-        }
-
         void Viewport::setGeometry(const Box2I& value)
         {
             const bool changed = value != getGeometry();
             IWidget::setGeometry(value);
             _doRender |= changed;
-
-            const Size2I hint = _viewTypeComboBox->getSizeHint();
-            _viewTypeComboBox->setGeometry(Box2I(
-                value.min.x + _margin,
-                value.min.y + _margin,
-                hint.w,
-                hint.h));
         }
 
         void Viewport::_gridUpdate()
@@ -509,16 +468,6 @@ namespace fx
             {
                 event.render->drawTexture(_buffer->getColorID(), g, true);
             }
-
-            // Mark the viewport the menu actions and the keyboard apply to.
-            // With four of them on screen this is the difference between an
-            // arrangement and a guess.
-            if (_current)
-            {
-                event.render->drawMesh(
-                    border(g, _border),
-                    event.style->getColorRole(ColorRole::KeyFocus));
-            }
         }
 
         void Viewport::mouseMoveEvent(MouseMoveEvent& event)
@@ -538,7 +487,7 @@ namespace fx
                 !isOrtho(_viewType))
             {
                 // Orbiting an axis view would turn it into something that is
-                // no longer the front, so the axis views do not orbit at all.
+                // no longer the front, so the axis panes do not orbit at all.
                 _setOrbit(_orbit + V2F(d.x * .25F, d.y * .25F));
             }
         }

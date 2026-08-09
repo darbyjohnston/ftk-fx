@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright Contributors to the ftk-fx project.
 
-#include <fx/App/Views.h>
+#include <fx/App/Panes.h>
 
 #include <fx/App/SceneModel.h>
-#include <fx/App/Viewport.h>
+#include <fx/App/Pane.h>
 
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/Splitter.h>
@@ -18,109 +18,109 @@ namespace fx
 {
     namespace app
     {
-        void Views::_init(
+        void Panes::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
             const std::shared_ptr<IWidget>& parent)
         {
-            IWidget::_init(context, "fx::app::Views", parent);
+            IWidget::_init(context, "fx::app::Panes", parent);
             setHStretch(Stretch::Expanding);
             setVStretch(Stretch::Expanding);
 
-            _layout = Observable<ViewLayout>::create(ViewLayout::Single);
+            _layout = Observable<PaneLayout>::create(PaneLayout::Single);
 
-            for (int i = 0; i < viewCountMax; ++i)
+            for (int i = 0; i < paneCountMax; ++i)
             {
-                _viewports[i] = Viewport::create(
+                _panes[i] = Pane::create(
                     context,
                     model,
                     getDefaultViewType(i));
                 setScreenshotTag(
-                    _viewports[i],
-                    Format("MainWindow.Viewport{0}").arg(i));
-                _viewports[i]->setPressCallback(
+                    _panes[i],
+                    Format("MainWindow.Pane{0}").arg(i));
+                _panes[i]->setPressCallback(
                     [this, i] { setCurrentIndex(i); });
             }
-            _viewports[0]->setCurrent(true);
+            _panes[0]->setCurrent(true);
 
             _layoutUpdate();
         }
 
-        Views::~Views()
+        Panes::~Panes()
         {}
 
-        std::shared_ptr<Views> Views::create(
+        std::shared_ptr<Panes> Panes::create(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
             const std::shared_ptr<IWidget>& parent)
         {
-            auto out = std::shared_ptr<Views>(new Views);
+            auto out = std::shared_ptr<Panes>(new Panes);
             out->_init(context, model, parent);
             return out;
         }
 
-        ViewLayout Views::getLayout() const
+        PaneLayout Panes::getLayout() const
         {
             return _layout->get();
         }
 
-        std::shared_ptr<IObservable<ViewLayout> > Views::observeLayout() const
+        std::shared_ptr<IObservable<PaneLayout> > Panes::observeLayout() const
         {
             return _layout;
         }
 
-        void Views::setLayout(ViewLayout value)
+        void Panes::setLayout(PaneLayout value)
         {
             if (!_layout->setIfChanged(value))
                 return;
             _layoutUpdate();
             // The current viewport may have just been hidden, and actions
             // aimed at a viewport nobody can see would be a mystery.
-            setCurrentIndex(std::min(_currentIndex, getViewCount(value) - 1));
+            setCurrentIndex(std::min(_currentIndex, getPaneCount(value) - 1));
         }
 
-        const std::shared_ptr<Viewport>& Views::getCurrent() const
+        const std::shared_ptr<Pane>& Panes::getCurrent() const
         {
-            return _viewports[_currentIndex];
+            return _panes[_currentIndex];
         }
 
-        const std::shared_ptr<Viewport>& Views::getViewport(int index) const
+        const std::shared_ptr<Pane>& Panes::getPane(int index) const
         {
-            return _viewports[clamp(index, 0, viewCountMax - 1)];
+            return _panes[clamp(index, 0, paneCountMax - 1)];
         }
 
-        int Views::getCurrentIndex() const
+        int Panes::getCurrentIndex() const
         {
             return _currentIndex;
         }
 
-        void Views::setCurrentIndex(int value)
+        void Panes::setCurrentIndex(int value)
         {
             const int index = clamp(
                 value,
                 0,
-                getViewCount(_layout->get()) - 1);
+                getPaneCount(_layout->get()) - 1);
             if (index == _currentIndex)
                 return;
-            _viewports[_currentIndex]->setCurrent(false);
+            _panes[_currentIndex]->setCurrent(false);
             _currentIndex = index;
-            _viewports[_currentIndex]->setCurrent(true);
+            _panes[_currentIndex]->setCurrent(true);
         }
 
-        void Views::setPointSize(float value)
+        void Panes::setPointSize(float value)
         {
-            for (const auto& viewport : _viewports)
+            for (const auto& pane : _panes)
             {
-                viewport->setPointSize(value);
+                pane->setPointSize(value);
             }
         }
 
-        Size2I Views::getSizeHint() const
+        Size2I Panes::getSizeHint() const
         {
             return _root ? _root->getSizeHint() : Size2I();
         }
 
-        void Views::setGeometry(const Box2I& value)
+        void Panes::setGeometry(const Box2I& value)
         {
             IWidget::setGeometry(value);
             if (_root)
@@ -129,41 +129,41 @@ namespace fx
             }
         }
 
-        void Views::_layoutUpdate()
+        void Panes::_layoutUpdate()
         {
             auto context = getContext();
             if (!context)
                 return;
 
-            // Detach the viewports before dropping the splitters, or the
-            // splitters take them down with them.
-            for (const auto& viewport : _viewports)
+            // Detach the panes before dropping the splitters, or the splitters
+            // take them down with them.
+            for (const auto& pane : _panes)
             {
-                viewport->setParent(nullptr);
+                pane->setParent(nullptr);
             }
             _root.reset();
 
             switch (_layout->get())
             {
-            case ViewLayout::Two:
+            case PaneLayout::Two:
             {
                 auto splitter = Splitter::create(context, Orientation::Horizontal);
-                _viewports[0]->setParent(splitter);
-                _viewports[1]->setParent(splitter);
+                _panes[0]->setParent(splitter);
+                _panes[1]->setParent(splitter);
                 _root = splitter;
                 break;
             }
-            case ViewLayout::Three:
+            case PaneLayout::Three:
             {
                 auto splitter = Splitter::create(context, Orientation::Horizontal);
-                _viewports[0]->setParent(splitter);
+                _panes[0]->setParent(splitter);
                 auto right = Splitter::create(context, Orientation::Vertical, splitter);
-                _viewports[1]->setParent(right);
-                _viewports[2]->setParent(right);
+                _panes[1]->setParent(right);
+                _panes[2]->setParent(right);
                 _root = splitter;
                 break;
             }
-            case ViewLayout::Four:
+            case PaneLayout::Four:
             {
                 // Two rows, each split in two. The rows divide independently,
                 // which is not what a linked four-up does; it needs the
@@ -171,16 +171,16 @@ namespace fx
                 // machinery until someone is bothered by it.
                 auto splitter = Splitter::create(context, Orientation::Vertical);
                 auto top = Splitter::create(context, Orientation::Horizontal, splitter);
-                _viewports[0]->setParent(top);
-                _viewports[1]->setParent(top);
+                _panes[0]->setParent(top);
+                _panes[1]->setParent(top);
                 auto bottom = Splitter::create(context, Orientation::Horizontal, splitter);
-                _viewports[2]->setParent(bottom);
-                _viewports[3]->setParent(bottom);
+                _panes[2]->setParent(bottom);
+                _panes[3]->setParent(bottom);
                 _root = splitter;
                 break;
             }
             default:
-                _root = _viewports[0];
+                _root = _panes[0];
                 break;
             }
 

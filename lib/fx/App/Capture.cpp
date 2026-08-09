@@ -7,8 +7,8 @@
 #include <fx/App/MainWindow.h>
 #include <fx/App/Panels.h>
 #include <fx/App/SceneModel.h>
-#include <fx/App/Viewport.h>
-#include <fx/App/Views.h>
+#include <fx/App/Pane.h>
+#include <fx/App/Panes.h>
 
 #include <ftk/UI/ComboBox.h>
 #include <ftk/UI/IButton.h>
@@ -287,7 +287,7 @@ namespace fx
             if (!app)
                 return;
             auto model = app->getSceneModel();
-            auto views = app->getMainWindow()->getViews();
+            auto panes = app->getMainWindow()->getPanes();
 
             if (step.contains("frame"))
             {
@@ -296,27 +296,40 @@ namespace fx
             if (step.contains("layout"))
             {
                 const int count = step.at("layout").get<int>();
-                if (count < 1 || count > viewCountMax)
+                if (count < 1 || count > paneCountMax)
                     throw std::runtime_error(ftk::Format(
-                        "layout must be 1 to {0}").arg(viewCountMax));
-                views->setLayout(static_cast<ViewLayout>(count - 1));
+                        "layout must be 1 to {0}").arg(paneCountMax));
+                panes->setLayout(static_cast<PaneLayout>(count - 1));
             }
             if (step.contains("view"))
             {
                 const auto& view = step.at("view");
                 const int index = view.at("index").get<int>();
-                if (index < 0 || index >= viewCountMax)
+                if (index < 0 || index >= paneCountMax)
                     throw std::runtime_error("view index out of range");
                 ViewType type = ViewType::First;
                 const std::string name = view.at("type").get<std::string>();
                 if (!fromString(name, type))
                     throw std::runtime_error(ftk::Format(
                         "unknown view type \"{0}\"").arg(name));
-                views->getViewport(index)->setViewType(type);
+                panes->getPane(index)->setViewType(type);
+            }
+            if (step.contains("pane"))
+            {
+                const auto& pane = step.at("pane");
+                const int index = pane.at("index").get<int>();
+                if (index < 0 || index >= paneCountMax)
+                    throw std::runtime_error("pane index out of range");
+                PaneType type = PaneType::First;
+                const std::string name = pane.at("type").get<std::string>();
+                if (!fromString(name, type))
+                    throw std::runtime_error(ftk::Format(
+                        "unknown pane type \"{0}\"").arg(name));
+                panes->getPane(index)->setPaneType(type);
             }
             if (step.contains("current"))
             {
-                views->setCurrentIndex(step.at("current").get<int>());
+                panes->setCurrentIndex(step.at("current").get<int>());
             }
             if (step.contains("lock"))
             {

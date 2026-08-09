@@ -13,9 +13,10 @@ A single shot, which is the useful form while working on one:
 
 Setup steps a shot may use:
 * {"frame": 70}                              go to a frame
-* {"layout": 4}                              arrange that many viewports
-* {"view": {"index": 1, "type": "Top"}}      set a viewport's view
-* {"current": 1}                             make a viewport the current one
+* {"layout": 4}                              arrange that many panes
+* {"pane": {"index": 1, "type": "Curves"}}   set what a pane shows
+* {"view": {"index": 1, "type": "Top"}}      set a viewport pane's view
+* {"current": 1}                             make a pane the current one
 * {"lock": true}                             lock the frame at the playhead
 * {"playing": true}                          start playback
 * {"panel": {"name": "Diagnostics", "open": true}}   open or close a panel
@@ -24,8 +25,10 @@ A shot may also set "settle" in seconds to wait longer before capturing, and
 "splitter" in its window block to move the panel column, which is how a shot of
 a wide panel gets room for it.
 
-The view type names are the labels in the viewport's own menu: Persp, Front,
-Side, Top. An unknown one fails the shot rather than capturing the wrong view.
+The type names are the labels in the pane's own menus: View, Curves,
+Spreadsheet, Expression, Compositor for the content, and Persp, Front, Side, Top
+for a viewport's view. An unknown one fails the shot rather than quietly
+capturing the wrong thing.
 
 DJV turns its sidecars into annotated SVGs for the documentation with a
 make_svg.py step. There are no documentation pages here yet, so that step does

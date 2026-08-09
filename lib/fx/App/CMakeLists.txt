@@ -5,13 +5,15 @@ set(HEADERS
     DiagPanel.h
     IPanel.h
     MainWindow.h
+    Pane.h
+    PaneOptions.h
+    PanePlaceholder.h
     Panels.h
+    Panes.h
     ParametersPanel.h
     SceneModel.h
     TimelineBar.h
-    ViewOptions.h
-    Viewport.h
-    Views.h)
+    Viewport.h)
 
 set(SOURCE
     App.cpp
@@ -20,13 +22,15 @@ set(SOURCE
     DiagPanel.cpp
     IPanel.cpp
     MainWindow.cpp
+    Pane.cpp
+    PaneOptions.cpp
+    PanePlaceholder.cpp
     Panels.cpp
+    Panes.cpp
     ParametersPanel.cpp
     SceneModel.cpp
     TimelineBar.cpp
-    ViewOptions.cpp
-    Viewport.cpp
-    Views.cpp)
+    Viewport.cpp)
 
 add_library(fxApp ${HEADERS} ${SOURCE})
 

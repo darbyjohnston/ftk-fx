@@ -4,7 +4,7 @@
 #include <fx/App/ParametersPanel.h>
 
 #include <fx/App/SceneModel.h>
-#include <fx/App/Views.h>
+#include <fx/App/Panes.h>
 
 #include <ftk/UI/Bellows.h>
 #include <ftk/UI/FloatEditSlider.h>
@@ -47,7 +47,7 @@ namespace fx
         void ParametersPanel::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Views>& views,
+            const std::shared_ptr<Panes>& panes,
             const std::shared_ptr<IWidget>& parent)
         {
             IPanel::_init(
@@ -123,13 +123,13 @@ namespace fx
             auto pointSizeSlider = FloatEditSlider::create(context);
             pointSizeSlider->setRange(1.F, 16.F);
             pointSizeSlider->setValue(3.F);
-            std::weak_ptr<Views> viewsWeak(views);
+            std::weak_ptr<Panes> panesWeak(panes);
             pointSizeSlider->setCallback(
-                [viewsWeak](float value)
+                [panesWeak](float value)
                 {
-                    if (auto views = viewsWeak.lock())
+                    if (auto panes = panesWeak.lock())
                     {
-                        views->setPointSize(value);
+                        panes->setPointSize(value);
                     }
                 });
             displayLayout->addRow("Point size:", pointSizeSlider);
@@ -146,11 +146,11 @@ namespace fx
         std::shared_ptr<ParametersPanel> ParametersPanel::create(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Views>& views,
+            const std::shared_ptr<Panes>& panes,
             const std::shared_ptr<IWidget>& parent)
         {
             auto out = std::shared_ptr<ParametersPanel>(new ParametersPanel);
-            out->_init(context, model, views, parent);
+            out->_init(context, model, panes, parent);
             return out;
         }
     }

@@ -13,7 +13,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Viewport0",
+          "id": "MainWindow.Pane0",
           "caption": "Viewport"
         },
         {
@@ -31,7 +31,7 @@
       ]
     },
     {
-      "id": "views-single",
+      "id": "panes-single",
       "window": {
         "w": 1000,
         "h": 640
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "id": "views-two",
+      "id": "panes-two",
       "window": {
         "w": 1000,
         "h": 640
@@ -61,7 +61,7 @@
       ]
     },
     {
-      "id": "views-three",
+      "id": "panes-three",
       "window": {
         "w": 1000,
         "h": 640
@@ -76,7 +76,7 @@
       ]
     },
     {
-      "id": "views-four",
+      "id": "panes-four",
       "window": {
         "w": 1000,
         "h": 640
@@ -91,25 +91,25 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Viewport0",
+          "id": "MainWindow.Pane0",
           "caption": "Perspective"
         },
         {
-          "id": "MainWindow.Viewport1",
+          "id": "MainWindow.Pane1",
           "caption": "Top"
         },
         {
-          "id": "MainWindow.Viewport2",
+          "id": "MainWindow.Pane2",
           "caption": "Front"
         },
         {
-          "id": "MainWindow.Viewport3",
+          "id": "MainWindow.Pane3",
           "caption": "Side"
         }
       ]
     },
     {
-      "id": "views-ortho",
+      "id": "panes-ortho",
       "window": {
         "w": 1000,
         "h": 640
@@ -194,6 +194,49 @@
         {
           "id": "MainWindow.Panel.Diagnostics",
           "caption": "Diagnostics"
+        }
+      ]
+    },
+    {
+      "id": "panes-mixed",
+      "window": {
+        "w": 1200,
+        "h": 800
+      },
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "layout": 4
+        },
+        {
+          "pane": {
+            "index": 1,
+            "type": "Curves"
+          }
+        },
+        {
+          "pane": {
+            "index": 2,
+            "type": "Spreadsheet"
+          }
+        },
+        {
+          "pane": {
+            "index": 3,
+            "type": "Expression"
+          }
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "A viewport"
+        },
+        {
+          "id": "MainWindow.Pane1",
+          "caption": "Stand-in"
         }
       ]
     }

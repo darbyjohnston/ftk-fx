@@ -17,7 +17,7 @@ namespace fx
     namespace app
     {
         class SceneModel;
-        class Views;
+        class Panes;
 
         //! The parameter panel.
         class ParametersPanel : public IPanel
@@ -26,7 +26,7 @@ namespace fx
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
-                const std::shared_ptr<Views>&,
+                const std::shared_ptr<Panes>&,
                 const std::shared_ptr<ftk::IWidget>& parent);
 
             ParametersPanel() = default;
@@ -37,7 +37,7 @@ namespace fx
             static std::shared_ptr<ParametersPanel> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
-                const std::shared_ptr<Views>&,
+                const std::shared_ptr<Panes>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
         private:

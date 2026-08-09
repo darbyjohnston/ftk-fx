@@ -16,7 +16,7 @@ whole thing scrubs and plays back. Everything the artist can reach is already a
 |---|---|
 | `lib/fx/Core` | Pool, frame, cache, curve, parameter, keyed randomness |
 | `lib/fx/Sim` | Emitters, forces, rules, the solver |
-| `lib/fx/App` | Scene model, viewports, timeline, panel column |
+| `lib/fx/App` | Scene model, panes, timeline, panel column |
 | `lib/fx/CoreTest` | Tests for the above |
 | `bin/ftk-fx` | The application |
 | `tests/fx-test` | The test runner |
@@ -77,9 +77,11 @@ and display parameters, and a diagnostics panel graphing feather-tk's frame time
 and object counts alongside this application's particle count, solve time and
 cache size.
 
-The View menu arranges one, two, three or four viewports, and each viewport's
-own menu picks what it looks through: perspective, front, side or top, the axis
-views orthographic. Dragging orbits a perspective view; the middle button, or
+The View menu arranges one, two, three or four panes. Each pane's own menu picks
+what it shows -- a viewport, or a stand-in for the curve editor, the particle
+spreadsheet, the expression editor or the compositor -- and a viewport pane gets
+a second menu for what it looks through: perspective, front, side or top, the
+axis views orthographic. Dragging orbits a perspective view; the middle button, or
 alt and the left button, pans any of them; the wheel zooms. Backspace reframes
 the viewport with the highlighted border, which is whichever one was last
 clicked in.

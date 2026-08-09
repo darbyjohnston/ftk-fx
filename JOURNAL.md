@@ -7,6 +7,75 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-08 — Panes, with stand-ins for the editors
+
+The pane system from two entries ago, built early and on purpose. The journal
+said to wait for the curve editor to pull the interface into existence; instead
+the four editors that do not exist are stand-ins -- a label naming the editor
+and the section of the design it comes from -- so the mechanism can be arranged,
+switched and screenshotted before any of them is written.
+
+That is a different thing from building the abstraction on one implementation,
+which is what the earlier entry warned against. A stand-in is not a guess at
+what a curve editor needs; it is an admission that we do not know yet, and it
+still exercises everything the mechanism has to do.
+
+### Two words that nearly mean the same thing
+
+`Panes` is the main region -- viewports and editors, in fixed arrangements.
+`Panels` is the right hand column -- parameters and diagnostics, stacked. They
+are different mechanisms answering §2's two different shapes, and the names are
+one letter apart, so: **panes are arranged, panels are stacked.**
+
+`Views` became `Panes` in the same change. Leaving a spreadsheet inside
+something called `Views` is exactly the sort of name that costs a re-read after
+a month away.
+
+### What the mechanism turned out to be
+
+Almost nothing, because feather-tk's `setParent` both detaches and attaches. A
+pane keeps a map of content by type, hands the layout the one that is current,
+and parents the rest to null. Switching content is one line, and the trap is the
+same one the arrangements hit: detach before dropping the thing that owns them,
+or it takes them with it.
+
+Content is made on first use and kept per slot -- the lazy caching the earlier
+entry predicted. It is about ten lines. Switching a pane to Curves and back
+finds the same viewport, at the camera it was left at, which is the sidecar
+assertion in the `roundtrip` probe: after Curves, Spreadsheet, View and a switch
+to top, the pane reads "View Top".
+
+### The header strip, and what it cost
+
+The viewport used to carry its own view menu as an overlay in its corner, which
+cost no vertical space. A pane needs a menu for its content type as well, and
+overlaying two menus on content that might be a spreadsheet is not a design. So
+the pane has a header strip, and the viewport lost its overlay.
+
+The cost is a strip of vertical space per pane -- real, and worse in a four-up.
+What it buys is the thing the earlier entry asked for: a place for per-content
+controls, so the application's menu bar does not have to change depending on
+which pane was last clicked.
+
+### Small things that only appear once content can be swapped
+
+- **Point size moved onto the pane.** It is a display setting, so a viewport
+  switched away from and back to should still have it. Held by the pane and
+  applied when the viewport is made.
+- **The pane never sees the click.** Content accepts the mouse, so a viewport
+  passes the press back up rather than the pane trying to intercept what its own
+  content is handling. A stand-in accepts nothing, so the pane's own handler
+  catches those.
+- **`getViewport()` returns null** when the pane is not showing one, and the
+  Frame and Zoom actions check it. There is no camera to frame in a spreadsheet.
+
+### The boundary still holds
+
+Fixed arrangements, no drag-to-split, no tear-off, no floating windows, no saved
+layouts. Nothing here needed any of them.
+
+---
+
 ## 2026-08-08 — The panel column, and what it found on its first day
 
 The right hand column from the previous entry, built: `IPanel` provides a

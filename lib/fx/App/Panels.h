@@ -21,7 +21,7 @@ namespace fx
     {
         class IPanel;
         class SceneModel;
-        class Views;
+        class Panes;
 
         //! The right hand column of panels.
         //!
@@ -44,7 +44,7 @@ namespace fx
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
-                const std::shared_ptr<Views>&,
+                const std::shared_ptr<Panes>&,
                 const std::shared_ptr<ftk::IWidget>& parent);
 
             Panels() = default;
@@ -55,7 +55,7 @@ namespace fx
             static std::shared_ptr<Panels> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
-                const std::shared_ptr<Views>&,
+                const std::shared_ptr<Panes>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
             //! Get every panel's name, in the order they are stacked.

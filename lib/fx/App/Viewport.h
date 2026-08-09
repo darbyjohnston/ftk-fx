@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <fx/App/ViewOptions.h>
+#include <fx/App/PaneOptions.h>
 
 #include <fx/Core/Frame.h>
 
@@ -12,11 +12,6 @@
 #include <ftk/GL/Mesh.h>
 #include <ftk/GL/OffscreenBuffer.h>
 #include <ftk/GL/Shader.h>
-
-namespace ftk
-{
-    class ComboBox;
-}
 
 namespace fx
 {
@@ -30,10 +25,9 @@ namespace fx
         //! life they are, over a ground grid that gives the fall somewhere to
         //! fall to.
         //!
-        //! Each viewport owns its camera, and there is one viewport per slot
-        //! whether or not the current arrangement shows it -- see Views. That
-        //! is what lets an artist switch to four-up and find the perspective
-        //! camera where they left it.
+        //! The viewport owns its camera and nothing else: the menu that chooses
+        //! what it looks through belongs to the Pane holding it, along with the
+        //! menu that decides whether it is what the pane is showing at all.
         class Viewport : public ftk::IWidget
         {
         protected:
@@ -74,17 +68,12 @@ namespace fx
             float getPointSize() const;
             void setPointSize(float);
 
-            //! Set whether this is the viewport actions apply to. The current
-            //! viewport draws a border so that it is obvious which one that is.
-            void setCurrent(bool);
-
             //! Set the callback for the viewport being clicked in, which is how
-            //! it becomes the current one.
+            //! its pane becomes the current one.
             void setPressCallback(const std::function<void(void)>&);
 
             ///@}
 
-            void sizeHintEvent(const ftk::SizeHintEvent&) override;
             void setGeometry(const ftk::Box2I&) override;
             void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void mouseMoveEvent(ftk::MouseMoveEvent&) override;
@@ -113,7 +102,6 @@ namespace fx
 
             std::shared_ptr<const core::Frame> _frame;
             float _pointSize = 3.F;
-            bool _current = false;
             std::function<void(void)> _pressCallback;
 
             ViewType _viewType = ViewType::Perspective;
@@ -133,9 +121,6 @@ namespace fx
             ftk::MouseButton _mouseButton = ftk::MouseButton::None;
             int _mouseModifiers = 0;
 
-            std::shared_ptr<ftk::ComboBox> _viewTypeComboBox;
-            int _margin = 0;
-            int _border = 0;
 
             bool _doRender = true;
             bool _pointsDirty = true;

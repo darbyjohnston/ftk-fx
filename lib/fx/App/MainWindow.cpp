@@ -7,8 +7,9 @@
 #include <fx/App/Panels.h>
 #include <fx/App/SceneModel.h>
 #include <fx/App/TimelineBar.h>
+#include <fx/App/Pane.h>
 #include <fx/App/Viewport.h>
-#include <fx/App/Views.h>
+#include <fx/App/Panes.h>
 
 #include <ftk/UI/Action.h>
 #include <ftk/UI/Divider.h>
@@ -33,13 +34,13 @@ namespace fx
             ftk::MainWindow::_init(context, app, size);
             _model = model;
 
-            _views = Views::create(context, model);
-            _panels = Panels::create(context, model, _views);
+            _panes = Panes::create(context, model);
+            _panels = Panels::create(context, model, _panes);
             setScreenshotTag(_panels, "MainWindow.Panels");
 
             _splitter = Splitter::create(context, Orientation::Horizontal);
             _splitter->setSplit(.78F);
-            _views->setParent(_splitter);
+            _panes->setParent(_splitter);
             _panels->setParent(_splitter);
 
             auto layout = VerticalLayout::create(context);
@@ -68,9 +69,9 @@ namespace fx
             return out;
         }
 
-        const std::shared_ptr<Views>& MainWindow::getViews() const
+        const std::shared_ptr<Panes>& MainWindow::getPanes() const
         {
-            return _views;
+            return _panes;
         }
 
         const std::shared_ptr<Panels>& MainWindow::getPanels() const
@@ -89,7 +90,7 @@ namespace fx
             // replacing it, so the File and Window menus it provides stay.
             auto menu = getMenuBar()->addMenu("View");
 
-            std::weak_ptr<Views> viewsWeak(_views);
+            std::weak_ptr<Panes> panesWeak(_panes);
             const std::vector<KeyShortcut> shortcuts =
             {
                 KeyShortcut(Key::_1, commandKeyModifier),
@@ -97,23 +98,23 @@ namespace fx
                 KeyShortcut(Key::_3, commandKeyModifier),
                 KeyShortcut(Key::_4, commandKeyModifier)
             };
-            const auto labels = getViewLayoutLabels();
+            const auto labels = getPaneLayoutLabels();
             for (size_t i = 0; i < labels.size(); ++i)
             {
-                const ViewLayout layout = static_cast<ViewLayout>(i);
+                const PaneLayout layout = static_cast<PaneLayout>(i);
                 auto action = Action::create(
                     labels[i],
                     shortcuts[i],
-                    [viewsWeak, layout](bool value)
+                    [panesWeak, layout](bool value)
                     {
                         // Only ever switching to an arrangement. Unchecking the
                         // current one would leave no arrangement at all, so the
                         // observer below puts the tick straight back.
                         if (value)
                         {
-                            if (auto views = viewsWeak.lock())
+                            if (auto panes = panesWeak.lock())
                             {
-                                views->setLayout(layout);
+                                panes->setLayout(layout);
                             }
                         }
                     });
@@ -128,39 +129,54 @@ namespace fx
                 "Frame",
                 "ViewFrame",
                 Key::Backspace,
-                [viewsWeak]
+                [panesWeak]
                 {
-                    if (auto views = viewsWeak.lock())
+                    if (auto panes = panesWeak.lock())
                     {
-                        views->getCurrent()->frameView();
+                        // Only when the current pane is showing a viewport.
+                        // There is no camera to frame in a spreadsheet.
+                        if (auto viewport = panes->getCurrent()->getViewport())
+                        {
+                            viewport->frameView();
+                        }
                     }
                 }));
             menu->addAction(Action::create(
                 "Zoom In",
                 "ViewZoomIn",
                 KeyShortcut(Key::Equals, commandKeyModifier),
-                [viewsWeak]
+                [panesWeak]
                 {
-                    if (auto views = viewsWeak.lock())
+                    if (auto panes = panesWeak.lock())
                     {
-                        views->getCurrent()->zoomIn();
+                        // Only when the current pane is showing a viewport.
+                        // There is no camera to frame in a spreadsheet.
+                        if (auto viewport = panes->getCurrent()->getViewport())
+                        {
+                            viewport->zoomIn();
+                        }
                     }
                 }));
             menu->addAction(Action::create(
                 "Zoom Out",
                 "ViewZoomOut",
                 KeyShortcut(Key::Minus, commandKeyModifier),
-                [viewsWeak]
+                [panesWeak]
                 {
-                    if (auto views = viewsWeak.lock())
+                    if (auto panes = panesWeak.lock())
                     {
-                        views->getCurrent()->zoomOut();
+                        // Only when the current pane is showing a viewport.
+                        // There is no camera to frame in a spreadsheet.
+                        if (auto viewport = panes->getCurrent()->getViewport())
+                        {
+                            viewport->zoomOut();
+                        }
                     }
                 }));
 
-            _layoutObserver = Observer<ViewLayout>::create(
-                _views->observeLayout(),
-                [this](ViewLayout value)
+            _layoutObserver = Observer<PaneLayout>::create(
+                _panes->observeLayout(),
+                [this](PaneLayout value)
                 {
                     for (const auto& i : _layoutActions)
                     {

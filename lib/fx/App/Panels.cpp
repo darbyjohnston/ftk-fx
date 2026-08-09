@@ -24,7 +24,7 @@ namespace fx
         void Panels::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Views>& views,
+            const std::shared_ptr<Panes>& panes,
             const std::shared_ptr<IWidget>& parent)
         {
             IWidget::_init(context, "fx::app::Panels", parent);
@@ -42,7 +42,7 @@ namespace fx
             _scrollWidget->setBorder(false);
             _scrollWidget->setWidget(_layout);
 
-            _add(ParametersPanel::create(context, model, views));
+            _add(ParametersPanel::create(context, model, panes));
             _add(DiagPanel::create(context));
 
             // Diagnostics starts closed. It is for the moments when something
@@ -58,11 +58,11 @@ namespace fx
         std::shared_ptr<Panels> Panels::create(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Views>& views,
+            const std::shared_ptr<Panes>& panes,
             const std::shared_ptr<IWidget>& parent)
         {
             auto out = std::shared_ptr<Panels>(new Panels);
-            out->_init(context, model, views, parent);
+            out->_init(context, model, panes, parent);
             return out;
         }
 
