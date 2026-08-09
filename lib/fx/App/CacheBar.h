@@ -55,6 +55,7 @@ namespace fx
             int _currentFrame = 1;
             std::vector<core::FrameState> _states;
             ftk::Size2I _sizeHint;
+            int _border = 0;
 
             std::shared_ptr<ftk::Observer<ftk::RangeI> > _rangeObserver;
             std::shared_ptr<ftk::Observer<int> > _currentFrameObserver;

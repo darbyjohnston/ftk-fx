@@ -49,7 +49,7 @@ namespace fx
 
             _layout = VerticalLayout::create(context);
             _layout->setSpacingRole(SizeRole::SpacingSmall);
-            _layout->setMarginRole(SizeRole::MarginInside);
+            _layout->setMarginRole(SizeRole::MarginSmall);
             _setWidget(_layout);
 
             auto hLayout = HorizontalLayout::create(context, _layout);
@@ -162,7 +162,7 @@ namespace fx
 
         void TimelineBar::_statusUpdate()
         {
-            _statusLabel->setText(Format("{0} particles   {1} MB").
+            _statusLabel->setText(Format("{0} particles   {1} MB cached").
                 arg(_particleCount).
                 arg(_cacheByteCount / (1024.0 * 1024.0), 1));
         }

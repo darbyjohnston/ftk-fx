@@ -22,6 +22,8 @@ namespace fx
         {
             IMouseWidget::_init(context, "fx::app::CacheBar", parent);
             setHStretch(Stretch::Expanding);
+            setTooltip("Which frames are simulated, and where the playhead is. "
+                "Click or drag to scrub");
             _setMousePressEnabled(true);
             _model = model;
 
@@ -73,8 +75,13 @@ namespace fx
             const int handle = event.style->getSizeRole(
                 SizeRole::Handle,
                 event.displayScale);
+            _border = event.style->getSizeRole(
+                SizeRole::Border,
+                event.displayScale);
             _sizeHint.w = handle * 8;
-            _sizeHint.h = handle;
+            // Tall enough to be worth aiming at. At one handle it was a
+            // progress bar that happened to be clickable.
+            _sizeHint.h = handle * 2;
         }
 
         int CacheBar::_getFrame(int x) const
@@ -127,10 +134,26 @@ namespace fx
             event.render->drawRects(simulated, Color4F(.22F, .42F, .27F));
             event.render->drawRects(locked, Color4F(.24F, .38F, .58F));
 
-            const Box2I playhead = _getCellBox(_currentFrame);
-            event.render->drawRect(
-                Box2I(playhead.min.x, g.min.y, std::max(2, playhead.w()), g.h()),
+            // An outline rather than a filled cell. Filled, the playhead hid
+            // the state of the one frame most worth knowing the state of --
+            // a locked frame under the playhead looked like any other.
+            const Box2I cell = _getCellBox(_currentFrame);
+            const int w = std::max(cell.w(), _border * 8);
+            event.render->drawMesh(
+                border(
+                    Box2I(
+                        cell.min.x - (w - cell.w()) / 2,
+                        g.min.y,
+                        w,
+                        g.h()),
+                    _border * 2),
                 event.style->getColorRole(ColorRole::Text));
+
+            // Bordered like the other controls, so it reads as something to
+            // take hold of rather than as a strip of colour along the bottom.
+            event.render->drawMesh(
+                border(g, _border),
+                event.style->getColorRole(ColorRole::Border));
         }
 
         void CacheBar::mousePressEvent(MouseClickEvent& event)

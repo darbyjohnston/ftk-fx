@@ -7,6 +7,63 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Reading the screenshot back
+
+A screenshot of the four-up, looked at as a stranger would. Five things were
+wrong with it, and all five were the kind that only show up in a picture.
+
+**Every pane header said the same thing.** Four panes, four headers reading
+"Pane View", and no way to tell the perspective one from the top one without
+opening a menu. The combo boxes these menus replaced got this right without
+trying: a combo box shows its selection. The menus were named for what they
+contained. So `ftk::MenuBar` grew `setMenuText`, and each pane now titles its
+two menus with what is picked in them -- "View Persp", "View Top". The rename is
+taken by menu pointer rather than by title, since the title is the thing that
+moves; `Pane` holds the two menus instead of looking them up.
+
+That leaves the window with a View menu and every pane with one, meaning
+different things. The window's is about how the panes are arranged, so it is
+"Layout" now.
+
+**The points were square.** Obvious at three pixels once you look, glaring at
+fourteen. They are cut back to the disc inside with `gl_PointCoord`, and the
+outer pixel faded rather than stepped -- an unsoftened disc looks worse than the
+square did. The grid lines share the shader and `gl_PointCoord` means nothing
+outside a point, hence the uniform switching it off for them. A `pointSize`
+capture step gives this a shot big enough to see.
+
+**Three parameter rows had no reset button** -- the three where nobody called
+`setDefault`. Read as a panel where some values can be put back and some cannot,
+which is worse than not offering it at all. All of them have a default now.
+
+The button itself was a cross, which beside a value reads as "get rid of this",
+and it sat a few rows below a panel close button that was also a cross. ftk's
+Reset icon is only ever used by reset buttons, so the artwork just changed to
+the undo arrow.
+
+None of which could be seen at the default width: the column opened at 216
+points and the rows wanted 327, so the resets were outside it and reachable only
+by scrolling. The split starts at .66 now, which fits them.
+
+**The cache bar was a strip of colour along the bottom edge.** One handle tall,
+two points from the window edge, and though it has always been clickable it did
+not look it. Two handles tall, inside the bar's margin, and bordered like the
+other controls.
+
+Widening it exposed a second thing: the playhead was a filled cell, so it hid
+the state of the one frame most worth knowing the state of. The `cache-locked`
+shot was captioned "the locked frame" and never showed it -- the blue was
+underneath the white. The playhead is an outline now.
+
+The `1.4 MB` beside the particle count was unlabelled. It is the cache.
+
+### The one that was not in the screenshot
+
+`Frame` frames the current pane. In a four-up that is rarely what is wanted, and
+there was no way to ask for the rest, so `Frame All` sits beside it.
+
+---
+
 ## 2026-08-09 — A splitter that divides both ways
 
 The four-up was two splitters ganged together with a callback keeping the rows

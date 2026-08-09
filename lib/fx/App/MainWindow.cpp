@@ -159,6 +159,23 @@ namespace fx
                     }
                 }));
             menu->addAction(Action::create(
+                "Frame All",
+                KeyShortcut(Key::Backspace, commandKeyModifier),
+                [panesWeak]
+                {
+                    if (auto panes = panesWeak.lock())
+                    {
+                        const int count = getPaneCount(panes->getLayout());
+                        for (int i = 0; i < count; ++i)
+                        {
+                            if (auto viewport = panes->getPane(i)->getViewport())
+                            {
+                                viewport->frameView();
+                            }
+                        }
+                    }
+                }));
+            menu->addAction(Action::create(
                 "Zoom In",
                 "ViewZoomIn",
                 KeyShortcut(Key::Equals, commandKeyModifier),
