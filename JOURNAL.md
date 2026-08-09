@@ -30,6 +30,25 @@ Splitting one viewport into four is free. It is the same pixels cut up
 differently, which is the answer to "should the four-up worry me" and also the
 reason the F16 decision in §10 is the only lever that moves this number.
 
+### A fifth number does not fit
+
+Adding Peak pushed the frame group's legend off the side of the panel. The
+legend is a horizontal layout of one entry per sampler, which is right for a
+legend only while it has the room -- four entries were already one sampler away
+from the same thing, and the diagnostics colour list goes up to six.
+
+ftk had no wrapping layout, so there is one now. `FlowLayout` places children
+left to right and starts a new line when the next will not fit. The awkward
+part is that its height depends on its width, and `getSizeHint()` is not told
+the width; it reports the tallest single child until it has been given a
+geometry, and what that width actually needed thereafter. That means it settles
+over two passes instead of one, which is the price of the layout protocol not
+having height-for-width, and is cheap enough here.
+
+Verified the way the rest of this has been: the test fails with the wrap
+disabled and passes with it, and the panel captures at three widths show one
+line, two lines and three.
+
 ### The frame time could not answer anything
 
 Five captures of the same scene, one pane and then four:
