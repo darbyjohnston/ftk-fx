@@ -7,6 +7,7 @@
 
 
 #include <ftk/GL/GL.h>
+#include <ftk/GL/Util.h>
 
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Math.h>
@@ -403,6 +404,13 @@ namespace fx
                     _doRender = false;
                     gl::OffscreenBufferBinding binding(_buffer);
 
+                    // Everything this draw changes goes back on the way out.
+                    // The renderer enables blending once for the whole frame
+                    // and its primitives only set the blend function, so a
+                    // widget that leaves blending off draws every glyph after
+                    // it as a solid box.
+                    const gl::StateSave stateSave;
+
                     const ViewportState viewportState(event.render);
                     const ClipRectEnabledState clipRectEnabledState(event.render);
                     const ClipRectState clipRectState(event.render);
@@ -441,19 +449,7 @@ namespace fx
 #endif // FTK_API_GL_4_1
                         _pointsVao->bind();
                         _pointsVao->draw(GL_POINTS, 0, _pointCount);
-#if defined(FTK_API_GL_4_1)
-                        glDisable(GL_PROGRAM_POINT_SIZE);
-#endif // FTK_API_GL_4_1
-                        glDepthMask(GL_TRUE);
                     }
-                    glDisable(GL_DEPTH_TEST);
-
-                    // Put back what the renderer set up in begin(). It enables
-                    // blending once for the whole frame and its primitives only
-                    // ever set the blend function, so leaving blending off here
-                    // draws every glyph after this widget as a solid box.
-                    glEnable(GL_BLEND);
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 }
             }
             catch (const std::exception& e)

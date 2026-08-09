@@ -69,6 +69,14 @@ namespace fx
                     });
             }
 
+            // The Pane menu is built once here; only the View menu is added
+            // and removed as the content changes.
+            auto paneMenu = _menuBar->addMenu("Pane");
+            for (const auto& i : _paneTypeActions)
+            {
+                paneMenu->addAction(i.second);
+            }
+
             _contentUpdate();
             // Built here rather than left to the tick: this is not inside a
             // menu callback, and the header should have its menus before it is
@@ -189,24 +197,32 @@ namespace fx
 
         void Pane::_menuUpdate()
         {
-            auto context = getContext();
-            _menuBar->clear();
-
-            auto paneMenu = _menuBar->addMenu("Pane");
             for (const auto& i : _paneTypeActions)
             {
                 i.second->setChecked(i.first == _paneType);
-                paneMenu->addAction(i.second);
+            }
+            for (const auto& i : _viewTypeActions)
+            {
+                i.second->setChecked(i.first == _viewType);
             }
 
-            if (PaneType::View == _paneType)
+            // Only the View menu comes and goes, so only it is added and
+            // removed. The Pane menu is built once and left alone, which is
+            // also the menu an action is usually being picked from when this
+            // runs.
+            const bool view = PaneType::View == _paneType;
+            const bool has = _menuBar->getMenu("View").get();
+            if (view && !has)
             {
                 auto viewMenu = _menuBar->addMenu("View");
                 for (const auto& i : _viewTypeActions)
                 {
-                    i.second->setChecked(i.first == _viewType);
                     viewMenu->addAction(i.second);
                 }
+            }
+            else if (!view && has)
+            {
+                _menuBar->removeMenu("View");
             }
         }
 

@@ -7,6 +7,47 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — The rest of the feather-tk list
+
+Four more, all of them things another application would hit.
+
+**`gl::StateSave`.** The white-boxes bug from the first week, fixed at the
+source. A widget drawing its own OpenGL now takes one guard at the top of its
+draw and the state goes back on the way out. The viewport's manual restores are
+gone; it only enables things now. `SetAndRestore` was already there for a single
+capability, so this is the blunt end of an existing pair rather than a new idea.
+
+Verified the way the bug was found: force the viewport to re-render every frame,
+and check the text below it.
+
+**`MenuBar::removeMenu()`.** The absence of this is why the pane rebuilt its
+whole menu bar on every content change, which is what crashed. Now only the View
+menu is added and removed and the Pane menu -- the one an action is usually
+being picked from -- is built once and left alone.
+
+Making removal safe meant the buttons looking their index up when a callback
+runs rather than capturing it when the callback is made. A captured index is
+correct exactly until something is removed before it.
+
+**`DiagSystem::setTickTime()`.** Three seconds makes the graphs a trend over
+minutes. Nothing here needs finer, but an application chasing a hitch does, and
+there was no lever.
+
+**Two doc notes**, for the two things that cost real debugging here: that
+`drawEvent` runs before the children and `drawOverlayEvent` after them, and that
+a parent holds its children by shared pointer, so a widget merely forgotten
+about stays in the tree and goes on drawing.
+
+### What the exercise produced
+
+Six of the original suggestions, plus callback safety, minus the two that did
+not survive checking. Every one of them came from a bug or a line count in this
+application rather than from an opinion about what a toolkit ought to have, and
+every one is paired with its adoption here, because an addition nobody has used
+is a guess with a nice comment on it.
+
+---
+
 ## 2026-08-09 — The crash, fixed where it belonged
 
 The menu crash got two fixes. The first, here, was to stop rebuilding a menu
