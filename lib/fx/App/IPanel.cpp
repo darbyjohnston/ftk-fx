@@ -23,6 +23,8 @@ namespace fx
             std::shared_ptr<Icon> icon;
             std::shared_ptr<Label> label;
             std::shared_ptr<ToolButton> closeButton;
+            std::shared_ptr<IWidget> header;
+            std::shared_ptr<IWidget> divider;
             std::shared_ptr<VerticalLayout> panelLayout;
             std::shared_ptr<VerticalLayout> layout;
         };
@@ -64,6 +66,7 @@ namespace fx
             p.layout->setSpacingRole(SizeRole::None);
             auto hLayout = HorizontalLayout::create(context, p.layout);
             hLayout->setSpacingRole(SizeRole::None);
+            p.header = hLayout;
             // Coloured so each panel reads as its own thing in a stack of them,
             // rather than the column being one long run of controls.
             hLayout->setBackgroundRole(ColorRole::Header);
@@ -73,7 +76,7 @@ namespace fx
             }
             p.label->setParent(hLayout);
             p.closeButton->setParent(hLayout);
-            Divider::create(context, Orientation::Vertical, p.layout);
+            p.divider = Divider::create(context, Orientation::Vertical, p.layout);
             p.panelLayout = VerticalLayout::create(context, p.layout);
             p.panelLayout->setSpacingRole(SizeRole::None);
             p.panelLayout->setHStretch(Stretch::Expanding);
@@ -89,6 +92,13 @@ namespace fx
         const std::string& IPanel::getPanelName() const
         {
             return _p->name;
+        }
+
+        void IPanel::setHeaderVisible(bool value)
+        {
+            FTK_P();
+            p.header->setVisible(value);
+            p.divider->setVisible(value);
         }
 
         void IPanel::setCloseCallback(const std::function<void(void)>& value)

@@ -6,8 +6,10 @@
 #include <fx/App/PanePlaceholder.h>
 #include <fx/App/Viewport.h>
 
-#include <ftk/UI/ComboBox.h>
+#include <ftk/UI/Action.h>
 #include <ftk/UI/DrawUtil.h>
+#include <ftk/UI/Menu.h>
+#include <ftk/UI/MenuBar.h>
 #include <ftk/UI/RowLayout.h>
 
 using namespace ftk;
@@ -32,34 +34,38 @@ namespace fx
             _layout = VerticalLayout::create(context, shared_from_this());
             _layout->setSpacingRole(SizeRole::None);
 
-            _headerLayout = HorizontalLayout::create(context, _layout);
-            _headerLayout->setMarginRole(SizeRole::MarginInside);
-            _headerLayout->setSpacingRole(SizeRole::SpacingTool);
+            _menuBar = MenuBar::create(context, _layout);
 
-            _paneTypeComboBox = ComboBox::create(
-                context,
-                getPaneTypeLabels(),
-                _headerLayout);
-            _paneTypeComboBox->setTooltip("What this pane shows");
-            _paneTypeComboBox->setIndexCallback(
-                [this](int value)
-                {
-                    setPaneType(static_cast<PaneType>(value));
-                });
-
-            _viewTypeComboBox = ComboBox::create(
-                context,
-                getViewTypeLabels(),
-                _headerLayout);
-            _viewTypeComboBox->setCurrentIndex(static_cast<int>(viewType));
-            _viewTypeComboBox->setTooltip("The view this pane looks through");
-            _viewTypeComboBox->setIndexCallback(
-                [this](int value)
-                {
-                    setViewType(static_cast<ViewType>(value));
-                });
-
-            _headerLayout->addSpacer(Stretch::Expanding);
+            // The actions outlive the menus they are put into, so the checked
+            // state survives the rebuild that a content change causes.
+            const auto paneLabels = getPaneTypeLabels();
+            for (size_t i = 0; i < paneLabels.size(); ++i)
+            {
+                const PaneType type = static_cast<PaneType>(i);
+                _paneTypeActions[type] = Action::create(
+                    paneLabels[i],
+                    [this, type](bool value)
+                    {
+                        if (value)
+                        {
+                            setPaneType(type);
+                        }
+                    });
+            }
+            const auto viewLabels = getViewTypeLabels();
+            for (size_t i = 0; i < viewLabels.size(); ++i)
+            {
+                const ViewType type = static_cast<ViewType>(i);
+                _viewTypeActions[type] = Action::create(
+                    viewLabels[i],
+                    [this, type](bool value)
+                    {
+                        if (value)
+                        {
+                            setViewType(type);
+                        }
+                    });
+            }
 
             _contentUpdate();
         }
@@ -88,7 +94,6 @@ namespace fx
             if (value == _paneType)
                 return;
             _paneType = value;
-            _paneTypeComboBox->setCurrentIndex(static_cast<int>(value));
             _contentUpdate();
         }
 
@@ -102,7 +107,7 @@ namespace fx
             if (value == _viewType)
                 return;
             _viewType = value;
-            _viewTypeComboBox->setCurrentIndex(static_cast<int>(value));
+            _menuUpdate();
             if (_viewport)
             {
                 _viewport->setViewType(value);
@@ -159,7 +164,30 @@ namespace fx
                 // its layout at a time and the rest cost nothing to lay out.
                 i.second->setParent(i.second == content ? _layout : nullptr);
             }
-            _viewTypeComboBox->setVisible(PaneType::View == _paneType);
+            _menuUpdate();
+        }
+
+        void Pane::_menuUpdate()
+        {
+            auto context = getContext();
+            _menuBar->clear();
+
+            auto paneMenu = _menuBar->addMenu("Pane");
+            for (const auto& i : _paneTypeActions)
+            {
+                i.second->setChecked(i.first == _paneType);
+                paneMenu->addAction(i.second);
+            }
+
+            if (PaneType::View == _paneType)
+            {
+                auto viewMenu = _menuBar->addMenu("View");
+                for (const auto& i : _viewTypeActions)
+                {
+                    i.second->setChecked(i.first == _viewType);
+                    viewMenu->addAction(i.second);
+                }
+            }
         }
 
         void Pane::setPointSize(float value)
@@ -203,12 +231,15 @@ namespace fx
             _layout->setGeometry(value);
         }
 
-        void Pane::drawEvent(const Box2I& drawRect, const DrawEvent& event)
+        void Pane::drawOverlayEvent(const Box2I& drawRect, const DrawEvent& event)
         {
-            IWidget::drawEvent(drawRect, event);
             // Mark the pane the menu actions and the keyboard apply to. With
             // four of them on screen this is the difference between an
             // arrangement and a guess.
+            //
+            // Drawn in the overlay pass rather than the ordinary one, which
+            // runs before the children: the content fills the pane, so a border
+            // drawn there survived only where the header did not reach.
             if (_current)
             {
                 event.render->drawMesh(

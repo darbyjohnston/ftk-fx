@@ -5,6 +5,7 @@
 
 #include <ftk/UI/IWidget.h>
 
+#include <ftk/Core/Observable.h>
 #include <ftk/Core/ObservableList.h>
 
 #include <map>
@@ -12,6 +13,7 @@
 namespace ftk
 {
     class ScrollWidget;
+    class TabWidget;
     class VerticalLayout;
 }
 
@@ -20,20 +22,37 @@ namespace fx
     namespace app
     {
         class IPanel;
-        class SceneModel;
         class Panes;
+        class SceneModel;
+
+        //! How the panel column presents its panels.
+        enum class PanelStyle
+        {
+            //! Stacked, all of them visible at once.
+            Column,
+
+            //! One at a time, with a tab bar.
+            Tabs,
+
+            Count,
+            First = Column
+        };
+
+        std::vector<std::string> getPanelStyleLabels();
+        std::string getLabel(PanelStyle);
 
         //! The right hand column of panels.
         //!
-        //! A stack of panels rather than a tab per panel, because the reason
-        //! these are a column and not one of the panes is that they are wanted
-        //! at the same time as each other: watching frame time while dragging a
-        //! slider is the point, and tabs would make it one or the other.
+        //! Stacked by default, because the reason these are a column and not
+        //! one of the panes is that they are wanted at the same time as each
+        //! other: watching frame time while dragging a slider is the point.
+        //! Tabs are the other choice for when the column is narrow and one
+        //! panel at full height beats two squeezed, which is a judgement only
+        //! the person looking at it can make.
         //!
-        //! One scroll area for the whole stack rather than one inside each
-        //! panel, so a panel takes the height its contents need instead of an
-        //! equal share of the column, and there is a single scroll bar rather
-        //! than one nested inside another.
+        //! Stacked, there is one scroll area for the whole column, so a panel
+        //! takes the height its contents need rather than an equal share. In
+        //! tabs each panel scrolls on its own, since only one is on screen.
         //!
         //! Every panel is made up front and shown or hidden. There are few of
         //! them and they are cheap; making them on demand is machinery to be
@@ -70,18 +89,38 @@ namespace fx
 
             ///@}
 
+            //! \name Style
+            ///@{
+
+            PanelStyle getStyle() const;
+            std::shared_ptr<ftk::IObservable<PanelStyle> > observeStyle() const;
+            void setStyle(PanelStyle);
+
+            ///@}
+
             ftk::Size2I getSizeHint() const override;
             void setGeometry(const ftk::Box2I&) override;
 
         private:
             void _add(const std::shared_ptr<IPanel>&);
-            void _openUpdate();
+
+            //! Put the open panels into whichever container the style calls
+            //! for, and take the column away when there are none.
+            void _panelsUpdate();
+
+            //! Get a panel's scroll area for tabs, making it the first time.
+            const std::shared_ptr<ftk::ScrollWidget>& _getScroll(
+                const std::string&);
 
             std::vector<std::string> _names;
             std::map<std::string, std::shared_ptr<IPanel> > _panels;
+            std::map<std::string, std::shared_ptr<ftk::ScrollWidget> > _scrolls;
             std::shared_ptr<ftk::ObservableList<std::string> > _open;
-            std::shared_ptr<ftk::VerticalLayout> _layout;
-            std::shared_ptr<ftk::ScrollWidget> _scrollWidget;
+            std::shared_ptr<ftk::Observable<PanelStyle> > _style;
+
+            std::shared_ptr<ftk::VerticalLayout> _columnLayout;
+            std::shared_ptr<ftk::ScrollWidget> _columnScroll;
+            std::shared_ptr<ftk::TabWidget> _tabWidget;
         };
     }
 }

@@ -7,6 +7,66 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-08 — A menu bar per pane, and two bugs it made visible
+
+Three changes, and the two bugs they surfaced are worth more than the changes.
+
+### The pane header is a menu bar
+
+The two combo boxes are gone. Each pane has an `ftk::MenuBar` with a Pane menu
+for the content type and a View menu for the camera, the current entry checked.
+
+`MenuBar` adds menus and clears them all, but does not take one away, so the bar
+is rebuilt whenever the content changes. That is why the actions are made once
+in the constructor and kept: they outlive the menus they are put into, so their
+checked state survives the rebuild. A pane showing a spreadsheet has no View
+menu at all, rather than a disabled one that does nothing.
+
+### Phantom splitters: the parent owns the children
+
+Faint handles were showing through the pane headers, left over from previous
+arrangements. `Panes::_layoutUpdate()` dropped `_root` and built a new tree, and
+`_root` was the only other reference -- except it was not, because
+`IWidget::_children` is a list of *shared* pointers. Dropping the local
+reference left the old splitters parented to `Panes`, keeping their last
+geometry and going on drawing. One leaked tree per layout change.
+
+The fix is `_root->setParent(nullptr)` before the reset. The rule this
+establishes, which the pane and panel code both now follow: **detaching from the
+parent is what destroys a widget; dropping your own reference is not.**
+
+### The current-pane border was drawn under the content
+
+It was drawn in `drawEvent`, which runs before the children, so the content
+covered it everywhere except the strip the header did not fill -- which read as
+a box around the header rather than a border on the pane. Moved to
+`drawOverlayEvent`, which runs after.
+
+Both bugs were spotted by looking at the application, not by anything in the
+capture harness. The sidecar can say what a widget's box is; it cannot say that
+something was drawn over it.
+
+### The panel column takes itself away
+
+Closing the last panel hides the column, and `ftk::Splitter` does the rest --
+with one visible child it gives it the whole area and draws no handle. Opening a
+panel from the menu brings it back, and the splitter has kept its position.
+
+### Column or tabs
+
+A stacked column is the default, for the reason the column exists at all: these
+panels are wanted at the same time as each other. Tabs are there for when the
+column is narrow and one panel at full height beats two squeezed, which is a
+judgement only the person looking at it can make.
+
+The scroll area moves with the choice. Stacked, there is one for the whole
+column, so a panel takes the height its contents need rather than an equal
+share. In tabs each panel gets its own, since only one is on screen. In tabs the
+panel's own header is hidden: the tab already names it and carries a close
+button, and having both said it twice.
+
+---
+
 ## 2026-08-08 — Panes, with stand-ins for the editors
 
 The pane system from two entries ago, built early and on purpose. The journal

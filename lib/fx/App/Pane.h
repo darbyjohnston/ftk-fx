@@ -11,8 +11,8 @@
 
 namespace ftk
 {
-    class ComboBox;
-    class HorizontalLayout;
+    class Action;
+    class MenuBar;
     class VerticalLayout;
 }
 
@@ -25,11 +25,11 @@ namespace fx
 
         //! One slot in the main region, and whatever it is showing.
         //!
-        //! The pane owns a header strip with the menu that changes what it
-        //! shows, and, when that is a viewport, the viewport's own view menu
-        //! beside it. Per-content controls belong here rather than in the
-        //! application's menu bar: a menu bar whose contents depend on which
-        //! pane was last clicked is a menu bar nobody can learn.
+        //! The pane owns a header with a menu bar of its own: a Pane menu that
+        //! changes what it shows, and a View menu for the camera when what it
+        //! shows is a viewport. Per-content controls belong here rather than in
+        //! the application's menu bar, because a menu bar whose contents depend
+        //! on which pane was last clicked is a menu bar nobody can learn.
         //!
         //! Content is made the first time the pane is asked for it and then
         //! kept, so switching away and back finds a camera where it was left
@@ -90,7 +90,7 @@ namespace fx
             ftk::Size2I getSizeHint() const override;
             void setGeometry(const ftk::Box2I&) override;
             void sizeHintEvent(const ftk::SizeHintEvent&) override;
-            void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
+            void drawOverlayEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void mousePressEvent(ftk::MouseClickEvent&) override;
 
         private:
@@ -98,6 +98,12 @@ namespace fx
             std::shared_ptr<IWidget> _getContent(PaneType);
 
             void _contentUpdate();
+
+            //! Rebuild the header's menus for the current content. Rebuilt
+            //! rather than hidden: ftk::MenuBar adds and clears menus but does
+            //! not take one away, and a View menu left on a spreadsheet would
+            //! be a menu that does nothing.
+            void _menuUpdate();
 
             std::weak_ptr<SceneModel> _model;
             PaneType _paneType = PaneType::View;
@@ -110,9 +116,9 @@ namespace fx
             int _border = 0;
             float _pointSize = 3.F;
 
-            std::shared_ptr<ftk::ComboBox> _paneTypeComboBox;
-            std::shared_ptr<ftk::ComboBox> _viewTypeComboBox;
-            std::shared_ptr<ftk::HorizontalLayout> _headerLayout;
+            std::shared_ptr<ftk::MenuBar> _menuBar;
+            std::map<PaneType, std::shared_ptr<ftk::Action> > _paneTypeActions;
+            std::map<ViewType, std::shared_ptr<ftk::Action> > _viewTypeActions;
             std::shared_ptr<ftk::VerticalLayout> _layout;
         };
     }

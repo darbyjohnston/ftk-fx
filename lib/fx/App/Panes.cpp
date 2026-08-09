@@ -141,6 +141,15 @@ namespace fx
             {
                 pane->setParent(nullptr);
             }
+            // And detach the old tree from this widget. A parent holds its
+            // children by shared pointer, so dropping the only other reference
+            // does not free them: the old splitters stayed in the tree, kept
+            // their last geometry and went on drawing their handles over the
+            // new arrangement. One leaked tree per layout change.
+            if (_root)
+            {
+                _root->setParent(nullptr);
+            }
             _root.reset();
 
             switch (_layout->get())

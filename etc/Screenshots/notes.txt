@@ -20,6 +20,7 @@ Setup steps a shot may use:
 * {"lock": true}                             lock the frame at the playhead
 * {"playing": true}                          start playback
 * {"panel": {"name": "Diagnostics", "open": true}}   open or close a panel
+* {"panelStyle": "Tabs"}                     stack the panels or tab them
 
 A shot may also set "settle" in seconds to wait longer before capturing, and
 "splitter" in its window block to move the panel column, which is how a shot of

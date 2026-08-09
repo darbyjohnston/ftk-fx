@@ -346,6 +346,18 @@ namespace fx
                         "unknown panel \"{0}\"").arg(name));
                 panels->setOpen(name, panel.value("open", true));
             }
+            if (step.contains("panelStyle"))
+            {
+                const std::string name = step.at("panelStyle").get<std::string>();
+                auto panels = app->getMainWindow()->getPanels();
+                if ("Tabs" == name)
+                    panels->setStyle(PanelStyle::Tabs);
+                else if ("Column" == name)
+                    panels->setStyle(PanelStyle::Column);
+                else
+                    throw std::runtime_error(ftk::Format(
+                        "unknown panel style \"{0}\"").arg(name));
+            }
             if (step.contains("playing"))
             {
                 model->setPlaying(step.at("playing").get<bool>());

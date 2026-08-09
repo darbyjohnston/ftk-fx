@@ -75,7 +75,8 @@ ends. Clicking or dragging on the cache bar scrubs.
 The Panels menu opens the panels in the right hand column: the emitter, force
 and display parameters, and a diagnostics panel graphing feather-tk's frame time
 and object counts alongside this application's particle count, solve time and
-cache size.
+cache size. The same menu switches the column between stacked panels and tabs,
+and closing the last panel takes the column away entirely.
 
 The View menu arranges one, two, three or four panes. Each pane's own menu picks
 what it shows -- a viewport, or a stand-in for the curve editor, the particle

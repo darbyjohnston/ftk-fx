@@ -46,6 +46,11 @@ namespace fx
 
             const std::string& getPanelName() const;
 
+            //! Set whether the header is shown. Hidden when the column is
+            //! showing tabs, since the tab already names the panel and carries
+            //! its own close button.
+            void setHeaderVisible(bool);
+
             //! Set what the close button does. The panel does not know how the
             //! column keeps track of what is open, so it asks.
             void setCloseCallback(const std::function<void(void)>&);

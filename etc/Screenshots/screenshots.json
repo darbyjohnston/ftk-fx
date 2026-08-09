@@ -239,6 +239,59 @@
           "caption": "Stand-in"
         }
       ]
+    },
+    {
+      "id": "panels-tabs",
+      "window": {
+        "w": 1100,
+        "h": 700,
+        "splitter": 0.62
+      },
+      "settle": 1.0,
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "panel": {
+            "name": "Diagnostics",
+            "open": true
+          }
+        },
+        {
+          "panelStyle": "Tabs"
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Panels",
+          "caption": "One panel at a time"
+        }
+      ]
+    },
+    {
+      "id": "panels-hidden",
+      "window": {
+        "w": 1100,
+        "h": 700
+      },
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "The column is gone"
+        }
+      ]
     }
   ]
 }

@@ -4,6 +4,7 @@
 #pragma once
 
 #include <fx/App/PaneOptions.h>
+#include <fx/App/Panels.h>
 
 #include <ftk/UI/MainWindow.h>
 
@@ -73,7 +74,9 @@ namespace fx
             std::shared_ptr<ftk::Observer<PaneLayout> > _layoutObserver;
 
             std::map<std::string, std::shared_ptr<ftk::Action> > _panelActions;
+            std::shared_ptr<ftk::Action> _panelTabsAction;
             std::shared_ptr<ftk::ListObserver<std::string> > _openPanelsObserver;
+            std::shared_ptr<ftk::Observer<PanelStyle> > _panelStyleObserver;
         };
     }
 }

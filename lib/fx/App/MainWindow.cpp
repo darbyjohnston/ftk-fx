@@ -204,8 +204,32 @@ namespace fx
                 menu->addAction(action);
             }
 
-            // The panel's own close button changes the same list, so the ticks
-            // follow what is open rather than what was last picked from here.
+            menu->addDivider();
+
+            _panelTabsAction = Action::create(
+                "Tabs",
+                [panelsWeak](bool value)
+                {
+                    if (auto panels = panelsWeak.lock())
+                    {
+                        panels->setStyle(
+                            value ? PanelStyle::Tabs : PanelStyle::Column);
+                    }
+                });
+            _panelTabsAction->setTooltip(
+                "Show one panel at a time with a tab bar, rather than stacked");
+            menu->addAction(_panelTabsAction);
+
+            _panelStyleObserver = Observer<PanelStyle>::create(
+                _panels->observeStyle(),
+                [this](PanelStyle value)
+                {
+                    _panelTabsAction->setChecked(PanelStyle::Tabs == value);
+                });
+
+            // The panel's own close button and the tab bar's change the same
+            // list, so the ticks follow what is open rather than what was last
+            // picked from here.
             _openPanelsObserver = ListObserver<std::string>::create(
                 _panels->observeOpen(),
                 [this](const std::vector<std::string>& value)
