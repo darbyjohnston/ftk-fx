@@ -23,6 +23,9 @@ namespace fx
             _frame = Observable<std::shared_ptr<const core::Frame> >::create();
             _cacheStates = ObservableList<core::FrameState>::create();
             _cacheByteCount = Observable<size_t>::create(0);
+            _path = Observable<std::filesystem::path>::create();
+            _modified = Observable<bool>::create(false);
+            _saved = getScene();
 
             _cache.setRange(_range->get());
             _cache.setMemoryBudget(256 * 1024 * 1024);
@@ -44,6 +47,81 @@ namespace fx
             return out;
         }
 
+        sim::Scene SceneModel::getScene() const
+        {
+            sim::Scene out;
+            out.range = _range->get();
+            out.frameRate = _frameRate;
+            out.system = _system;
+            return out;
+        }
+
+        void SceneModel::setScene(const sim::Scene& value)
+        {
+            _system = value.system;
+            _frameRate = value.frameRate;
+            _range->setIfChanged(value.range);
+            _cache.setRange(value.range);
+            _cache.clear();
+            _currentFrame->setIfChanged(
+                clamp(_currentFrame->get(), value.range.min(), value.range.max()));
+            _simulate(_currentFrame->get());
+            _modifiedUpdate();
+        }
+
+        void SceneModel::newScene()
+        {
+            setScene(sim::Scene());
+            _saved = getScene();
+            _path->setIfChanged(std::filesystem::path());
+            _modifiedUpdate();
+        }
+
+        void SceneModel::open(const std::filesystem::path& path)
+        {
+            // Read before anything is changed, so a file that throws leaves
+            // the scene that is already open alone.
+            const sim::Scene scene = sim::read(path);
+            setScene(scene);
+            _saved = getScene();
+            _path->setIfChanged(path);
+            _modifiedUpdate();
+        }
+
+        void SceneModel::save(const std::filesystem::path& path)
+        {
+            const sim::Scene scene = getScene();
+            sim::write(path, scene);
+            _saved = scene;
+            _path->setIfChanged(path);
+            _modifiedUpdate();
+        }
+
+        const std::filesystem::path& SceneModel::getPath() const
+        {
+            return _path->get();
+        }
+
+        std::shared_ptr<IObservable<std::filesystem::path> > SceneModel::observePath() const
+        {
+            return _path;
+        }
+
+        bool SceneModel::isModified() const
+        {
+            return _modified->get();
+        }
+
+        std::shared_ptr<IObservable<bool> > SceneModel::observeModified() const
+        {
+            return _modified;
+        }
+
+        void SceneModel::_modifiedUpdate()
+        {
+            _modified->setIfChanged(getScene() != _saved);
+        }
+
         const sim::System& SceneModel::getSystem() const
         {
             return _system;
@@ -58,6 +136,7 @@ namespace fx
         {
             _cache.invalidateFrom(_range->get().min());
             _simulate(_currentFrame->get());
+            _modifiedUpdate();
         }
 
         const RangeI& SceneModel::getRange() const
@@ -78,6 +157,7 @@ namespace fx
             _currentFrame->setIfChanged(
                 clamp(_currentFrame->get(), value.min(), value.max()));
             _simulate(_currentFrame->get());
+            _modifiedUpdate();
         }
 
         double SceneModel::getFrameRate() const

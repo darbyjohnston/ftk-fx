@@ -402,6 +402,14 @@ namespace fx
                     throw std::runtime_error(ftk::Format(
                         "unknown panel style \"{0}\"").arg(name));
             }
+            if (step.contains("save"))
+            {
+                model->save(step.at("save").get<std::string>());
+            }
+            if (step.contains("open"))
+            {
+                model->open(step.at("open").get<std::string>());
+            }
             if (step.contains("rate"))
             {
                 // The one simulation parameter a shot can set. Frame time is

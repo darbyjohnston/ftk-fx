@@ -46,6 +46,9 @@ namespace fx
 
             //! Spread of the lifespan, as a fraction of it.
             core::Parameter lifespanVariance = core::Parameter(.25F);
+
+            bool operator == (const PointEmitter&) const;
+            bool operator != (const PointEmitter&) const;
         };
 
         //! The force fields acting on a system.
@@ -55,6 +58,9 @@ namespace fx
 
             //! Linear drag, as a fraction of speed removed per second.
             core::Parameter drag = core::Parameter(.1F);
+
+            bool operator == (const Forces&) const;
+            bool operator != (const Forces&) const;
         };
 
         //! A particle system: one pool's worth of emitters, fields, and rules.
@@ -90,6 +96,12 @@ namespace fx
                 const core::Frame& prev,
                 int frame,
                 double frameRate) const;
+
+            //! Compares the recipe. Two systems that compare equal produce the
+            //! same particles, which is what makes this the test for whether a
+            //! scene has unsaved changes.
+            bool operator == (const System&) const;
+            bool operator != (const System&) const;
 
         private:
             //! Fill in a newly born particle. `subFrame` is the time the

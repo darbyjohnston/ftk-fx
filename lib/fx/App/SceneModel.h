@@ -4,7 +4,9 @@
 #pragma once
 
 #include <fx/Core/Cache.h>
-#include <fx/Sim/System.h>
+#include <fx/Sim/Scene.h>
+
+#include <filesystem>
 
 #include <ftk/Core/Observable.h>
 #include <ftk/Core/ObservableList.h>
@@ -39,6 +41,41 @@ namespace fx
 
             static std::shared_ptr<SceneModel> create(
                 const std::shared_ptr<ftk::Context>&);
+
+            //! \name File
+            ///@{
+
+            //! Get the scene: the recipe and the time it runs over, without
+            //! the playhead or the cache.
+            sim::Scene getScene() const;
+
+            //! Replace the scene, throwing away everything simulated from the
+            //! old one.
+            void setScene(const sim::Scene&);
+
+            //! Start again from a default scene, with no path.
+            void newScene();
+
+            //! Read a scene. Throws, leaving the current scene untouched:
+            //! failing to open a file should not cost the artist the one they
+            //! already had.
+            void open(const std::filesystem::path&);
+
+            //! Write the scene, and take the path as the current one.
+            void save(const std::filesystem::path&);
+
+            //! Get the path the scene was last opened from or saved to. Empty
+            //! for a scene that has never been saved.
+            const std::filesystem::path& getPath() const;
+            std::shared_ptr<ftk::IObservable<std::filesystem::path> > observePath() const;
+
+            //! Get whether the scene differs from what is on disk. Compared
+            //! rather than flagged, so putting a value back where it was is
+            //! not a change.
+            bool isModified() const;
+            std::shared_ptr<ftk::IObservable<bool> > observeModified() const;
+
+            ///@}
 
             //! \name System
             ///@{
@@ -124,6 +161,9 @@ namespace fx
             //! Publish the cache state and size.
             void _cacheUpdate();
 
+            //! Compare the scene against what was last read or written.
+            void _modifiedUpdate();
+
             std::shared_ptr<ftk::Context> _context;
             sim::System _system;
             core::Cache _cache;
@@ -135,6 +175,12 @@ namespace fx
             std::shared_ptr<ftk::Observable<std::shared_ptr<const core::Frame> > > _frame;
             std::shared_ptr<ftk::ObservableList<core::FrameState> > _cacheStates;
             std::shared_ptr<ftk::Observable<size_t> > _cacheByteCount;
+            std::shared_ptr<ftk::Observable<std::filesystem::path> > _path;
+            std::shared_ptr<ftk::Observable<bool> > _modified;
+
+            //! The scene as it is on disk, which is what "modified" is
+            //! measured against.
+            sim::Scene _saved;
             std::shared_ptr<ftk::Timer> _playbackTimer;
             int64_t _simTime = 0;
         };

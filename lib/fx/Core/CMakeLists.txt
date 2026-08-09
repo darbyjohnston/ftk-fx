@@ -4,6 +4,7 @@ set(HEADERS
     Frame.h
     Parameter.h
     Pool.h
+    Serialize.h
     Rand.h
     Version.h)
 
@@ -13,6 +14,7 @@ set(SOURCE
     Frame.cpp
     Parameter.cpp
     Pool.cpp
+    Serialize.cpp
     Version.cpp)
 
 add_library(fxCore ${HEADERS} ${SOURCE})

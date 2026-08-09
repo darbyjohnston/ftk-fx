@@ -376,6 +376,60 @@
           "caption": "Points at 14, drawn as discs"
         }
       ]
+    },
+    {
+      "id": "file-menu",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "click": [
+            26,
+            26
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "New, Open, Save, Save As"
+        }
+      ]
+    },
+    {
+      "id": "scene-round-trip",
+      "window": {
+        "w": 700,
+        "h": 480
+      },
+      "setup": [
+        {
+          "rate": 2000
+        },
+        {
+          "save": "/tmp/ftk-fx-round-trip.fx"
+        },
+        {
+          "rate": 200
+        },
+        {
+          "open": "/tmp/ftk-fx-round-trip.fx"
+        },
+        {
+          "frame": 70
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Timeline",
+          "caption": "Saved at rate 2000, changed to 200, opened again"
+        }
+      ]
     }
   ]
 }

@@ -12,12 +12,16 @@
 #include <fx/App/Panes.h>
 
 #include <ftk/UI/Action.h>
+#include <ftk/UI/DialogSystem.h>
 #include <ftk/UI/Divider.h>
+#include <ftk/UI/FileBrowser.h>
 #include <ftk/UI/Menu.h>
 #include <ftk/UI/MenuBar.h>
 #include <ftk/UI/RowLayout.h>
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/Splitter.h>
+
+#include <ftk/Core/Format.h>
 
 using namespace ftk;
 
@@ -51,8 +55,16 @@ namespace fx
             setScreenshotTag(_timelineBar, "MainWindow.Timeline");
             setWidget(layout);
 
+            _createFileMenu(context, app);
             _createLayoutMenu(context);
             _createPanelsMenu(context);
+
+            _pathObserver = Observer<std::filesystem::path>::create(
+                model->observePath(),
+                [this](const std::filesystem::path&) { _titleUpdate(); });
+            _modifiedObserver = Observer<bool>::create(
+                model->observeModified(),
+                [this](bool) { _titleUpdate(); });
         }
 
         MainWindow::~MainWindow()
@@ -99,6 +111,182 @@ namespace fx
             _mouseButton(MouseButton::Left, true, modifiers);
             _cursorPos(to);
             _mouseButton(MouseButton::Left, false, modifiers);
+        }
+
+        namespace
+        {
+            const std::string extension = ".fx";
+            const std::vector<std::string> extensions = { extension };
+        }
+
+        void MainWindow::_createFileMenu(
+            const std::shared_ptr<Context>& context,
+            const std::shared_ptr<App>& app)
+        {
+            // The framework's File menu holds Exit and nothing else. Replaced
+            // rather than appended to, so the file actions come before Exit
+            // instead of after it, and put back where it was so File is still
+            // the first menu.
+            auto menu = Menu::create(context);
+            std::weak_ptr<SceneModel> weak(_model);
+            std::weak_ptr<MainWindow> windowWeak(
+                std::dynamic_pointer_cast<MainWindow>(shared_from_this()));
+
+            menu->addAction(Action::create(
+                "New",
+                KeyShortcut(Key::N, commandKeyModifier),
+                [weak]
+                {
+                    if (auto model = weak.lock())
+                    {
+                        model->newScene();
+                    }
+                }));
+
+            menu->addAction(Action::create(
+                "Open",
+                KeyShortcut(Key::O, commandKeyModifier),
+                [this, weak, context]
+                {
+                    ftk::FileBrowserOpenOptions options;
+                    options.title = "Open Scene";
+                    options.extensions = extensions;
+                    options.extensionsLabel = "Scenes";
+                    context->getSystem<ftk::FileBrowserSystem>()->open(
+                        std::dynamic_pointer_cast<IWindow>(shared_from_this()),
+                        [this, weak](const ftk::Path& path)
+                        {
+                            if (auto model = weak.lock())
+                            {
+                                try
+                                {
+                                    model->open(path.get());
+                                }
+                                catch (const std::exception& e)
+                                {
+                                    _error(e.what());
+                                }
+                            }
+                        },
+                        options);
+                }));
+
+            menu->addAction(Action::create(
+                "Save",
+                KeyShortcut(Key::S, commandKeyModifier),
+                [this, weak]
+                {
+                    auto model = weak.lock();
+                    if (!model)
+                        return;
+                    // A scene that has never been saved has nowhere to save
+                    // to, so Save becomes Save As the first time.
+                    if (model->getPath().empty())
+                    {
+                        _saveAs();
+                        return;
+                    }
+                    try
+                    {
+                        model->save(model->getPath());
+                    }
+                    catch (const std::exception& e)
+                    {
+                        _error(e.what());
+                    }
+                }));
+
+            menu->addAction(Action::create(
+                "Save As",
+                KeyShortcut(
+                    Key::S,
+                    static_cast<int>(commandKeyModifier) |
+                    static_cast<int>(KeyModifier::Shift)),
+                [this] { _saveAs(); }));
+
+            menu->addDivider();
+
+            std::weak_ptr<App> appWeak(app);
+            menu->addAction(Action::create(
+                "Exit",
+                KeyShortcut(Key::Q, commandKeyModifier),
+                [appWeak]
+                {
+                    if (auto app = appWeak.lock())
+                    {
+                        app->exit();
+                    }
+                }));
+
+            getMenuBar()->removeMenu("File");
+            getMenuBar()->insertMenu(0, "File", menu);
+
+            _titleUpdate();
+        }
+
+        void MainWindow::_saveAs()
+        {
+            auto context = getContext();
+            auto model = _model.lock();
+            if (!context || !model)
+                return;
+            ftk::FileBrowserOpenOptions options;
+            options.title = "Save Scene";
+            options.mode = ftk::FileBrowserMode::Save;
+            options.extensions = extensions;
+            options.extensionsLabel = "Scenes";
+            std::weak_ptr<SceneModel> weak(model);
+            context->getSystem<ftk::FileBrowserSystem>()->open(
+                std::dynamic_pointer_cast<IWindow>(shared_from_this()),
+                [this, weak](const ftk::Path& value)
+                {
+                    auto model = weak.lock();
+                    if (!model)
+                        return;
+                    // Typing a name without an extension is the common case,
+                    // and a scene called "smoke" that will not appear in the
+                    // browser's own filter is not helpful.
+                    std::filesystem::path path = value.get();
+                    if (path.extension().empty())
+                    {
+                        path += extension;
+                    }
+                    try
+                    {
+                        model->save(path);
+                    }
+                    catch (const std::exception& e)
+                    {
+                        _error(e.what());
+                    }
+                },
+                options);
+        }
+
+        void MainWindow::_error(const std::string& what)
+        {
+            if (auto context = getContext())
+            {
+                context->getSystem<ftk::DialogSystem>()->message(
+                    "Error",
+                    what,
+                    std::dynamic_pointer_cast<IWindow>(shared_from_this()));
+                context->log("fx::app::MainWindow", what, LogType::Error);
+            }
+        }
+
+        void MainWindow::_titleUpdate()
+        {
+            auto model = _model.lock();
+            if (!model)
+                return;
+            const std::filesystem::path& path = model->getPath();
+            const std::string name = path.empty() ?
+                std::string("Untitled") :
+                path.filename().string();
+            setTitle(ftk::Format("{0}{1} - ftk-fx").
+                arg(name).
+                arg(model->isModified() ? "*" : ""));
         }
 
         void MainWindow::_createLayoutMenu(const std::shared_ptr<Context>& context)

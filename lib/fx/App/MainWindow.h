@@ -8,6 +8,7 @@
 
 #include <ftk/UI/MainWindow.h>
 
+#include <filesystem>
 #include <map>
 #include <string>
 
@@ -75,7 +76,20 @@ namespace fx
             void keyPressEvent(ftk::KeyEvent&) override;
 
         private:
+            void _createFileMenu(
+                const std::shared_ptr<ftk::Context>&,
+                const std::shared_ptr<App>&);
             void _createLayoutMenu(const std::shared_ptr<ftk::Context>&);
+
+            //! Ask for a path and save to it.
+            void _saveAs();
+
+            //! Report a failure to the artist rather than only to the log.
+            void _error(const std::string&);
+
+            //! Put the file's name and whether it is modified in the title
+            //! bar, which is where everything else puts it.
+            void _titleUpdate();
             void _createPanelsMenu(const std::shared_ptr<ftk::Context>&);
 
             std::weak_ptr<SceneModel> _model;
@@ -83,6 +97,8 @@ namespace fx
             std::shared_ptr<Panels> _panels;
             std::shared_ptr<TimelineBar> _timelineBar;
             std::shared_ptr<ftk::Splitter> _splitter;
+            std::shared_ptr<ftk::Observer<std::filesystem::path> > _pathObserver;
+            std::shared_ptr<ftk::Observer<bool> > _modifiedObserver;
 
             std::map<PaneLayout, std::shared_ptr<ftk::Action> > _layoutActions;
             std::shared_ptr<ftk::Observer<PaneLayout> > _layoutObserver;

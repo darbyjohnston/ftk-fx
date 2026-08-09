@@ -1,7 +1,9 @@
 set(HEADERS
+    Scene.h
     System.h)
 
 set(SOURCE
+    Scene.cpp
     System.cpp)
 
 add_library(fxSim ${HEADERS} ${SOURCE})

@@ -6,6 +6,7 @@
 #include <fx/CoreTest/CacheTest.h>
 #include <fx/CoreTest/CurveTest.h>
 #include <fx/CoreTest/PoolTest.h>
+#include <fx/CoreTest/SceneTest.h>
 #include <fx/CoreTest/SystemTest.h>
 
 #include <ftk/Core/CmdLine.h>
@@ -48,6 +49,7 @@ namespace fx
             p.tests.push_back(core_test::CurveTest::create(context));
             p.tests.push_back(core_test::CacheTest::create(context));
             p.tests.push_back(core_test::SystemTest::create(context));
+            p.tests.push_back(core_test::SceneTest::create(context));
         }
 
         App::App() :

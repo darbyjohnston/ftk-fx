@@ -15,6 +15,51 @@ namespace fx
 {
     namespace sim
     {
+        bool PointEmitter::operator == (const PointEmitter& other) const
+        {
+            return
+                enabled == other.enabled &&
+                seed == other.seed &&
+                position == other.position &&
+                rate == other.rate &&
+                direction == other.direction &&
+                spread == other.spread &&
+                speed == other.speed &&
+                speedVariance == other.speedVariance &&
+                lifespan == other.lifespan &&
+                lifespanVariance == other.lifespanVariance;
+        }
+
+        bool PointEmitter::operator != (const PointEmitter& other) const
+        {
+            return !(*this == other);
+        }
+
+        bool Forces::operator == (const Forces& other) const
+        {
+            return gravity == other.gravity && drag == other.drag;
+        }
+
+        bool Forces::operator != (const Forces& other) const
+        {
+            return !(*this == other);
+        }
+
+        bool System::operator == (const System& other) const
+        {
+            return
+                _name == other._name &&
+                _enabled == other._enabled &&
+                _emitter == other._emitter &&
+                _forces == other._forces &&
+                _substeps == other._substeps;
+        }
+
+        bool System::operator != (const System& other) const
+        {
+            return !(*this == other);
+        }
+
         namespace
         {
             // Random channels. One per draw, so that adding a draw later does
