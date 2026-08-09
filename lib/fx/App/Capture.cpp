@@ -37,7 +37,7 @@ namespace fx
             // the machine being fast or slow does not change them.
             const std::chrono::milliseconds tickInterval(30);
             const int settleTicks = 10;   // 300ms to settle before capturing
-            const int timeoutTicks = 200; // 6s hard cap
+            const int timeoutTicks = 200; // 6s hard cap for the default settle
 
             // Console diagnostics, so a failure is never silent.
             void note(const std::string& shot, const std::string& msg)
@@ -402,6 +402,15 @@ namespace fx
                     throw std::runtime_error(ftk::Format(
                         "unknown panel style \"{0}\"").arg(name));
             }
+            if (step.contains("rate"))
+            {
+                // The one simulation parameter a shot can set. Frame time is
+                // worth measuring against a known particle count, and the
+                // count follows the rate.
+                model->getSystem().getEmitter().rate.setConstant(
+                    step.at("rate").get<float>());
+                model->parameterChanged();
+            }
             if (step.contains("pointSize"))
             {
                 panes->setPointSize(step.at("pointSize").get<float>());
@@ -418,7 +427,13 @@ namespace fx
             if (p.done)
                 return;
             ++p.ticks;
-            if (p.ticks > timeoutTicks)
+            // The cap allows for one settle per late step and one to capture
+            // after them, so a shot that asks to sit and watch something for
+            // eight seconds is not cut off at six.
+            const int timeout = std::max<int>(
+                timeoutTicks,
+                p.settleTicksShot * static_cast<int>(p.lateSteps.size() + 2));
+            if (p.ticks > timeout)
             {
                 note(p.shotId, "timed out waiting for the shot to settle");
                 _finish(false);
