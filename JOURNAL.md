@@ -30,13 +30,28 @@ the bar has ever had.
 drawn in pixels with the camera's rotation but not its position or its zoom --
 it says which way the scene is facing, nothing else. Each axis has a faint stub
 running the other way, because with only the positive half drawn Front and Back
-are the same picture.
+are the same picture. It is sized in points, which a draw event does not carry,
+so the display scale is caught in `sizeHintEvent` and kept.
 
-Two things learned in the drawing. Line width is one pixel whatever is asked
-for, so three hairlines in a corner are easy to miss; a dot on each positive
-tip fixes that and doubles as the answer to which end is positive when an axis
-is nearly edge on. And the tripod is sized in points, which a draw event does
-not carry -- the display scale has to be caught in `sizeHintEvent` and kept.
+Written first in OpenGL alongside the grid and the points, then moved onto
+`event.render` -- the question being whether the viewport's drawing could be
+centralised there, since OpenGL is meant to be retired eventually.
+
+For the grid and the particles the answer is no, and forcing it would be a
+mistake: the renderer is two dimensional. `TriMesh2F` has no z, mesh primitives
+hardcode straight alpha, and there are no point sprites, so the projection
+would move to the CPU and the scene would lose its depth, its additive
+accumulation -- which is what makes the core of a plume read as light -- and
+its round points. Centralising a 3D viewport behind a 2D API costs the three
+things that make it a 3D viewport.
+
+The tripod is the exception, and it belongs there. It is a screen space overlay
+at a fixed size, so it has no projection to lose, and it comes out better for
+the move: `LineOptions` carries a width where `glLineWidth` is one pixel
+whatever is asked for, and `circle()` gives real dots on the tips rather than
+point sprites. Sorting the three axes by depth before drawing replaces what the
+depth test was doing. It draws after the buffer is blitted rather than inside
+it, which is what an overlay should have been doing anyway.
 
 ---
 

@@ -99,11 +99,9 @@ namespace fx
             void _pointsUpdate();
 
             void _gridUpdate();
-            void _axisUpdate();
-
             //! The corner tripod, drawn in pixels rather than in the scene so
             //! that it keeps its size whatever the camera is doing.
-            void _axisDraw(const ftk::Size2I& buffer, float displayScale);
+            void _axisDraw(const ftk::Box2I&, const ftk::DrawEvent&);
 
             std::shared_ptr<const core::Frame> _frame;
             float _pointSize = 3.F;
@@ -134,9 +132,6 @@ namespace fx
             std::shared_ptr<ftk::gl::VBO> _gridVbo;
             std::shared_ptr<ftk::gl::VAO> _gridVao;
             size_t _gridCount = 0;
-            std::shared_ptr<ftk::gl::VBO> _axisVbo;
-            std::shared_ptr<ftk::gl::VAO> _axisVao;
-            size_t _axisCount = 0;
             float _displayScale = 1.F;
             std::shared_ptr<ftk::gl::OffscreenBuffer> _buffer;
 

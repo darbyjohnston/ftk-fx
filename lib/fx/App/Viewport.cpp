@@ -13,7 +13,9 @@
 #include <ftk/Core/Math.h>
 #include <ftk/Core/Matrix.h>
 #include <ftk/Core/RenderUtil.h>
+#include <ftk/UI/DrawUtil.h>
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 
@@ -349,83 +351,6 @@ namespace fx
             _gridCount = count;
         }
 
-        void Viewport::_axisUpdate()
-        {
-            // Six vertices for the three axes and six more for a stub of each
-            // running the other way, which is what tells a head-on ortho view
-            // apart from the one behind it: with only the positive half drawn,
-            // Front and Back look identical.
-            std::vector<uint8_t> data;
-            const size_t count = 15;
-            data.resize(count * vertexByteCount);
-            uint8_t* p = data.data();
-            const Color4F x(.92F, .30F, .30F);
-            const Color4F y(.40F, .84F, .36F);
-            const Color4F z(.36F, .54F, .95F);
-            const std::array<std::pair<V3F, Color4F>, 3> axes =
-            {
-                std::make_pair(V3F(1.F, 0.F, 0.F), x),
-                std::make_pair(V3F(0.F, 1.F, 0.F), y),
-                std::make_pair(V3F(0.F, 0.F, 1.F), z)
-            };
-            for (const auto& axis : axes)
-            {
-                writeVertex(p, V3F(0.F, 0.F, 0.F), axis.second);
-                writeVertex(p, axis.first, axis.second);
-            }
-            for (const auto& axis : axes)
-            {
-                Color4F dim = axis.second;
-                dim.a = .35F;
-                writeVertex(p, V3F(0.F, 0.F, 0.F), dim);
-                writeVertex(p, axis.first * -.4F, dim);
-            }
-            // A dot on each positive tip. Lines are one pixel wide whatever is
-            // asked for on this driver, and three hairlines in a corner are
-            // easy to miss; the dots also say which end is positive when an
-            // axis is nearly edge on.
-            for (const auto& axis : axes)
-            {
-                writeVertex(p, axis.first, axis.second);
-            }
-            _axisVbo = gl::VBO::create(count, gl::VBOType::Pos3_F32_Color_U8);
-            _axisVbo->copy(data);
-            _axisVao = gl::VAO::create(_axisVbo->getType(), _axisVbo->getID());
-            _axisCount = count;
-        }
-
-        void Viewport::_axisDraw(const Size2I& buffer, float displayScale)
-        {
-            if (!_axisVao || 0 == _axisCount)
-                return;
-
-            // Pixels, not world units, and the camera's rotation without its
-            // position or its zoom -- the tripod says which way the scene is
-            // facing, not where it is or how far away.
-            const float length = axisLength * displayScale;
-            const float margin = axisMargin * displayScale;
-            const M44F mvp =
-                ortho(
-                    0.F, static_cast<float>(buffer.w),
-                    0.F, static_cast<float>(buffer.h),
-                    -1000.F, 1000.F) *
-                translate(V3F(margin, margin, 0.F)) *
-                scale(V3F(length, length, length)) *
-                rotateX(_orbit.y) *
-                rotateY(_orbit.x);
-            _shader->setUniform("mvp", mvp);
-            _shader->setUniform("round", 0.F);
-            _shader->setUniform("pointSize", 1.F);
-            glDisable(GL_DEPTH_TEST);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            _axisVao->bind();
-            _axisVao->draw(GL_LINES, 0, 12);
-            _shader->setUniform("round", 1.F);
-            _shader->setUniform("pointSize", 5.F * displayScale);
-            _axisVao->draw(GL_POINTS, 12, 3);
-        }
-
         void Viewport::_pointsUpdate()
         {
             _pointsDirty = false;
@@ -464,6 +389,68 @@ namespace fx
             _pointsVbo->copy(data, 0, data.size());
         }
 
+        void Viewport::_axisDraw(const Box2I& g, const DrawEvent& event)
+        {
+            // The camera's rotation and nothing else: the tripod says which
+            // way the scene is facing, not where it is or how far away.
+            const M44F rotation = rotateX(_orbit.y) * rotateY(_orbit.x);
+            const float length = axisLength * _displayScale;
+            const V2F origin(
+                g.min.x + axisMargin * _displayScale,
+                g.max.y - axisMargin * _displayScale);
+
+            struct Axis
+            {
+                V3F dir;
+                Color4F color;
+            };
+            std::array<Axis, 3> axes =
+            {
+                Axis{ V3F(1.F, 0.F, 0.F), Color4F(.92F, .30F, .30F) },
+                Axis{ V3F(0.F, 1.F, 0.F), Color4F(.40F, .84F, .36F) },
+                Axis{ V3F(0.F, 0.F, 1.F), Color4F(.36F, .54F, .95F) }
+            };
+            std::array<V3F, 3> dir;
+            for (size_t i = 0; i < axes.size(); ++i)
+            {
+                dir[i] = rotation * axes[i].dir;
+            }
+
+            // Furthest first, so the axis nearest the viewer is the one drawn
+            // on top where they cross. The depth test used to do this.
+            std::array<size_t, 3> order = { 0, 1, 2 };
+            std::sort(
+                order.begin(),
+                order.end(),
+                [&dir](size_t a, size_t b) { return dir[a].z < dir[b].z; });
+
+            const float width = std::max(1.F, _displayScale);
+            LineOptions lineOptions;
+            lineOptions.width = width;
+            const int radius = static_cast<int>(std::max(2.F, 2.F * _displayScale));
+            for (size_t i : order)
+            {
+                // Screen y runs the other way to the camera's.
+                const V2F tip(
+                    origin.x + dir[i].x * length,
+                    origin.y - dir[i].y * length);
+                const V2F stub(
+                    origin.x - dir[i].x * length * .4F,
+                    origin.y + dir[i].y * length * .4F);
+                Color4F faint = axes[i].color;
+                faint.a = .35F;
+                event.render->drawLine(origin, stub, faint, lineOptions);
+                event.render->drawLine(origin, tip, axes[i].color, lineOptions);
+                event.render->drawMesh(
+                    circle(
+                        V2I(
+                            static_cast<int>(tip.x),
+                            static_cast<int>(tip.y)),
+                        radius),
+                    axes[i].color);
+            }
+        }
+
         void Viewport::sizeHintEvent(const SizeHintEvent& event)
         {
             IWidget::sizeHintEvent(event);
@@ -484,10 +471,6 @@ namespace fx
                 if (!_gridVao)
                 {
                     _gridUpdate();
-                }
-                if (!_axisVao)
-                {
-                    _axisUpdate();
                 }
                 if (_pointsDirty)
                 {
@@ -565,9 +548,6 @@ namespace fx
                         _pointsVao->draw(GL_POINTS, 0, _pointCount);
                     }
 
-                    // Last, and over everything: it is an overlay on the view
-                    // rather than something standing in the scene.
-                    _axisDraw(size, _displayScale);
                 }
             }
             catch (const std::exception& e)
@@ -582,6 +562,12 @@ namespace fx
             {
                 event.render->drawTexture(_buffer->getColorID(), g, true);
             }
+
+            // Over the top of the buffer rather than inside it, and through
+            // the renderer rather than in OpenGL: the tripod is a screen space
+            // overlay at a fixed size, which is the one part of this widget
+            // that a two dimensional drawing API expresses well.
+            _axisDraw(g, event);
         }
 
         void Viewport::mouseMoveEvent(MouseMoveEvent& event)
