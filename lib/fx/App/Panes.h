@@ -5,7 +5,7 @@
 
 #include <fx/App/PaneOptions.h>
 
-#include <ftk/UI/IWidget.h>
+#include <ftk/UI/IContainer.h>
 
 #include <ftk/Core/Observable.h>
 
@@ -26,7 +26,7 @@ namespace fx
         //! back finds each pane showing what it was showing, from the camera it
         //! was left at, and why the OpenGL resources behind a viewport are not
         //! thrown away and rebuilt every time the artist changes their mind.
-        class Panes : public ftk::IWidget
+        class Panes : public ftk::IContainer
         {
         protected:
             void _init(
@@ -71,9 +71,6 @@ namespace fx
             //! Set the point size in every viewport. Display settings are the
             //! same everywhere; it is the camera that differs between them.
             void setPointSize(float);
-
-            ftk::Size2I getSizeHint() const override;
-            void setGeometry(const ftk::Box2I&) override;
 
         private:
             //! Tear down the tree of splitters and build the one the current

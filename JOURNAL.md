@@ -7,6 +7,62 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-08 — Three changes to feather-tk, on a widget-api branch
+
+Building this application turned up things the toolkit could do rather than
+things it did wrong, so three of them went upstream. Each is paired with its
+adoption here, which is the only honest test of whether it helped.
+
+**`ftk::IContainer`.** Six widgets here carried the identical pair forwarding
+their geometry and size hint to a layout that filled them; `ScrollWidget` and
+DJV's `IToolWidget` already had it too. Deriving and calling `_setWidget()` says
+it once. Net 63 lines out of this application, and `Panels` gained the most: the
+column and the tab widget were two children with their visibility toggled and
+are now whichever one the container is handed.
+
+**The button and modifiers on `MouseMoveEvent`.** A dragging widget needs to
+know which button is doing it. Without that the viewport recorded the button on
+press, cleared it on release, and had a release handler for no other reason.
+`IWindow` already knows -- it keeps the click that started the press -- so it
+fills them in.
+
+I had this half wrong when I proposed it. `IMouseWidget` *can* accept any button
+already: passing `MouseButton::None` matches all of them. What it could not do
+was say which one, which is the part that mattered.
+
+**`Splitter::setWidgets()` and a split callback.** The first makes a rebuild one
+call rather than an ordering to get right, which is the phantom splitters again
+seen from the toolkit's side. The second is what a linked four-up needs, and the
+four-up's rows now divide together.
+
+### The one that bit back
+
+Adopting `IContainer` in `Panes` broke the four-up: pane zero vanished. In a
+single-pane arrangement the container's child *is* pane zero, and rebuilding
+into a four-up parents pane zero under the new tree and then hands the tree to
+`_setWidget`, which dutifully detached the old child -- taking pane zero back
+out of the tree it had just been put into.
+
+So `_setWidget` releases only what is still its own child. "Let go of what I am
+holding" is right; "detach this widget wherever it now lives" is not. A
+convenience that owns lifetimes has to be careful about which of those it means.
+
+This one the harness did catch, in the sidecar: `panes-four` came back with
+three panes and one of them twice the width.
+
+### Not done
+
+`FTK_ENUM` is welded to `FTK_API`, so a downstream application marks its own
+functions with ftk's export attribute. I overstated this as something that bit
+me: `FTK_STATIC` makes `FTK_API` empty, and this application is a static build,
+so the macro would have worked. It is wrong only for a shared build on Windows.
+Left alone.
+
+Font roles and a shared header-strip widget are still worth doing and are not
+done.
+
+---
+
 ## 2026-08-08 — Never take apart the thing that is calling you
 
 Switching a pane to the spreadsheet crashed. The pane menu's action rebuilt the

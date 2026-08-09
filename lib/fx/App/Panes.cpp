@@ -23,7 +23,7 @@ namespace fx
             const std::shared_ptr<SceneModel>& model,
             const std::shared_ptr<IWidget>& parent)
         {
-            IWidget::_init(context, "fx::app::Panes", parent);
+            IContainer::_init(context, "fx::app::Panes", parent);
             setHStretch(Stretch::Expanding);
             setVStretch(Stretch::Expanding);
 
@@ -115,19 +115,7 @@ namespace fx
             }
         }
 
-        Size2I Panes::getSizeHint() const
-        {
-            return _root ? _root->getSizeHint() : Size2I();
-        }
 
-        void Panes::setGeometry(const Box2I& value)
-        {
-            IWidget::setGeometry(value);
-            if (_root)
-            {
-                _root->setGeometry(value);
-            }
-        }
 
         void Panes::_layoutUpdate()
         {
@@ -136,55 +124,61 @@ namespace fx
                 return;
 
             // Detach the panes before dropping the splitters, or the splitters
-            // take them down with them.
+            // take them down with them. Splitter::setWidgets() does the same
+            // for its own children, which is what makes the rebuild below a
+            // statement rather than an ordering to get right.
             for (const auto& pane : _panes)
             {
                 pane->setParent(nullptr);
             }
-            // And detach the old tree from this widget. A parent holds its
-            // children by shared pointer, so dropping the only other reference
-            // does not free them: the old splitters stayed in the tree, kept
-            // their last geometry and went on drawing their handles over the
-            // new arrangement. One leaked tree per layout change.
-            if (_root)
-            {
-                _root->setParent(nullptr);
-            }
-            _root.reset();
 
             switch (_layout->get())
             {
             case PaneLayout::Two:
             {
                 auto splitter = Splitter::create(context, Orientation::Horizontal);
-                _panes[0]->setParent(splitter);
-                _panes[1]->setParent(splitter);
+                splitter->setWidgets({ _panes[0], _panes[1] });
                 _root = splitter;
                 break;
             }
             case PaneLayout::Three:
             {
+                auto right = Splitter::create(context, Orientation::Vertical);
+                right->setWidgets({ _panes[1], _panes[2] });
                 auto splitter = Splitter::create(context, Orientation::Horizontal);
-                _panes[0]->setParent(splitter);
-                auto right = Splitter::create(context, Orientation::Vertical, splitter);
-                _panes[1]->setParent(right);
-                _panes[2]->setParent(right);
+                splitter->setWidgets({ _panes[0], right });
                 _root = splitter;
                 break;
             }
             case PaneLayout::Four:
             {
-                // Two rows, each split in two. The rows divide independently,
-                // which is not what a linked four-up does; it needs the
-                // splitters to talk to each other and is not worth the
-                // machinery until someone is bothered by it.
+                // Two rows, each split in two, with the two divisions tied
+                // together so the four panes stay a grid rather than drifting
+                // into a ragged pair of rows.
+                auto top = Splitter::create(context, Orientation::Horizontal);
+                top->setWidgets({ _panes[0], _panes[1] });
+                auto bottom = Splitter::create(context, Orientation::Horizontal);
+                bottom->setWidgets({ _panes[2], _panes[3] });
+                std::weak_ptr<Splitter> topWeak(top);
+                std::weak_ptr<Splitter> bottomWeak(bottom);
+                top->setSplitCallback(
+                    [bottomWeak](float value)
+                    {
+                        if (auto bottom = bottomWeak.lock())
+                        {
+                            bottom->setSplit(value);
+                        }
+                    });
+                bottom->setSplitCallback(
+                    [topWeak](float value)
+                    {
+                        if (auto top = topWeak.lock())
+                        {
+                            top->setSplit(value);
+                        }
+                    });
                 auto splitter = Splitter::create(context, Orientation::Vertical);
-                auto top = Splitter::create(context, Orientation::Horizontal, splitter);
-                _panes[0]->setParent(top);
-                _panes[1]->setParent(top);
-                auto bottom = Splitter::create(context, Orientation::Horizontal, splitter);
-                _panes[2]->setParent(bottom);
-                _panes[3]->setParent(bottom);
+                splitter->setWidgets({ top, bottom });
                 _root = splitter;
                 break;
             }
@@ -193,8 +187,10 @@ namespace fx
                 break;
             }
 
-            _root->setParent(shared_from_this());
-            _root->setGeometry(getGeometry());
+            // The old tree goes when this replaces it: IContainer detaches what
+            // it is handed over, and a widget only dies when its parent lets go
+            // of it.
+            _setWidget(_root);
         }
     }
 }
