@@ -14,6 +14,7 @@
 #include <ftk/Core/Matrix.h>
 #include <ftk/Core/RenderUtil.h>
 
+#include <array>
 #include <cstring>
 
 using namespace ftk;
@@ -43,6 +44,11 @@ namespace fx
 
             const float gridExtent = 12.F;
             const int gridLines = 25;
+
+            //! The corner tripod, in points: how long an axis is and how far
+            //! its origin sits from the corner.
+            const float axisLength = 22.F;
+            const float axisMargin = 26.F;
 
             std::string vertexSource()
             {
@@ -343,6 +349,83 @@ namespace fx
             _gridCount = count;
         }
 
+        void Viewport::_axisUpdate()
+        {
+            // Six vertices for the three axes and six more for a stub of each
+            // running the other way, which is what tells a head-on ortho view
+            // apart from the one behind it: with only the positive half drawn,
+            // Front and Back look identical.
+            std::vector<uint8_t> data;
+            const size_t count = 15;
+            data.resize(count * vertexByteCount);
+            uint8_t* p = data.data();
+            const Color4F x(.92F, .30F, .30F);
+            const Color4F y(.40F, .84F, .36F);
+            const Color4F z(.36F, .54F, .95F);
+            const std::array<std::pair<V3F, Color4F>, 3> axes =
+            {
+                std::make_pair(V3F(1.F, 0.F, 0.F), x),
+                std::make_pair(V3F(0.F, 1.F, 0.F), y),
+                std::make_pair(V3F(0.F, 0.F, 1.F), z)
+            };
+            for (const auto& axis : axes)
+            {
+                writeVertex(p, V3F(0.F, 0.F, 0.F), axis.second);
+                writeVertex(p, axis.first, axis.second);
+            }
+            for (const auto& axis : axes)
+            {
+                Color4F dim = axis.second;
+                dim.a = .35F;
+                writeVertex(p, V3F(0.F, 0.F, 0.F), dim);
+                writeVertex(p, axis.first * -.4F, dim);
+            }
+            // A dot on each positive tip. Lines are one pixel wide whatever is
+            // asked for on this driver, and three hairlines in a corner are
+            // easy to miss; the dots also say which end is positive when an
+            // axis is nearly edge on.
+            for (const auto& axis : axes)
+            {
+                writeVertex(p, axis.first, axis.second);
+            }
+            _axisVbo = gl::VBO::create(count, gl::VBOType::Pos3_F32_Color_U8);
+            _axisVbo->copy(data);
+            _axisVao = gl::VAO::create(_axisVbo->getType(), _axisVbo->getID());
+            _axisCount = count;
+        }
+
+        void Viewport::_axisDraw(const Size2I& buffer, float displayScale)
+        {
+            if (!_axisVao || 0 == _axisCount)
+                return;
+
+            // Pixels, not world units, and the camera's rotation without its
+            // position or its zoom -- the tripod says which way the scene is
+            // facing, not where it is or how far away.
+            const float length = axisLength * displayScale;
+            const float margin = axisMargin * displayScale;
+            const M44F mvp =
+                ortho(
+                    0.F, static_cast<float>(buffer.w),
+                    0.F, static_cast<float>(buffer.h),
+                    -1000.F, 1000.F) *
+                translate(V3F(margin, margin, 0.F)) *
+                scale(V3F(length, length, length)) *
+                rotateX(_orbit.y) *
+                rotateY(_orbit.x);
+            _shader->setUniform("mvp", mvp);
+            _shader->setUniform("round", 0.F);
+            _shader->setUniform("pointSize", 1.F);
+            glDisable(GL_DEPTH_TEST);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            _axisVao->bind();
+            _axisVao->draw(GL_LINES, 0, 12);
+            _shader->setUniform("round", 1.F);
+            _shader->setUniform("pointSize", 5.F * displayScale);
+            _axisVao->draw(GL_POINTS, 12, 3);
+        }
+
         void Viewport::_pointsUpdate()
         {
             _pointsDirty = false;
@@ -381,6 +464,14 @@ namespace fx
             _pointsVbo->copy(data, 0, data.size());
         }
 
+        void Viewport::sizeHintEvent(const SizeHintEvent& event)
+        {
+            IWidget::sizeHintEvent(event);
+            // Kept because the draw needs it and a draw event does not carry
+            // it: the tripod is sized in points, not in buffer pixels.
+            _displayScale = event.displayScale;
+        }
+
         void Viewport::drawEvent(const Box2I& drawRect, const DrawEvent& event)
         {
             const Box2I& g = getGeometry();
@@ -393,6 +484,10 @@ namespace fx
                 if (!_gridVao)
                 {
                     _gridUpdate();
+                }
+                if (!_axisVao)
+                {
+                    _axisUpdate();
                 }
                 if (_pointsDirty)
                 {
@@ -469,6 +564,10 @@ namespace fx
                         _pointsVao->bind();
                         _pointsVao->draw(GL_POINTS, 0, _pointCount);
                     }
+
+                    // Last, and over everything: it is an overlay on the view
+                    // rather than something standing in the scene.
+                    _axisDraw(size, _displayScale);
                 }
             }
             catch (const std::exception& e)

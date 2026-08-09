@@ -7,6 +7,39 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — A thinner playhead, and which way is up
+
+Two from Darby, both about reading the screen rather than about behaviour.
+
+**The playhead.** The choice offered was an ftk slider handle, for consistency
+with the parameter sliders, or a thin bar like the tlRender timeline. The
+slider handle is the wrong idiom here despite being the consistent one: a
+slider's trough carries no information, so a handle covering part of it costs
+nothing, whereas every pixel of this bar is a frame with a state. A handle wide
+enough to take hold of is wide enough to hide the frame it points at -- which is
+the same mistake the filled cell made two entries ago, arrived at from the
+other direction.
+
+So it is the tlRender form: a two-pixel marker centred on the frame rather than
+at its left edge, so it points at a cell instead of at the join between two.
+The affordance the slider handle would have given comes from the whole strip
+lighting up under the pointer instead, which is also the first hover feedback
+the bar has ever had.
+
+**The tripod.** A small three-axis gizmo in each viewport's bottom-left corner,
+drawn in pixels with the camera's rotation but not its position or its zoom --
+it says which way the scene is facing, nothing else. Each axis has a faint stub
+running the other way, because with only the positive half drawn Front and Back
+are the same picture.
+
+Two things learned in the drawing. Line width is one pixel whatever is asked
+for, so three hairlines in a corner are easy to miss; a dot on each positive
+tip fixes that and doubles as the answer to which end is positive when an axis
+is nearly edge on. And the tripod is sized in points, which a draw event does
+not carry -- the display scale has to be caught in `sizeHintEvent` and kept.
+
+---
+
 ## 2026-08-09 — Measuring the four-up, and the ruler being wrong
 
 A screenshot of four viewports under load: 5926 particles, 48MB of GL buffers,

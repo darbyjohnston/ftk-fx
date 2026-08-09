@@ -24,6 +24,7 @@ namespace fx
             setHStretch(Stretch::Expanding);
             setTooltip("Which frames are simulated, and where the playhead is. "
                 "Click or drag to scrub");
+            _setMouseHoverEnabled(true);
             _setMousePressEnabled(true);
             _model = model;
 
@@ -134,19 +135,33 @@ namespace fx
             event.render->drawRects(simulated, Color4F(.22F, .42F, .27F));
             event.render->drawRects(locked, Color4F(.24F, .38F, .58F));
 
-            // An outline rather than a filled cell. Filled, the playhead hid
-            // the state of the one frame most worth knowing the state of --
-            // a locked frame under the playhead looked like any other.
+            // The whole strip lights up rather than a handle, because a handle
+            // wide enough to take hold of is wide enough to hide the frame it
+            // points at, and every frame here is carrying a colour.
+            if (_isMousePressed())
+            {
+                event.render->drawRect(
+                    g,
+                    event.style->getColorRole(ColorRole::Pressed));
+            }
+            else if (_isMouseInside())
+            {
+                event.render->drawRect(
+                    g,
+                    event.style->getColorRole(ColorRole::Hover));
+            }
+
+            // A thin marker, the way the tlRender timeline draws its current
+            // time. Centred on the frame rather than at its left edge, so it
+            // points at the cell instead of at the join between two.
             const Box2I cell = _getCellBox(_currentFrame);
-            const int w = std::max(cell.w(), _border * 8);
-            event.render->drawMesh(
-                border(
-                    Box2I(
-                        cell.min.x - (w - cell.w()) / 2,
-                        g.min.y,
-                        w,
-                        g.h()),
-                    _border * 2),
+            const int w = _border * 2;
+            event.render->drawRect(
+                Box2I(
+                    cell.min.x + cell.w() / 2 - w / 2,
+                    g.min.y,
+                    w,
+                    g.h()),
                 event.style->getColorRole(ColorRole::Text));
 
             // Bordered like the other controls, so it reads as something to
