@@ -104,6 +104,8 @@ namespace fx
             //! Get how long the last call to simulate took, in milliseconds.
             //! Zero when the playhead landed on a frame the cache already had,
             //! which is the number worth seeing: it says the scrub was free.
+            //! How long the last step through _frameUpdate() took, in
+            //! microseconds.
             int64_t getSimTime() const;
 
             //! Get the number of particles at the playhead.

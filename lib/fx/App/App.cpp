@@ -92,7 +92,7 @@ namespace fx
                         0;
                 });
             diagSystem->addSampler(
-                "fx Sim/Time: {0}ms",
+                "fx Sim/Time: {0}us",
                 [weak]
                 {
                     auto model = weak.lock();

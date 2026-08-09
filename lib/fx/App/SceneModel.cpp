@@ -236,7 +236,11 @@ namespace fx
             }
 
             _cache.evict(frame);
-            _simTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            // Microseconds. Re-simulating seventy frames is a few
+            // milliseconds, and a scrub inside the cache is well under one, so
+            // rounding to milliseconds reads zero for everything that is not
+            // already slow.
+            _simTime = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::steady_clock::now() - startTime).count();
             _frame->setIfChanged(state);
             _cacheUpdate();
