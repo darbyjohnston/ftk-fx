@@ -39,7 +39,7 @@ namespace fx
             setScreenshotTag(_panels, "MainWindow.Panels");
 
             _splitter = Splitter::create(context, Orientation::Horizontal);
-            _splitter->setSplit(.78F);
+            _splitter->setSplit(.66F);
             _panes->setParent(_splitter);
             _panels->setParent(_splitter);
 

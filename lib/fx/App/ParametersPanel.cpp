@@ -18,6 +18,9 @@ namespace fx
 {
     namespace app
     {
+        // Every row gets a default, and so a reset button. The three that had
+        // none looked like rows that could not be reset rather than rows whose
+        // author forgot, which is worse than not offering it anywhere.
         void ParametersPanel::_addSlider(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<FormLayout>& layout,
@@ -79,6 +82,7 @@ namespace fx
             auto seedSlider = IntEditSlider::create(context);
             seedSlider->setRange(1, 100);
             seedSlider->setValue(static_cast<int>(emitter.seed));
+            seedSlider->setDefault(static_cast<int>(emitter.seed));
             seedSlider->setTooltip("Re-roll every random choice this emitter makes");
             sim::PointEmitter* emitterPtr = &emitter;
             seedSlider->setCallback(
@@ -102,6 +106,7 @@ namespace fx
             auto substepsSlider = IntEditSlider::create(context);
             substepsSlider->setRange(1, 8);
             substepsSlider->setValue(model->getSystem().getSubsteps());
+            substepsSlider->setDefault(model->getSystem().getSubsteps());
             substepsSlider->setTooltip(
                 "Solver steps per frame. More is smoother and slower");
             substepsSlider->setCallback(
@@ -123,6 +128,7 @@ namespace fx
             auto pointSizeSlider = FloatEditSlider::create(context);
             pointSizeSlider->setRange(1.F, 16.F);
             pointSizeSlider->setValue(3.F);
+            pointSizeSlider->setDefault(3.F);
             std::weak_ptr<Panes> panesWeak(panes);
             pointSizeSlider->setCallback(
                 [panesWeak](float value)
