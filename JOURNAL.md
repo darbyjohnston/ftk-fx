@@ -57,6 +57,29 @@ underneath the white. The playhead is an outline now.
 
 The `1.4 MB` beside the particle count was unlabelled. It is the cache.
 
+### The rename did nothing, and the sidecar said it worked
+
+Shipped, looked at, and the header still said "Persp" with Side ticked in
+the menu below it. `MenuBarButton` caches the glyphs it measured the first
+time and only throws them away when the style changes; `IButton::setText`
+calls `setSizeUpdate()`, which is not the same thing. Five of ftk's button
+subclasses override `setText` to set their own cache flag -- five identical
+copies of the same six lines -- and four never did, `MenuBarButton` among
+them. `IButton` calls a `_sizeDirty()` hook now and the subclasses override
+that instead, which is both shorter and not something the next subclass can
+forget.
+
+Worth recording how this got past the harness. The sidecar reads a widget's
+text out of the widget, and the widget's text was right the whole time; only
+the pixels were wrong. Every earlier bug in here -- the phantom splitters, the
+dropped pane, the crash -- moved something the sidecar could see. This one did
+not, and no assertion over the sidecar would ever have caught it. The picture
+is not a nicety on top of the harness.
+
+The reset icon needed a second pass for a related reason: the first one reused
+the Undo artwork, which is drawn for twenty pixels, so at eleven the ring came
+out thinner than a pixel. Drawn for its own size now.
+
 ### The one that was not in the screenshot
 
 `Frame` frames the current pane. In a four-up that is rarely what is wanted, and
