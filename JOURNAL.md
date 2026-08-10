@@ -7,6 +7,55 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — ActionGroup
+
+The layout menu offering to un-tick the current arrangement turned out to be
+three instances in this application, not one: the pane type and view type menus
+had it too, created the same way and compensated for the same way. tlRender has
+it twice, in two files, for the same three playback actions. feather-tk's own
+objview example has it. Darby wrote the toolkit and was caught out by it while
+looking for an example to point me at.
+
+That is the signature of a missing concept rather than a set of mistakes.
+
+An action could say it was a command or a switch. One of many had no way to be
+said, so everyone said it the same way by accident: create the actions with a
+plain callback, so picking one cannot un-pick it, and write an observer that
+walks the set calling `setChecked(this one == the current one)`. It works, it
+leaves `isCheckable()` false while `isChecked()` is true, and the mutual
+exclusion lives in every application that wants it.
+
+`ActionCheckType` -- None, Check, Radio -- lets the action say what it is.
+`ActionGroup` owns the rest, deliberately shaped like `ButtonGroup` so there is
+nothing new to learn.
+
+### Why it could not be ButtonGroup
+
+Two reasons, and the second is the interesting one. A menu makes its own
+buttons, so the application never sees them and cannot put them in a group. And
+one action drives several buttons -- the layout actions are menu items and tool
+bar buttons at the same time. Relatedness belongs where identity is, and
+identity is the action.
+
+### Watching rather than intercepting
+
+The first cut had the group install its own callbacks on each action, which is
+wrong: an action's callbacks are given when it is made and belong to whoever
+made it. The group would have thrown away the application's own lambda.
+
+It observes `checked` instead, which needs nothing from `Action` that was not
+already there. Picking the action that is already current arrives as a request
+to turn it off -- the button toggled it on the way in -- and the group puts it
+straight back. That is the one line the whole thing exists for, and the test
+fails without it.
+
+### What it removed
+
+Three loops here, two in tlRender, one in objview. Each becomes one call
+saying which index is current.
+
+---
+
 ## 2026-08-09 — Icons, a tool bar, and a shot that had stopped testing
 
 The menu actions carry feather-tk's icons where it has one -- FileNew, FileOpen,

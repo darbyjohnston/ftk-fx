@@ -15,6 +15,7 @@
 namespace ftk
 {
     class Action;
+    class ActionGroup;
     class Splitter;
 }
 
@@ -118,6 +119,7 @@ namespace fx
             std::shared_ptr<ftk::Observer<bool> > _hasRedoObserver;
 
             std::map<PaneLayout, std::shared_ptr<ftk::Action> > _layoutActions;
+            std::shared_ptr<ftk::ActionGroup> _layoutGroup;
             std::shared_ptr<ftk::Observer<PaneLayout> > _layoutObserver;
 
             std::map<std::string, std::shared_ptr<ftk::Action> > _panelActions;

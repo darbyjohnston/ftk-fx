@@ -7,7 +7,7 @@
 #include <fx/App/PanePlaceholder.h>
 #include <fx/App/Viewport.h>
 
-#include <ftk/UI/Action.h>
+#include <ftk/UI/ActionGroup.h>
 #include <ftk/UI/DrawUtil.h>
 #include <ftk/UI/Menu.h>
 #include <ftk/UI/MenuBar.h>
@@ -41,33 +41,28 @@ namespace fx
 
             // The actions outlive the menus they are put into, so the checked
             // state survives the rebuild that a content change causes.
+            // Both sets are one of many: a pane shows one thing and a
+            // viewport looks from one place, and neither has a "none of them".
+            // The groups keep them exclusive and draw the ticks.
+            _paneTypeGroup = ActionGroup::create(ActionGroupType::Radio);
             const auto paneLabels = getPaneTypeLabels();
             for (size_t i = 0; i < paneLabels.size(); ++i)
             {
                 const PaneType type = static_cast<PaneType>(i);
                 _paneTypeActions[type] = Action::create(
                     paneLabels[i],
-                    [this, type](bool value)
-                    {
-                        if (value)
-                        {
-                            setPaneType(type);
-                        }
-                    });
+                    [this, type] { setPaneType(type); });
+                _paneTypeGroup->addAction(_paneTypeActions[type]);
             }
+            _viewTypeGroup = ActionGroup::create(ActionGroupType::Radio);
             const auto viewLabels = getViewTypeLabels();
             for (size_t i = 0; i < viewLabels.size(); ++i)
             {
                 const ViewType type = static_cast<ViewType>(i);
                 _viewTypeActions[type] = Action::create(
                     viewLabels[i],
-                    [this, type](bool value)
-                    {
-                        if (value)
-                        {
-                            setViewType(type);
-                        }
-                    });
+                    [this, type] { setViewType(type); });
+                _viewTypeGroup->addAction(_viewTypeActions[type]);
             }
 
             // Built once here; only the view menu comes and goes. Both titles
@@ -204,14 +199,8 @@ namespace fx
 
         void Pane::_menuUpdate()
         {
-            for (const auto& i : _paneTypeActions)
-            {
-                i.second->setChecked(i.first == _paneType);
-            }
-            for (const auto& i : _viewTypeActions)
-            {
-                i.second->setChecked(i.first == _viewType);
-            }
+            _paneTypeGroup->setChecked(static_cast<int>(_paneType));
+            _viewTypeGroup->setChecked(static_cast<int>(_viewType));
 
             // Only the View menu comes and goes, so only it is added and
             // removed. The Pane menu is built once and left alone, which is

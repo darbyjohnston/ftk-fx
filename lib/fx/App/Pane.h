@@ -12,6 +12,7 @@
 namespace ftk
 {
     class Action;
+    class ActionGroup;
     class Menu;
     class MenuBar;
     class VerticalLayout;
@@ -130,6 +131,8 @@ namespace fx
 
             //! Held rather than looked up by title, because the titles are the
             //! current selections and change as the pane does.
+            std::shared_ptr<ftk::ActionGroup> _paneTypeGroup;
+            std::shared_ptr<ftk::ActionGroup> _viewTypeGroup;
             std::shared_ptr<ftk::MenuBar> _menuBar;
             std::shared_ptr<ftk::Menu> _paneMenu;
             std::shared_ptr<ftk::Menu> _viewMenu;

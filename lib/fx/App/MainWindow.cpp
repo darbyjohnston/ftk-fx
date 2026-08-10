@@ -11,7 +11,7 @@
 #include <fx/App/Viewport.h>
 #include <fx/App/Panes.h>
 
-#include <ftk/UI/Action.h>
+#include <ftk/UI/ActionGroup.h>
 #include <ftk/UI/DialogSystem.h>
 #include <ftk/UI/Divider.h>
 #include <ftk/UI/FileBrowser.h>
@@ -500,6 +500,7 @@ namespace fx
                 KeyShortcut(Key::_3, commandKeyModifier),
                 KeyShortcut(Key::_4, commandKeyModifier)
             };
+            _layoutGroup = ActionGroup::create(ActionGroupType::Radio);
             const auto labels = getPaneLayoutLabels();
             for (size_t i = 0; i < labels.size(); ++i)
             {
@@ -508,15 +509,8 @@ namespace fx
                 {
                     "LayoutSingle", "LayoutTwo", "LayoutThree", "LayoutFour"
                 };
-                // A plain callback rather than a checked one, which leaves the
-                // action not checkable -- so picking it always means "use this
-                // arrangement" and can never mean "stop using it". The tick is
-                // still shown, driven by the observer below from what the panes
-                // actually are.
-                //
-                // This is one-of-many, which feather-tk knows about for buttons
-                // (ButtonGroupType::Radio) and not for actions. Until it does,
-                // this is how tlRender's playback actions do it too.
+                // One of four. The group keeps them exclusive, draws the tick
+                // and stops the current one being un-picked.
                 auto action = Action::create(
                     labels[i],
                     icons[i],
@@ -530,6 +524,7 @@ namespace fx
                     });
                 action->setTooltip(labels[i] + " viewport layout");
                 _layoutActions[layout] = action;
+                _layoutGroup->addAction(action);
                 menu->addAction(action);
             }
 
@@ -537,10 +532,7 @@ namespace fx
                 _panes->observeLayout(),
                 [this](PaneLayout value)
                 {
-                    for (const auto& i : _layoutActions)
-                    {
-                        i.second->setChecked(i.first == value);
-                    }
+                    _layoutGroup->setChecked(static_cast<int>(value));
                 });
         }
 
