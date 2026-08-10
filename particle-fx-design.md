@@ -136,6 +136,8 @@ Every scalar and vector value in the application — emitter rate, field strengt
 
 Anything reachable in the UI is therefore animatable, drivable, and scriptable by construction. "Can I animate this?" should never be a question anyone has to ask.
 
+The same argument puts the **command stack** in the first phase. Undo is not a feature that can be added to a finished application: it is a claim about where edits happen, and every edit made before the claim exists has to be found and moved. The boundary is the scene model, not the widgets -- §9 requires script edits to be undoable too, and that only works if the GUI and Python take the same path. A drag is one command rather than one per mouse move, which is decided when the first draggable thing is written and is painful to change afterwards.
+
 ### Animation curves
 
 Time-domain, keyframed, evaluated once per frame — so evaluation cost is irrelevant and full Bézier is fine.
@@ -444,10 +446,10 @@ A `--headless` mode that loads a scene, runs a frame range, and writes caches an
 ## 15. Phasing
 
 **Phase 1 — Skeleton**
-Particle pool and attribute system. **The uniform `Parameter` type**, with constants and animation curves. Time/cache model with a working cache bar. Point and volume emitters, gravity and drag, lifespan and kill rules. Point and sphere viewport rendering. Playback and scrubbing. Scene save/load. *Goal: particles fall, scrubbing feels right, and every value is already animatable.*
+Particle pool and attribute system. **The uniform `Parameter` type**, with constants and animation curves. **Undo/redo through a command stack**, with every edit going through the model rather than being done by the widget that started it. Time/cache model with a working cache bar. Point and volume emitters, gravity and drag, lifespan and kill rules. Point and sphere viewport rendering. Playback and scrubbing. Scene save/load. *Goal: particles fall, scrubbing feels right, and every value is already animatable.*
 
 **Phase 2 — Usable**
-Curve editor UI with animation and profile curves, including per-particle variance bands. Geometry import and geometry emitters. Camera import and plate display. Full field set. Collisions against geometry. Ramp-over-life on every attribute. Streak and basic sprite rendering. Native cache export. *Goal: an artist can do a simple shot end-to-end.*
+**Transforms**, built from `Parameter`s like everything else, and edited through the panel to begin with. **Manipulators** in the viewport once there is more than one thing to move — which needs picking and a selection model, neither of which exists yet. Curve editor UI with animation and profile curves, including per-particle variance bands. Geometry import and geometry emitters. Camera import and plate display. Full field set. Collisions against geometry. Ramp-over-life on every attribute. Streak and basic sprite rendering. Native cache export. *Goal: an artist can do a simple shot end-to-end.*
 
 **Phase 3 — Scriptable**
 Python bindings with zero-copy attribute views. Creation and runtime expressions, edited in built-in panels. Event system. Secondary emission. Script-built tool UIs. *Goal: Sophia's authoring loop, in Python.*
