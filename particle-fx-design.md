@@ -283,6 +283,28 @@ Fast, previewable, comp-oriented. Not a beauty renderer.
 
 point · sphere · streak (velocity-aligned) · sprite · disc · instanced geometry (with per-particle orientation and scale) · trail/ribbon · blobby/metaball *(later)*
 
+### Spheres and blobs, as distance fields
+
+The viewport already draws a point as a disc by discarding the corners of the
+sprite in the fragment shader. A shaded sphere is the same trick carried one
+step further -- solve the ray against the unit sphere at the impostor's centre,
+shade the normal, write the depth -- and it costs no geometry at all. That is
+the sphere render type, and it is worth doing early because it is the first
+thing that makes a sim read as volume rather than as confetti.
+
+Blobs are the same idea again with the spheres allowed to melt into each other:
+a smooth minimum over the nearest few distance fields rather than a hard union.
+Raymarched in a screen-space pass over the particles near each pixel, with the
+neighbourhood found through the same spatial grid the collisions and the
+neighbour rules already need. Splitting it out from "blobby/metaball" in the
+list above because the two share an implementation -- a sphere is a blob with
+the blend radius at zero -- and because the field is what makes fluid-ish and
+gooey work possible at all.
+
+*(Later. Listed here so the render path is not designed in a way that forbids
+it: a render type has to be able to say "I need a depth pass and the particles
+around this pixel", not just "here is a quad".)*
+
 ### Sprites
 
 Treated as a first-class subsystem rather than a render option. Sprites are the cheapest way to buy visual complexity in this kind of work, and the difference between a passable sprite implementation and a good one is most of the difference between a shot that reads and one that doesn't.
