@@ -247,16 +247,21 @@ namespace fx
             displayLayout->setMarginRole(SizeRole::MarginSmall);
             auto pointSizeSlider = FloatEditSlider::create(context);
             pointSizeSlider->setRange(1.F, 16.F);
-            pointSizeSlider->setValue(3.F);
-            pointSizeSlider->setDefault(3.F);
-            std::weak_ptr<Panes> panesWeak(panes);
+            pointSizeSlider->setValue(model->getPointSize());
+            pointSizeSlider->setDefault(model->getPointSize());
             pointSizeSlider->setCallback(
-                [panesWeak](float value)
+                [weak](float value)
                 {
-                    if (auto panes = panesWeak.lock())
+                    if (auto model = weak.lock())
                     {
-                        panes->setPointSize(value);
+                        model->setPointSize(value);
                     }
+                });
+            _pointSizeObserver = Observer<float>::create(
+                model->observePointSize(),
+                [pointSizeSlider](float value)
+                {
+                    pointSizeSlider->setValue(value);
                 });
             displayLayout->addRow("Point size:", pointSizeSlider);
             auto displayBellows = Bellows::create(context, "Display", layout);

@@ -45,6 +45,10 @@ namespace fx
             _panes[0]->setCurrent(true);
 
             _layoutUpdate();
+
+            _pointSizeObserver = Observer<float>::create(
+                model->observePointSize(),
+                [this](float value) { setPointSize(value); });
         }
 
         Panes::~Panes()

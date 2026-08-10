@@ -53,3 +53,13 @@ DJV turns its sidecars into annotated SVGs for the documentation with a
 make_svg.py step. There are no documentation pages here yet, so that step does
 not exist; the "annotate" entries in the manifest are carried through to the
 sidecar ready for it.
+
+The readme shot is the one image in the repository rather than something
+regenerated into a temporary directory. Remake it with:
+
+% python3 etc/Screenshots/build_screenshots.py etc/Screenshots/screenshots.json \
+    --ftk-fx ../build-Debug/bin/ftk-fx/ftk-fx --out /tmp/shots --only readme
+% sips -Z 1920 /tmp/shots/readme.png --out etc/Images/ftk-fx_screenshot1.png
+
+The capture is at the display scale, so it comes out twice the window size;
+1920 across is what the other feather-tk projects use.

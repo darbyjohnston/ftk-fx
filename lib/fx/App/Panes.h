@@ -84,6 +84,7 @@ namespace fx
             //! The root of the splitter tree, which is a pane itself when the
             //! arrangement is a single one.
             std::shared_ptr<ftk::IWidget> _root;
+            std::shared_ptr<ftk::Observer<float> > _pointSizeObserver;
         };
     }
 }

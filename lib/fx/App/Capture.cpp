@@ -455,7 +455,7 @@ namespace fx
             }
             if (step.contains("pointSize"))
             {
-                panes->setPointSize(step.at("pointSize").get<float>());
+                model->setPointSize(step.at("pointSize").get<float>());
             }
             if (step.contains("playing"))
             {

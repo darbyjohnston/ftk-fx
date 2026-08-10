@@ -573,6 +573,28 @@
           "caption": "The key at frame 40 dragged down, and the sim re-run"
         }
       ]
+    },
+    {
+      "id": "readme",
+      "window": {
+        "w": 1400,
+        "h": 900,
+        "splitter": 0.72
+      },
+      "setup": [
+        {
+          "layout": 4
+        },
+        {
+          "rate": 2000
+        },
+        {
+          "pointSize": 9
+        },
+        {
+          "frame": 90
+        }
+      ]
     }
   ]
 }

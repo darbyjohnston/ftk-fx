@@ -5,6 +5,8 @@ built on [feather-tk](https://github.com/grizzlypeak3d/feather-tk). See
 [particle-fx-design.md](particle-fx-design.md) for the design, and
 [JOURNAL.md](JOURNAL.md) for why the code looks the way it does.
 
+![Screenshot](etc/Images/ftk-fx_screenshot1.png)
+
 Where it is now: a vertical slice. A point emitter fills a pool, gravity and
 drag move it, particles die at their lifespan, the frames are cached, and the
 whole thing scrubs and plays back. Everything the artist can reach is already a

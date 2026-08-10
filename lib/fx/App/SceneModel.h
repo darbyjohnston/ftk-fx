@@ -112,6 +112,22 @@ namespace fx
 
             ///@}
 
+            //! \name Display
+            ///@{
+
+            //! How big the particles draw, in points.
+            //!
+            //! Not part of the scene: it is how the artist is looking at the
+            //! simulation, not what the simulation is. It lives here anyway
+            //! because two widgets have an opinion about it -- the panel that
+            //! sets it and the viewports that use it -- and the way to keep
+            //! them agreeing is to give them one thing to agree with.
+            float getPointSize() const;
+            std::shared_ptr<ftk::IObservable<float> > observePointSize() const;
+            void setPointSize(float);
+
+            ///@}
+
             //! \name Time
             ///@{
 
@@ -194,6 +210,7 @@ namespace fx
             std::shared_ptr<ftk::Observable<bool> > _modified;
             std::shared_ptr<ftk::Observable<int> > _sceneChanged;
             std::shared_ptr<ftk::Observable<int> > _parameterChanged;
+            std::shared_ptr<ftk::Observable<float> > _pointSize;
 
             //! The scene as it is on disk, which is what "modified" is
             //! measured against.

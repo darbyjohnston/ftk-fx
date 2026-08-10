@@ -27,6 +27,7 @@ namespace fx
             _modified = Observable<bool>::create(false);
             _sceneChanged = Observable<int>::create(0);
             _parameterChanged = Observable<int>::create(0);
+            _pointSize = Observable<float>::create(3.F);
             _saved = getScene();
 
             _cache.setRange(_range->get());
@@ -151,6 +152,21 @@ namespace fx
             _simulate(_currentFrame->get());
             _modifiedUpdate();
             _parameterChanged->setAlways(_parameterChanged->get() + 1);
+        }
+
+        float SceneModel::getPointSize() const
+        {
+            return _pointSize->get();
+        }
+
+        std::shared_ptr<IObservable<float> > SceneModel::observePointSize() const
+        {
+            return _pointSize;
+        }
+
+        void SceneModel::setPointSize(float value)
+        {
+            _pointSize->setIfChanged(value);
         }
 
         const RangeI& SceneModel::getRange() const
