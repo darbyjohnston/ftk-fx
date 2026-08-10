@@ -263,14 +263,25 @@ namespace fx
 
             try
             {
+                // A click or a drag has to wait for the window to be laid
+                // out, and everything after one has to wait for the click:
+                // a shot that clicks and then undoes is undoing the click.
+                // So the first deferred step defers the rest, and the setup
+                // runs in the order it is written.
+                bool late = false;
                 for (const auto& step : p.shot.value("setup", nlohmann::json::array()))
                 {
-                    if (step.contains("click") || step.contains("drag"))
+                    late = late ||
+                        step.contains("click") ||
+                        step.contains("drag");
+                    if (late)
                     {
                         p.lateSteps.push_back(step);
-                        continue;
                     }
-                    _applyStep(step);
+                    else
+                    {
+                        _applyStep(step);
+                    }
                 }
             }
             catch (const std::exception& e)
@@ -432,9 +443,24 @@ namespace fx
                 {
                     core::from_json(k.at("interp"), key.interp);
                 }
+                const sim::System before = model->getSystem();
                 curve.addKey(key);
                 parameter->setCurve(curve);
-                model->parameterChanged();
+                model->systemChanged("Key " + path, before);
+            }
+            if (step.contains("undo"))
+            {
+                for (int i = 0; i < step.at("undo").get<int>(); ++i)
+                {
+                    model->undo();
+                }
+            }
+            if (step.contains("redo"))
+            {
+                for (int i = 0; i < step.at("redo").get<int>(); ++i)
+                {
+                    model->redo();
+                }
             }
             if (step.contains("save"))
             {
@@ -449,9 +475,10 @@ namespace fx
                 // The one simulation parameter a shot can set. Frame time is
                 // worth measuring against a known particle count, and the
                 // count follows the rate.
+                const sim::System before = model->getSystem();
                 model->getSystem().getEmitter().rate.setConstant(
                     step.at("rate").get<float>());
-                model->parameterChanged();
+                model->systemChanged("Set Rate", before);
             }
             if (step.contains("pointSize"))
             {

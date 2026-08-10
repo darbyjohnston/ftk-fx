@@ -13,6 +13,48 @@ namespace fx
 {
     namespace app
     {
+        namespace
+        {
+            //! One command for every kind of edit.
+            //!
+            //! It holds the whole system before and after rather than a
+            //! description of what changed, which sounds wasteful and is not:
+            //! a system is a recipe of a few dozen parameters, copying one is
+            //! cheaper than the re-simulation the edit causes anyway, and it
+            //! means setting a constant, moving a key and re-rolling a seed are
+            //! the same command rather than three.
+            //!
+            //! The model is held by raw pointer because the model owns the
+            //! stack that owns this, so it cannot outlive it.
+            class SystemCommand : public ftk::ICommand
+            {
+            public:
+                SystemCommand(
+                    SceneModel* model,
+                    const std::string& name,
+                    const sim::System& before,
+                    const sim::System& after) :
+                    _model(model),
+                    _name(name),
+                    _before(before),
+                    _after(after)
+                {}
+
+                const std::string& getName() const { return _name; }
+                const sim::System& getAfter() const { return _after; }
+                void setAfter(const sim::System& value) { _after = value; }
+
+                void exec() override { _model->applySystem(_after); }
+                void undo() override { _model->applySystem(_before); }
+
+            private:
+                SceneModel* _model = nullptr;
+                std::string _name;
+                sim::System _before;
+                sim::System _after;
+            };
+        }
+
         void SceneModel::_init(const std::shared_ptr<Context>& context)
         {
             _context = context;
@@ -28,6 +70,7 @@ namespace fx
             _sceneChanged = Observable<int>::create(0);
             _parameterChanged = Observable<int>::create(0);
             _pointSize = Observable<float>::create(3.F);
+            _commands = CommandStack::create();
             _saved = getScene();
 
             _cache.setRange(_range->get());
@@ -71,6 +114,10 @@ namespace fx
             _simulate(_currentFrame->get());
             _modifiedUpdate();
             _sceneChanged->setAlways(_sceneChanged->get() + 1);
+            // A new scene is not something to undo back out of, and the
+            // commands describe a system that no longer exists.
+            _commands->clear();
+            _lastCommand.reset();
         }
 
         void SceneModel::newScene()
@@ -146,12 +193,74 @@ namespace fx
             return _system;
         }
 
-        void SceneModel::parameterChanged()
+        void SceneModel::applySystem(const sim::System& value)
         {
+            _system = value;
             _cache.invalidateFrom(_range->get().min());
             _simulate(_currentFrame->get());
             _modifiedUpdate();
             _parameterChanged->setAlways(_parameterChanged->get() + 1);
+        }
+
+        void SceneModel::systemChanged(
+            const std::string& name,
+            const sim::System& before)
+        {
+            // Already applied: the caller edited the system in place. What is
+            // left is to record it and to throw away what it invalidated.
+            if (_editDepth > 0)
+            {
+                // Inside a drag. endEdit() records the whole of it.
+                applySystem(_system);
+                return;
+            }
+            auto command = std::make_shared<SystemCommand>(
+                this, name, before, _system);
+            _lastCommand = command;
+            // push() runs exec(), which is what applies and re-simulates.
+            _commands->push(command);
+        }
+
+        void SceneModel::beginEdit()
+        {
+            if (0 == _editDepth++)
+            {
+                _editBefore = _system;
+            }
+        }
+
+        void SceneModel::endEdit(const std::string& name)
+        {
+            if (_editDepth > 0 && 0 == --_editDepth && _editBefore != _system)
+            {
+                auto command = std::make_shared<SystemCommand>(
+                    this, name, _editBefore, _system);
+                _lastCommand = command;
+                _commands->push(command);
+            }
+        }
+
+        std::shared_ptr<IObservable<bool> > SceneModel::observeHasUndo() const
+        {
+            return _commands->observeHasUndo();
+        }
+
+        std::shared_ptr<IObservable<bool> > SceneModel::observeHasRedo() const
+        {
+            return _commands->observeHasRedo();
+        }
+
+        void SceneModel::undo()
+        {
+            // Whatever was on top is no longer, so nothing may be extended.
+            _lastCommand.reset();
+            _commands->undo();
+        }
+
+        void SceneModel::redo()
+        {
+            _lastCommand.reset();
+            _commands->redo();
         }
 
         float SceneModel::getPointSize() const

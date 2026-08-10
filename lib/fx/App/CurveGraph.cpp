@@ -97,10 +97,11 @@ namespace fx
             _channels = value;
             _hasSelection = false;
             _dragging = false;
+            _valueRangeUpdate();
             setDrawUpdate();
         }
 
-        RangeF CurveGraph::_getValueRange() const
+        void CurveGraph::_valueRangeUpdate()
         {
             float min = 0.F;
             float max = 0.F;
@@ -117,13 +118,16 @@ namespace fx
                 }
             }
             if (first)
-                return RangeF(0.F, 1.F);
+            {
+                _valueRange = RangeF(0.F, 1.F);
+                return;
+            }
             // A little air above and below, and a range that is never zero
             // high: a curve with one key is a horizontal line, and it should
             // be a horizontal line through the middle rather than a division
             // by zero.
             const float pad = std::max((max - min) * .1F, std::max(std::abs(max), 1.F) * .1F);
-            return RangeF(min - pad, max + pad);
+            _valueRange = RangeF(min - pad, max + pad);
         }
 
         V2F CurveGraph::_toPos(double frame, float value) const
@@ -131,7 +135,7 @@ namespace fx
             const Box2I g = margin(getGeometry(), -_size.margin);
             const RangeI& r = _range;
             const double frames = std::max(1, r.max() - r.min());
-            const RangeF v = _getValueRange();
+            const RangeF& v = _valueRange;
             const float span = std::max(v.max() - v.min(), .0001F);
             return V2F(
                 g.min.x + (frame - r.min()) / frames * g.w(),
@@ -153,7 +157,7 @@ namespace fx
             const Box2I g = margin(getGeometry(), -_size.margin);
             if (g.h() <= 0)
                 return 0.F;
-            const RangeF v = _getValueRange();
+            const RangeF& v = _valueRange;
             return v.min() +
                 (g.max.y - y) / static_cast<float>(g.h()) * (v.max() - v.min());
         }
@@ -195,9 +199,13 @@ namespace fx
         {
             if (channel >= _channels.size())
                 return;
+            auto model = _model.lock();
+            if (!model)
+                return;
             auto* parameter = _channels[channel].parameter;
             if (core::Parameter::Type::Curve != parameter->getType())
                 return;
+            const sim::System before = model->getSystem();
             core::Curve curve = parameter->getCurve();
             auto keys = curve.getKeys();
             if (key >= keys.size())
@@ -231,10 +239,9 @@ namespace fx
                 }
             }
 
-            if (auto model = _model.lock())
-            {
-                model->parameterChanged();
-            }
+            // One name for the whole drag, so the moves merge into a single
+            // undo step.
+            model->systemChanged("Move Key", before);
         }
 
         Size2I CurveGraph::getSizeHint() const
@@ -276,7 +283,11 @@ namespace fx
             event.render->drawRect(
                 g, event.style->getColorRole(ColorRole::Base));
 
-            const RangeF v = _getValueRange();
+            if (!_dragging)
+            {
+                _valueRangeUpdate();
+            }
+            const RangeF& v = _valueRange;
 
             // Where zero is, when zero is on screen. It is the line an artist
             // reads a curve against.
@@ -355,6 +366,10 @@ namespace fx
                 _selectedKey = key;
                 _hasSelection = true;
                 _dragging = true;
+                if (auto model = _model.lock())
+                {
+                    model->beginEdit();
+                }
             }
             else
             {
@@ -373,7 +388,16 @@ namespace fx
         void CurveGraph::mouseReleaseEvent(MouseClickEvent& event)
         {
             IMouseWidget::mouseReleaseEvent(event);
+            if (_dragging)
+            {
+                if (auto model = _model.lock())
+                {
+                    model->endEdit("Move Key");
+                }
+            }
             _dragging = false;
+            // The keys have moved, so the plot can find its scale again.
+            _valueRangeUpdate();
             setDrawUpdate();
         }
 
@@ -404,9 +428,11 @@ namespace fx
                 (Key::Delete == event.key || Key::Backspace == event.key))
             {
                 event.accept = true;
+                auto model = _model.lock();
                 auto* parameter = _channels[_selectedChannel].parameter;
-                if (core::Parameter::Type::Curve == parameter->getType())
+                if (model && core::Parameter::Type::Curve == parameter->getType())
                 {
+                    const sim::System before = model->getSystem();
                     core::Curve curve = parameter->getCurve();
                     curve.removeKey(_selectedKey);
                     // The last key gone leaves the parameter constant again,
@@ -419,10 +445,7 @@ namespace fx
                     {
                         parameter->setCurve(curve);
                     }
-                    if (auto model = _model.lock())
-                    {
-                        model->parameterChanged();
-                    }
+                    model->systemChanged("Delete Key", before);
                 }
                 _hasSelection = false;
                 setDrawUpdate();

@@ -56,6 +56,7 @@ namespace fx
             setWidget(layout);
 
             _createFileMenu(context, app);
+            _createEditMenu(context);
             _createLayoutMenu(context);
             _createPanelsMenu(context);
 
@@ -109,7 +110,17 @@ namespace fx
             _cursorEnter(true);
             _cursorPos(from);
             _mouseButton(MouseButton::Left, true, modifiers);
-            _cursorPos(to);
+            // Moved in steps rather than jumped. A widget that treats a drag
+            // as one gesture and a widget that treats every move as a separate
+            // edit look the same from one event, and the difference is the
+            // whole question for undo.
+            const int steps = 8;
+            for (int i = 1; i <= steps; ++i)
+            {
+                _cursorPos(V2I(
+                    from.x + (to.x - from.x) * i / steps,
+                    from.y + (to.y - from.y) * i / steps));
+            }
             _mouseButton(MouseButton::Left, false, modifiers);
         }
 
@@ -287,6 +298,41 @@ namespace fx
             setTitle(ftk::Format("{0}{1} - ftk-fx").
                 arg(name).
                 arg(model->isModified() ? "*" : ""));
+        }
+
+        void MainWindow::_createEditMenu(const std::shared_ptr<Context>& context)
+        {
+            auto menu = Menu::create(context);
+            std::weak_ptr<SceneModel> weak(_model);
+
+            _undoAction = Action::create(
+                "Undo",
+                KeyShortcut(Key::Z, commandKeyModifier),
+                [weak] { if (auto model = weak.lock()) model->undo(); });
+            menu->addAction(_undoAction);
+
+            _redoAction = Action::create(
+                "Redo",
+                KeyShortcut(
+                    Key::Z,
+                    static_cast<int>(commandKeyModifier) |
+                    static_cast<int>(KeyModifier::Shift)),
+                [weak] { if (auto model = weak.lock()) model->redo(); });
+            menu->addAction(_redoAction);
+
+            // Beside File rather than after Panels: an artist looking for undo
+            // looks in the second menu.
+            getMenuBar()->insertMenu(1, "Edit", menu);
+
+            auto model = _model.lock();
+            if (!model)
+                return;
+            _hasUndoObserver = Observer<bool>::create(
+                model->observeHasUndo(),
+                [this](bool value) { _undoAction->setEnabled(value); });
+            _hasRedoObserver = Observer<bool>::create(
+                model->observeHasRedo(),
+                [this](bool value) { _redoAction->setEnabled(value); });
         }
 
         void MainWindow::_createLayoutMenu(const std::shared_ptr<Context>& context)

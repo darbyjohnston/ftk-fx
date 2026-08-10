@@ -26,11 +26,17 @@ Setup steps a shot may use:
 * {"key": {"path": "Emitter/Rate", "frame": 1, "value": 100}}
                                              key a parameter, with an optional
                                              "interp" beside it
+* {"undo": 2}                                undo that many steps
+* {"redo": 1}                                redo that many
 * {"save": "/tmp/a.fx"}                      write the scene
 * {"open": "/tmp/a.fx"}                      read a scene back
 * {"click": [60, 80]}                        click there, with an optional
                                              "modifier" beside it
 * {"drag": [[776, 619], [500, 400]]}         press there, move, release
+
+Steps run in the order they are written. A click or a drag cannot run until
+the window has been laid out, so it and everything after it are applied one
+per settle; the steps before it run immediately.
 
 Clicks go through the window the way a person's do, so they reach the parts a
 setup step cannot: the click-pane-menu shot opens a pane's menu and picks an

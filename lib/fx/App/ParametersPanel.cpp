@@ -41,6 +41,10 @@ namespace fx
                 {
                     if (_updating)
                         return;
+                    auto model = weak.lock();
+                    if (!model)
+                        return;
+                    const sim::System before = model->getSystem();
                     // Dragging an animated parameter moves the key at the
                     // playhead rather than throwing the animation away.
                     // Silently discarding a curve because a slider moved is
@@ -58,11 +62,26 @@ namespace fx
                     {
                         captured.parameter->setConstant(value);
                     }
+                    model->systemChanged("Set " + captured.name, before);
+                    _valuesUpdate();
+                });
+
+            // The slider says when it was taken hold of and let go, so a drag
+            // is one undo step.
+            row.slider->setPressedCallback(
+                [weak, captured](float, bool pressed)
+                {
                     if (auto model = weak.lock())
                     {
-                        model->parameterChanged();
+                        if (pressed)
+                        {
+                            model->beginEdit();
+                        }
+                        else
+                        {
+                            model->endEdit("Set " + captured.name);
+                        }
                     }
-                    _valuesUpdate();
                 });
 
             row.keyButton = ToolButton::create(context);
@@ -95,6 +114,7 @@ namespace fx
             auto model = _model.lock();
             if (!model)
                 return;
+            const sim::System before = model->getSystem();
             core::Parameter* parameter = info.parameter;
             if (value)
             {
@@ -132,7 +152,9 @@ namespace fx
                     parameter->setCurve(curve);
                 }
             }
-            model->parameterChanged();
+            model->systemChanged(
+                (value ? "Key " : "Unkey ") + info.name,
+                before);
             _valuesUpdate();
         }
 
@@ -207,14 +229,23 @@ namespace fx
             seedSlider->setValue(static_cast<int>(model->getSystem().getEmitter().seed));
             seedSlider->setDefault(static_cast<int>(model->getSystem().getEmitter().seed));
             seedSlider->setTooltip("Re-roll every random choice this emitter makes");
+            seedSlider->setPressedCallback(
+                [weak](int, bool pressed)
+                {
+                    if (auto model = weak.lock())
+                    {
+                        pressed ? model->beginEdit() : model->endEdit("Set Seed");
+                    }
+                });
             seedSlider->setCallback(
                 [weak](int value)
                 {
                     if (auto model = weak.lock())
                     {
+                        const sim::System before = model->getSystem();
                         model->getSystem().getEmitter().seed =
                             static_cast<uint64_t>(value);
-                        model->parameterChanged();
+                        model->systemChanged("Set Seed", before);
                     }
                 });
             groups["Emitter"]->addRow("Seed:", seedSlider);
@@ -225,13 +256,22 @@ namespace fx
             substepsSlider->setDefault(model->getSystem().getSubsteps());
             substepsSlider->setTooltip(
                 "Solver steps per frame. More is smoother and slower");
+            substepsSlider->setPressedCallback(
+                [weak](int, bool pressed)
+                {
+                    if (auto model = weak.lock())
+                    {
+                        pressed ? model->beginEdit() : model->endEdit("Set Substeps");
+                    }
+                });
             substepsSlider->setCallback(
                 [weak](int value)
                 {
                     if (auto model = weak.lock())
                     {
+                        const sim::System before = model->getSystem();
                         model->getSystem().setSubsteps(value);
-                        model->parameterChanged();
+                        model->systemChanged("Set Substeps", before);
                     }
                 });
             groups["Forces"]->addRow("Substeps:", substepsSlider);

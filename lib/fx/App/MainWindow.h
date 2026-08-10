@@ -79,6 +79,7 @@ namespace fx
             void _createFileMenu(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<App>&);
+            void _createEditMenu(const std::shared_ptr<ftk::Context>&);
             void _createLayoutMenu(const std::shared_ptr<ftk::Context>&);
 
             //! Ask for a path and save to it.
@@ -99,6 +100,10 @@ namespace fx
             std::shared_ptr<ftk::Splitter> _splitter;
             std::shared_ptr<ftk::Observer<std::filesystem::path> > _pathObserver;
             std::shared_ptr<ftk::Observer<bool> > _modifiedObserver;
+            std::shared_ptr<ftk::Action> _undoAction;
+            std::shared_ptr<ftk::Action> _redoAction;
+            std::shared_ptr<ftk::Observer<bool> > _hasUndoObserver;
+            std::shared_ptr<ftk::Observer<bool> > _hasRedoObserver;
 
             std::map<PaneLayout, std::shared_ptr<ftk::Action> > _layoutActions;
             std::shared_ptr<ftk::Observer<PaneLayout> > _layoutObserver;

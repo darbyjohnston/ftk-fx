@@ -87,6 +87,7 @@ namespace fx
         void CurveEditor::_graphUpdate()
         {
             std::vector<ParameterInfo> shown;
+            std::vector<std::string> paths;
             for (const auto& info : _channels)
             {
                 if (core::Parameter::Type::Curve == info.parameter->getType() &&
@@ -94,8 +95,16 @@ namespace fx
                     _shown.end())
                 {
                     shown.push_back(info);
+                    paths.push_back(info.getPath());
                 }
             }
+            // Only when the set actually differs. Handing the plot the same
+            // channels again drops its selection, and this runs on every
+            // parameter edit -- including the ones a drag is making, so the
+            // drag would cancel itself after its first move.
+            if (paths == _graphPaths)
+                return;
+            _graphPaths = paths;
             _graph->setChannels(shown);
         }
 

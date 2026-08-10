@@ -8,6 +8,7 @@
 
 #include <filesystem>
 
+#include <ftk/Core/Command.h>
 #include <ftk/Core/Observable.h>
 #include <ftk/Core/ObservableList.h>
 #include <ftk/Core/Range.h>
@@ -101,14 +102,54 @@ namespace fx
             //! the model cannot see the edit for itself.
             sim::System& getSystem();
 
-            //! Throw away the simulation the old parameters produced.
+            //! Record an edit that has already been made to the system, and
+            //! throw away the simulation the old values produced.
             //!
-            //! Everything from the start of the range, not from the playhead: a
-            //! constant that changed was never only in effect from here on, and
-            //! pretending otherwise would give a cache that no run from the
-            //! start could reproduce. Only the frames actually looked at are
-            //! re-simulated, so this is cheaper than it sounds.
-            void parameterChanged();
+            //! The caller mutates the system through getSystem() and then hands
+            //! back what it looked like beforehand; the two together are the
+            //! undo step. Editing in place and reporting afterwards, rather
+            //! than describing the edit and asking for it, is what lets one
+            //! command cover every kind of change -- a constant, a key, a seed
+            //! -- without a command class per operation.
+            //!
+            //! Inside beginEdit()/endEdit() the change is applied but not
+            //! recorded, so a drag is one undo step rather than one per mouse
+            //! move.
+            //!
+            //! The cache is invalidated from the start of the range rather than
+            //! from the playhead: a constant that changed was never only in
+            //! effect from here on, and pretending otherwise would give a cache
+            //! that no run from the start could reproduce. Only the frames
+            //! actually looked at are re-simulated.
+            void systemChanged(
+                const std::string& name,
+                const sim::System& before);
+
+            ///@}
+
+            //! \name Undo
+            ///@{
+
+            //! Open an edit that several changes will contribute to.
+            //!
+            //! A drag is one thing the artist did, however many events it took
+            //! to do it. Bracketed explicitly rather than guessed at from what
+            //! the values look like: a slider knows when it was pressed, and
+            //! two edits that happen to leave the system in the same state are
+            //! not necessarily the same edit.
+            void beginEdit();
+
+            //! Close the edit and record it, unless nothing actually changed.
+            void endEdit(const std::string& name);
+
+            std::shared_ptr<ftk::IObservable<bool> > observeHasUndo() const;
+            std::shared_ptr<ftk::IObservable<bool> > observeHasRedo() const;
+            void undo();
+            void redo();
+
+            //! Replace the system and re-simulate, without recording anything.
+            //! For the command stack; everything else wants systemChanged().
+            void applySystem(const sim::System&);
 
             ///@}
 
@@ -211,6 +252,20 @@ namespace fx
             std::shared_ptr<ftk::Observable<int> > _sceneChanged;
             std::shared_ptr<ftk::Observable<int> > _parameterChanged;
             std::shared_ptr<ftk::Observable<float> > _pointSize;
+            std::shared_ptr<ftk::CommandStack> _commands;
+
+            //! The command at the top of the stack, when it is still the one
+            //! this model pushed. Held so that a drag can extend it instead of
+            //! stacking a command per mouse move; cleared by undo and redo,
+            //! after which it is no longer the top.
+            std::shared_ptr<ftk::ICommand> _lastCommand;
+
+            //! The system as it was when the outermost beginEdit() ran, and
+            //! how many are open. Counted rather than flagged so that a widget
+            //! bracketing an edit that another widget already bracketed does
+            //! not close it early.
+            sim::System _editBefore;
+            int _editDepth = 0;
 
             //! The scene as it is on disk, which is what "modified" is
             //! measured against.

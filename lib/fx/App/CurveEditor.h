@@ -63,6 +63,10 @@ namespace fx
             //! decides whether they have to be built again.
             std::vector<std::string> _animated;
 
+            //! What the plot was last given, so that it is not handed the same
+            //! channels again: doing that drops whatever is selected.
+            std::vector<std::string> _graphPaths;
+
             std::shared_ptr<ftk::Observer<int> > _parameterObserver;
             std::shared_ptr<ftk::Observer<int> > _sceneObserver;
         };

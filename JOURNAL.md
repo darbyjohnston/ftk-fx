@@ -7,6 +7,59 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Undo, and two bugs it found
+
+The command stack, moved into phase 1 for the reason the `Parameter` type is
+there: undo is not a feature, it is a claim about where edits happen, and every
+edit written before the claim exists has to be found and moved. There were
+eight such places. There will be sixty.
+
+**One command for every kind of edit.** It holds the whole system before and
+after rather than a description of what changed. That sounds wasteful and is
+not: a system is a recipe of a few dozen parameters, copying one is far cheaper
+than the re-simulation the edit causes anyway, and it means setting a constant,
+moving a key, deleting one and re-rolling a seed are the same command rather
+than four classes that each have to get their inverse right.
+
+The shape is edit-then-report rather than describe-then-ask: the widget mutates
+the system through `getSystem()` and hands back what it looked like beforehand.
+That keeps the existing pointer-based editing and still gives the model both
+ends of the change.
+
+**A drag is one step.** First attempt guessed at it -- merge with the previous
+command if the name matches and the values follow on. Darby pointed at
+`setPressedCallback` on the sliders, which is the honest answer: a slider knows
+when it was taken hold of and let go, so the edit is bracketed rather than
+inferred. Two edits that happen to leave the system in the same state are not
+necessarily the same edit, and now nothing has to assume they are.
+
+### The drag was cancelling itself
+
+Verifying this needed the harness to drag in steps rather than to jump, since a
+widget that treats a drag as one gesture and one that treats every move as a
+separate edit look identical from a single event. Made it move in eight, and
+the eight-step drag landed somewhere the one-step drag did not.
+
+The cause was not in the drag. Every edit raises "the parameters changed", the
+curve editor rebuilds its channel list on that, and handing the plot its
+channels again resets the selection -- so the first move of any drag ended it.
+It had been there since the editor was written and could not be seen without
+a drag that was more than one event long. The plot is only handed its channels
+when the set actually differs now.
+
+### And the harness was reordering the shot
+
+Then a drag followed by an undo produced a state that made no sense. Clicks and
+drags have to wait for the window to be laid out, so they are applied later than
+the rest of the setup -- which meant everything written after one ran *before*
+it. A shot that clicks and then undoes was undoing the click. The first
+deferred step defers the rest now, and a manifest runs in the order it reads.
+
+None of the three showed up in the values the sidecar records. They showed up in
+a number that was wrong for a reason nothing on screen would explain.
+
+---
+
 ## 2026-08-09 — Saving a scene, and keying one
 
 Two of the four things §15 still wanted from Phase 1.

@@ -595,6 +595,79 @@
           "frame": 90
         }
       ]
+    },
+    {
+      "id": "undo-drag",
+      "window": {
+        "w": 620,
+        "h": 420
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 1,
+            "value": 50
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 40,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 80,
+            "value": 200
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 120,
+            "value": 900
+          }
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "pane": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "drag": [
+            [
+              664,
+              158
+            ],
+            [
+              664,
+              560
+            ]
+          ]
+        },
+        {
+          "undo": 1
+        },
+        {
+          "frame": 40
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Timeline",
+          "caption": "A drag of eight moves, undone by one step"
+        }
+      ]
     }
   ]
 }

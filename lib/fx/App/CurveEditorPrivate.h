@@ -48,11 +48,17 @@ namespace fx
             void keyPressEvent(ftk::KeyEvent&) override;
 
         private:
-            //! The value range the plot covers, taken from the keys rather
+            //! Recompute the value range the plot covers, from the keys rather
             //! than from the parameters' slider ranges: a rate that lives
             //! between 100 and 200 should not be drawn as a flat line across
             //! the bottom of a plot that goes to 2000.
-            ftk::RangeF _getValueRange() const;
+            //!
+            //! Never called during a drag. The range is derived from the keys,
+            //! so recomputing it while one is being moved re-scales the axis
+            //! under the pointer, which moves the key, which re-scales the
+            //! axis: the key chases the cursor and settles somewhere neither
+            //! of them chose.
+            void _valueRangeUpdate();
 
             //! Frame and value to a point in the widget, and back.
             ftk::V2F _toPos(double frame, float value) const;
@@ -68,6 +74,7 @@ namespace fx
             std::weak_ptr<SceneModel> _model;
             std::vector<ParameterInfo> _channels;
             ftk::RangeI _range = ftk::RangeI(1, 120);
+            ftk::RangeF _valueRange = ftk::RangeF(0.F, 1.F);
             int _currentFrame = 1;
 
             //! Which key is selected, and which is being dragged. The same key
