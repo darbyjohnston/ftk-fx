@@ -137,17 +137,24 @@ namespace fx
             {
             case PaneLayout::Two:
             {
-                auto splitter = Splitter::create(context, Orientation::Horizontal);
+                // Stacked rather than side by side. A viewport is wider than
+                // it is tall, and halving the width of an already wide window
+                // gives two panes that are the wrong shape for what goes in
+                // them.
+                auto splitter = Splitter::create(context, Orientation::Vertical);
                 splitter->setWidgets({ _panes[0], _panes[1] });
                 _root = splitter;
                 break;
             }
             case PaneLayout::Three:
             {
-                auto right = Splitter::create(context, Orientation::Vertical);
-                right->setWidgets({ _panes[1], _panes[2] });
-                auto splitter = Splitter::create(context, Orientation::Horizontal);
-                splitter->setWidgets({ _panes[0], right });
+                // Two across the top and one along the bottom, which is the
+                // four-up with a row missing rather than the two-up with a
+                // column added -- and it keeps the same reading order.
+                auto top = Splitter::create(context, Orientation::Horizontal);
+                top->setWidgets({ _panes[0], _panes[1] });
+                auto splitter = Splitter::create(context, Orientation::Vertical);
+                splitter->setWidgets({ top, _panes[2] });
                 _root = splitter;
                 break;
             }
