@@ -6,7 +6,7 @@
 
 ## 1. Premise
 
-A focused, standalone particle animation tool in the spirit of Wavefront Dynamation: one application an artist can learn in a week, live in all day, and use to hand-craft effects shots. Not a general-purpose 3D package, not a physically-accurate solver, not a node-graph environment.
+A focused, standalone particle animation tool in the spirit of the single-purpose particle systems of the early nineties: one application an artist can learn in a week, live in all day, and use to hand-craft effects shots. Not a general-purpose 3D package, not a physically-accurate solver, not a node-graph environment.
 
 The target work is bread-and-butter episodic and feature effects — debris, sparks, embers, dust, smoke wisps, swarms, impacts, atmospherics — where the sim is judged by how it reads on camera, not by how well it matches physics.
 
@@ -45,7 +45,7 @@ The target work is bread-and-butter episodic and feature effects — debris, spa
 
 ### Scope reality check
 
-Wavefront's original Dynamation was likely 100–150k lines of C, of which perhaps half was GUI code and language implementation. Most of that is now free: feather-tk provides the widget toolkit, Python provides the scripting language, NumPy provides vectorized math, and OpenEXR/Alembic/OCIO/tlRender provide I/O. The application-specific code here — pools, solver, emitters, fields, events, cache, curves, render types, compositor — is plausibly **25–40k lines**. That is achievable at a few thousand lines a quarter, and the phase boundaries mean it is useful long before it is finished.
+A standalone particle tool of the early nineties was likely 100–150k lines of C, of which perhaps half was GUI code and language implementation. Most of that is now free: feather-tk provides the widget toolkit, Python provides the scripting language, NumPy provides vectorized math, and OpenEXR/Alembic/OCIO/tlRender provide I/O. The application-specific code here — pools, solver, emitters, fields, events, cache, curves, render types, compositor — is plausibly **25–40k lines**. That is achievable at a few thousand lines a quarter, and the phase boundaries mean it is useful long before it is finished.
 
 ### What "small bursts" implies
 
@@ -250,7 +250,7 @@ One language, Python, at every level. The mental model must be continuous from "
 
 ### Expressions
 
-Written per-particle, evaluated array-at-a-time over NumPy views. Two hooks per system, matching the Dynamation model:
+Written per-particle, evaluated array-at-a-time over NumPy views. Two hooks per system, the split particle systems have always made:
 
 - **Creation** — runs once when a particle is born
 - **Runtime** — runs every substep
@@ -326,7 +326,7 @@ Output to EXR, multi-layer, with OCIO-managed color throughout. Half-float by de
 
 ## 10a. Render layers and the built-in compositor
 
-Not in Dynamation, and one of the higher-value additions here.
+Not something the older particle tools had, and one of the higher-value additions here.
 
 ### Render layers
 
