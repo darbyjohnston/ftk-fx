@@ -81,6 +81,7 @@ namespace fx
                 const std::shared_ptr<App>&);
             void _createEditMenu(const std::shared_ptr<ftk::Context>&);
             void _createLayoutMenu(const std::shared_ptr<ftk::Context>&);
+            void _createCameraMenu(const std::shared_ptr<ftk::Context>&);
 
             //! Ask for a path and save to it.
             void _saveAs();

@@ -58,6 +58,7 @@ namespace fx
             _createFileMenu(context, app);
             _createEditMenu(context);
             _createLayoutMenu(context);
+            _createCameraMenu(context);
             _createPanelsMenu(context);
 
             _pathObserver = Observer<std::filesystem::path>::create(
@@ -335,46 +336,20 @@ namespace fx
                 [this](bool value) { _redoAction->setEnabled(value); });
         }
 
-        void MainWindow::_createLayoutMenu(const std::shared_ptr<Context>& context)
+        void MainWindow::_createCameraMenu(const std::shared_ptr<Context>& context)
         {
-            // Added to the menu bar the base window already made, rather than
-            // replacing it, so the File and Window menus it provides stay.
-            auto menu = getMenuBar()->addMenu("Layout");
-
+            // Its own menu rather than part of Layout. Layout is how the panes
+            // are arranged; these move the camera in one of them, which is a
+            // different question that happened to share a menu because that
+            // menu used to be called View.
+            //
+            // Not in the panes' own menus, where a 3D application would
+            // normally put them and where "which pane?" would answer itself:
+            // the window dispatches shortcuts through its own menu bar only,
+            // so an action in a pane's menu would have no key attached to it.
+            auto menu = Menu::create(context);
+            getMenuBar()->insertMenu(3, "Camera", menu);
             std::weak_ptr<Panes> panesWeak(_panes);
-            const std::vector<KeyShortcut> shortcuts =
-            {
-                KeyShortcut(Key::_1, commandKeyModifier),
-                KeyShortcut(Key::_2, commandKeyModifier),
-                KeyShortcut(Key::_3, commandKeyModifier),
-                KeyShortcut(Key::_4, commandKeyModifier)
-            };
-            const auto labels = getPaneLayoutLabels();
-            for (size_t i = 0; i < labels.size(); ++i)
-            {
-                const PaneLayout layout = static_cast<PaneLayout>(i);
-                auto action = Action::create(
-                    labels[i],
-                    shortcuts[i],
-                    [panesWeak, layout](bool value)
-                    {
-                        // Only ever switching to an arrangement. Unchecking the
-                        // current one would leave no arrangement at all, so the
-                        // observer below puts the tick straight back.
-                        if (value)
-                        {
-                            if (auto panes = panesWeak.lock())
-                            {
-                                panes->setLayout(layout);
-                            }
-                        }
-                    });
-                action->setTooltip(labels[i] + " viewport layout");
-                _layoutActions[layout] = action;
-                menu->addAction(action);
-            }
-
-            menu->addDivider();
 
             menu->addAction(Action::create(
                 "Frame",
@@ -409,6 +384,8 @@ namespace fx
                         }
                     }
                 }));
+            menu->addDivider();
+
             menu->addAction(Action::create(
                 "Zoom In",
                 "ViewZoomIn",
@@ -418,7 +395,7 @@ namespace fx
                     if (auto panes = panesWeak.lock())
                     {
                         // Only when the current pane is showing a viewport.
-                        // There is no camera to frame in a spreadsheet.
+                        // There is nothing to zoom in a spreadsheet.
                         if (auto viewport = panes->getCurrent()->getViewport())
                         {
                             viewport->zoomIn();
@@ -434,13 +411,58 @@ namespace fx
                     if (auto panes = panesWeak.lock())
                     {
                         // Only when the current pane is showing a viewport.
-                        // There is no camera to frame in a spreadsheet.
+                        // There is nothing to zoom in a spreadsheet.
                         if (auto viewport = panes->getCurrent()->getViewport())
                         {
                             viewport->zoomOut();
                         }
                     }
                 }));
+
+        }
+
+        void MainWindow::_createLayoutMenu(const std::shared_ptr<Context>& context)
+        {
+            // Added to the menu bar the base window already made, rather than
+            // replacing it, so the File and Window menus it provides stay.
+            // Inserted rather than appended: the framework's Window menu is
+            // added second and belongs at the end, not in the middle of the
+            // application's own.
+            auto menu = Menu::create(context);
+            getMenuBar()->insertMenu(2, "Layout", menu);
+
+            std::weak_ptr<Panes> panesWeak(_panes);
+            const std::vector<KeyShortcut> shortcuts =
+            {
+                KeyShortcut(Key::_1, commandKeyModifier),
+                KeyShortcut(Key::_2, commandKeyModifier),
+                KeyShortcut(Key::_3, commandKeyModifier),
+                KeyShortcut(Key::_4, commandKeyModifier)
+            };
+            const auto labels = getPaneLayoutLabels();
+            for (size_t i = 0; i < labels.size(); ++i)
+            {
+                const PaneLayout layout = static_cast<PaneLayout>(i);
+                auto action = Action::create(
+                    labels[i],
+                    shortcuts[i],
+                    [panesWeak, layout](bool value)
+                    {
+                        // Only ever switching to an arrangement. Unchecking the
+                        // current one would leave no arrangement at all, so the
+                        // observer below puts the tick straight back.
+                        if (value)
+                        {
+                            if (auto panes = panesWeak.lock())
+                            {
+                                panes->setLayout(layout);
+                            }
+                        }
+                    });
+                action->setTooltip(labels[i] + " viewport layout");
+                _layoutActions[layout] = action;
+                menu->addAction(action);
+            }
 
             _layoutObserver = Observer<PaneLayout>::create(
                 _panes->observeLayout(),
@@ -455,7 +477,8 @@ namespace fx
 
         void MainWindow::_createPanelsMenu(const std::shared_ptr<Context>& context)
         {
-            auto menu = getMenuBar()->addMenu("Panels");
+            auto menu = Menu::create(context);
+            getMenuBar()->insertMenu(4, "Panels", menu);
             std::weak_ptr<Panels> panelsWeak(_panels);
             for (const auto& name : _panels->getPanelNames())
             {

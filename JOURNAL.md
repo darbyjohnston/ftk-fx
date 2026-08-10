@@ -35,6 +35,24 @@ orientation is a separate thing and does not exist yet.
 The harness grew a `frameView` step, which is the only way to reach it: it is a
 menu action, and the shots that need it need it applied to every pane.
 
+### Where Frame and Zoom live
+
+They were in the Layout menu, which is a leftover: that menu was called View
+until it collided with the panes' own View menus, and the camera actions came
+along with the rename. Layout is how the panes are arranged; framing moves a
+camera in one of them.
+
+They belong in the pane's own menu, which is where a 3D application would put
+them and where "which pane?" would answer itself. That is not available:
+`ftk::MainWindow` dispatches shortcuts through its own menu bar only, so an
+action in a pane's menu bar would have no key attached. Frame would lose
+Backspace for the sake of being in the tidier place, which is a bad trade.
+
+So a Camera menu at window level. Not "View" -- that word is taken by the pane
+menus, and reintroducing it is the collision that started this. The menus are
+inserted rather than appended while here, so the framework's Window menu sits
+at the end instead of in the middle of the application's own.
+
 ---
 
 ## 2026-08-09 — Undo, and two bugs it found

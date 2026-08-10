@@ -769,6 +769,30 @@
           "caption": "Each view fitted to the particles, not reset to a default"
         }
       ]
+    },
+    {
+      "id": "camera-menu",
+      "window": {
+        "w": 900,
+        "h": 560
+      },
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "click": [
+            370,
+            26
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "Camera moves the view; Layout arranges the panes"
+        }
+      ]
     }
   ]
 }
