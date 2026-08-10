@@ -69,6 +69,21 @@ namespace fx
             const std::filesystem::path& getPath() const;
             std::shared_ptr<ftk::IObservable<std::filesystem::path> > observePath() const;
 
+            //! Observe wholesale replacement of the scene -- New, Open, or
+            //! anything else that changes every value at once.
+            //!
+            //! Separate from parameterChanged(), which the panels raise
+            //! themselves: a panel refreshing on its own edits would fight the
+            //! drag that caused them.
+            std::shared_ptr<ftk::IObservable<int> > observeSceneChanged() const;
+
+            //! Observe edits to the parameters, as a counter that goes up.
+            //!
+            //! Raised by parameterChanged(), so it fires on every step of a
+            //! drag: anything watching it has to be cheap or has to compare
+            //! before it acts.
+            std::shared_ptr<ftk::IObservable<int> > observeParameterChanged() const;
+
             //! Get whether the scene differs from what is on disk. Compared
             //! rather than flagged, so putting a value back where it was is
             //! not a change.
@@ -177,6 +192,8 @@ namespace fx
             std::shared_ptr<ftk::Observable<size_t> > _cacheByteCount;
             std::shared_ptr<ftk::Observable<std::filesystem::path> > _path;
             std::shared_ptr<ftk::Observable<bool> > _modified;
+            std::shared_ptr<ftk::Observable<int> > _sceneChanged;
+            std::shared_ptr<ftk::Observable<int> > _parameterChanged;
 
             //! The scene as it is on disk, which is what "modified" is
             //! measured against.

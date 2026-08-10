@@ -6,7 +6,10 @@
 #include <fx/App/App.h>
 #include <fx/App/MainWindow.h>
 #include <fx/App/Panels.h>
+#include <fx/App/ParameterList.h>
 #include <fx/App/SceneModel.h>
+
+#include <fx/Core/Serialize.h>
 #include <fx/App/Pane.h>
 #include <fx/App/Panes.h>
 
@@ -401,6 +404,37 @@ namespace fx
                 else
                     throw std::runtime_error(ftk::Format(
                         "unknown panel style \"{0}\"").arg(name));
+            }
+            if (step.contains("key"))
+            {
+                const auto& k = step.at("key");
+                const std::string path = k.at("path").get<std::string>();
+                core::Parameter* parameter = nullptr;
+                for (const auto& info : getParameters(model->getSystem()))
+                {
+                    if (info.getPath() == path)
+                    {
+                        parameter = info.parameter;
+                        break;
+                    }
+                }
+                if (!parameter)
+                    throw std::runtime_error(ftk::Format(
+                        "unknown parameter \"{0}\"").arg(path));
+                core::Curve curve =
+                    core::Parameter::Type::Curve == parameter->getType() ?
+                    parameter->getCurve() :
+                    core::Curve();
+                core::Key key;
+                key.frame = k.at("frame").get<double>();
+                key.value = k.at("value").get<float>();
+                if (k.contains("interp"))
+                {
+                    core::from_json(k.at("interp"), key.interp);
+                }
+                curve.addKey(key);
+                parameter->setCurve(curve);
+                model->parameterChanged();
             }
             if (step.contains("save"))
             {

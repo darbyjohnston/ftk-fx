@@ -23,6 +23,9 @@ Setup steps a shot may use:
 * {"panelStyle": "Tabs"}                     stack the panels or tab them
 * {"pointSize": 12}                          how big the particles draw
 * {"rate": 2000}                             particles emitted per second
+* {"key": {"path": "Emitter/Rate", "frame": 1, "value": 100}}
+                                             key a parameter, with an optional
+                                             "interp" beside it
 * {"save": "/tmp/a.fx"}                      write the scene
 * {"open": "/tmp/a.fx"}                      read a scene back
 * {"click": [60, 80]}                        click there, with an optional

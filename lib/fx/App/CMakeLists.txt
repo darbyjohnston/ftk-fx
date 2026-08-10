@@ -6,6 +6,10 @@ set(HEADERS
     IPanel.h
     MainWindow.h
     Pane.h
+    CurveEditor.h
+    CurveEditorPrivate.h
+    Icons.h
+    ParameterList.h
     PaneOptions.h
     PanePlaceholder.h
     Panels.h
@@ -23,6 +27,10 @@ set(SOURCE
     IPanel.cpp
     MainWindow.cpp
     Pane.cpp
+    CurveEditor.cpp
+    CurveGraph.cpp
+    Icons.cpp
+    ParameterList.cpp
     PaneOptions.cpp
     PanePlaceholder.cpp
     Panels.cpp

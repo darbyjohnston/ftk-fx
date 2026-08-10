@@ -7,6 +7,92 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Saving a scene, and keying one
+
+Two of the four things §15 still wanted from Phase 1.
+
+### The file
+
+JSON, as §13 asks for, and written to be read rather than only to be parsed.
+A constant parameter is a bare number; only an animated one becomes an object,
+and then it carries its constant alongside the curve so that switching the
+animation off returns the value to where it was rather than to zero.
+Interpolation and infinity are written as names, not as the integers the enums
+happen to have, so inserting a mode does not silently reinterpret every file
+already on disk. A key writes its slopes only when it is a Bezier, because for
+every other mode they are either unused or taken from the neighbours, and
+storing them would put numbers in the file that editing a neighbour invalidates.
+
+Floats are narrowed before they are written. A float promoted to double prints
+as the double nearest the float, so a tenth reads `0.10000000149011612`; the
+shortest form that still parses back to the same float is used instead. It is
+exact -- the round trip test compares for equality, so a wrong answer here
+fails rather than drifting.
+
+Every field is optional on load and defaults from a fresh object, so a file
+written before a field existed still opens. What is not optional is a file that
+makes no sense: a range that runs backwards or an interpolation nobody has
+heard of throws. `open()` reads the whole file before touching the model, so a
+bad file costs the artist nothing.
+
+**Modified is compared, not flagged.** `Scene::operator==` walks the recipe, so
+nudging a value and putting it back is not a change. That is worth the handful
+of comparisons it costs; a dirty flag that lies is worse than no dirty flag.
+
+Two things fell out of the wiring. The framework's File menu holds Exit and
+nothing else, and appending to it puts New and Open *below* Exit -- so it is
+replaced instead, and `MenuBar` grew `insertMenu` to put the replacement back
+where the original was. And opening a scene changes every value at once, which
+no panel was watching for: `parameterChanged()` is what a panel raises itself,
+and a panel refreshing on its own edits would fight the drag that caused them.
+So there is a separate signal for wholesale replacement.
+
+### The keys
+
+`Parameter` has had curves and `SystemTest` has animated gravity through them
+since the first week. Nothing in the interface could author one, which is a
+strange place for a tool whose design says "can I animate this?" should never
+be a question.
+
+A diamond beside every parameter now keys it at the playhead, and the Curves
+pane is a real editor: a channel list, a plot sampled a pixel at a time so it
+shows what the solver will actually see rather than straight lines between
+keys, and keys that can be dragged. Dragging one re-runs the simulation, which
+the harness checks -- a shot that drags the frame 40 key of a rate curve down
+reports 406 particles where the one that leaves it alone reports 1768.
+
+Dragging a *slider* on an animated parameter moves the key at the playhead
+rather than throwing the curve away. Silently discarding animation because a
+slider moved is not something anyone would ask for.
+
+The panel and the editor read the same list of what exists, in
+`ParameterList.h`. Two lists would be two things to keep in agreement, and the
+way to make two things agree is to not have two things.
+
+### Two bugs, one of them old
+
+The plot came up empty with every channel ticked. An ftk observer runs its
+callback when it is created, and the scene observer cleared the set of visible
+channels -- so the constructor filled the set, built the rows from it, and then
+the observer emptied it behind them. The rows were right and the plot was not,
+which is exactly the shape of the symptom.
+
+Fixing that turned up a segfault that was already there: the channel list is
+rebuilt by detaching its children, and it was iterating the list
+`getChildren()` returns a reference to while `setParent(nullptr)` erased from
+it. It had never fired because the only rebuild that had ever run was the first
+one, when the list is empty. The fix is to copy the list first -- which is what
+`Splitter::setWidgets` in ftk already does, for the same reason.
+
+### What the editor does not do yet
+
+One value range shared by every channel, so a gravity curve between -30 and -2
+is a flat line at the bottom of a plot that goes to 1800. §4a wants normalised
+and absolute views, which is the answer. No axis labels, no box selection, no
+tangent handles, no framing. All of those are additions rather than rewrites.
+
+---
+
 ## 2026-08-09 — A thinner playhead, and which way is up
 
 Two from Darby, both about reading the screen rather than about behaviour.

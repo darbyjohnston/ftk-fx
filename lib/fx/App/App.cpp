@@ -3,6 +3,8 @@
 
 #include <fx/App/App.h>
 
+#include <fx/App/Icons.h>
+
 #include <fx/App/Capture.h>
 #include <fx/App/MainWindow.h>
 #include <fx/App/SceneModel.h>
@@ -46,6 +48,8 @@ namespace fx
                     _cmdLine.captureOutput
                 },
                 AppFiles{ "ftk-fx", "ftk-fx" });
+
+            registerIcons(context);
         }
 
         App::~App()

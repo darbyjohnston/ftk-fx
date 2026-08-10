@@ -25,6 +25,8 @@ namespace fx
             _cacheByteCount = Observable<size_t>::create(0);
             _path = Observable<std::filesystem::path>::create();
             _modified = Observable<bool>::create(false);
+            _sceneChanged = Observable<int>::create(0);
+            _parameterChanged = Observable<int>::create(0);
             _saved = getScene();
 
             _cache.setRange(_range->get());
@@ -67,6 +69,7 @@ namespace fx
                 clamp(_currentFrame->get(), value.range.min(), value.range.max()));
             _simulate(_currentFrame->get());
             _modifiedUpdate();
+            _sceneChanged->setAlways(_sceneChanged->get() + 1);
         }
 
         void SceneModel::newScene()
@@ -107,6 +110,16 @@ namespace fx
             return _path;
         }
 
+        std::shared_ptr<IObservable<int> > SceneModel::observeSceneChanged() const
+        {
+            return _sceneChanged;
+        }
+
+        std::shared_ptr<IObservable<int> > SceneModel::observeParameterChanged() const
+        {
+            return _parameterChanged;
+        }
+
         bool SceneModel::isModified() const
         {
             return _modified->get();
@@ -137,6 +150,7 @@ namespace fx
             _cache.invalidateFrom(_range->get().min());
             _simulate(_currentFrame->get());
             _modifiedUpdate();
+            _parameterChanged->setAlways(_parameterChanged->get() + 1);
         }
 
         const RangeI& SceneModel::getRange() const

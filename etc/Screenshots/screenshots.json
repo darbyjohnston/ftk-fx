@@ -430,6 +430,149 @@
           "caption": "Saved at rate 2000, changed to 200, opened again"
         }
       ]
+    },
+    {
+      "id": "curves",
+      "window": {
+        "w": 1100,
+        "h": 700
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 1,
+            "value": 50
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 40,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 80,
+            "value": 200
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 120,
+            "value": 900
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 1,
+            "value": -2
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 120,
+            "value": -30
+          }
+        },
+        {
+          "layout": 2
+        },
+        {
+          "pane": {
+            "index": 1,
+            "type": "Curves"
+          }
+        },
+        {
+          "frame": 60
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane1",
+          "caption": "Two channels keyed and plotted"
+        },
+        {
+          "id": "MainWindow.Parameters",
+          "caption": "The value at the playhead"
+        }
+      ]
+    },
+    {
+      "id": "curves-drag",
+      "window": {
+        "w": 620,
+        "h": 420
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 1,
+            "value": 50
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 40,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 80,
+            "value": 200
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 120,
+            "value": 900
+          }
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "pane": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "drag": [
+            [
+              664,
+              158
+            ],
+            [
+              664,
+              560
+            ]
+          ]
+        },
+        {
+          "frame": 40
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Timeline",
+          "caption": "The key at frame 40 dragged down, and the sim re-run"
+        }
+      ]
     }
   ]
 }

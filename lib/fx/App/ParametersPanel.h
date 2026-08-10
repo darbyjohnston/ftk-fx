@@ -4,12 +4,17 @@
 #pragma once
 
 #include <fx/App/IPanel.h>
+#include <fx/App/ParameterList.h>
 
-#include <fx/Core/Parameter.h>
+#include <ftk/Core/Observable.h>
+
+#include <map>
 
 namespace ftk
 {
+    class FloatEditSlider;
     class FormLayout;
+    class ToolButton;
 }
 
 namespace fx
@@ -41,21 +46,36 @@ namespace fx
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
         private:
-            //! Add a slider driving a parameter's constant value.
-            //!
-            //! Only the constant: dragging a slider on an animated parameter
-            //! should set a key, and there is no curve editor to set it with
-            //! yet. Wiring that up here before the editor exists would be
-            //! guessing at how the two talk to each other.
-            void _addSlider(
+            //! One row: a slider for the value and a button that keys it.
+            struct Row
+            {
+                ParameterInfo info;
+                std::shared_ptr<ftk::FloatEditSlider> slider;
+                std::shared_ptr<ftk::ToolButton> keyButton;
+            };
+
+            void _addRow(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<ftk::FormLayout>&,
-                const std::string& label,
-                core::Parameter&,
-                float min,
-                float max);
+                const ParameterInfo&);
+
+            //! Set a key at the playhead, or take the one that is there away.
+            void _key(const ParameterInfo&, bool);
+
+            //! Show what each parameter is worth at the playhead, and light
+            //! the key button of anything keyed there.
+            void _valuesUpdate();
 
             std::weak_ptr<SceneModel> _model;
+            std::vector<Row> _rows;
+            int _currentFrame = 1;
+
+            //! Set while the panel is writing its own widgets, so that the
+            //! callbacks those writes fire do not read back as edits.
+            bool _updating = false;
+
+            std::shared_ptr<ftk::Observer<int> > _currentFrameObserver;
+            std::shared_ptr<ftk::Observer<int> > _sceneObserver;
         };
     }
 }

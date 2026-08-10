@@ -1,0 +1,97 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright Contributors to the ftk-fx project.
+
+#pragma once
+
+#include <fx/App/CurveEditor.h>
+
+#include <ftk/UI/IMouseWidget.h>
+
+#include <ftk/Core/Observable.h>
+
+namespace fx
+{
+    namespace app
+    {
+        class SceneModel;
+
+        //! The plot: the curves themselves, and the keys that can be dragged.
+        class CurveGraph : public ftk::IMouseWidget
+        {
+        protected:
+            void _init(
+                const std::shared_ptr<ftk::Context>&,
+                const std::shared_ptr<SceneModel>&,
+                const std::shared_ptr<ftk::IWidget>& parent);
+
+            CurveGraph() = default;
+
+        public:
+            virtual ~CurveGraph();
+
+            static std::shared_ptr<CurveGraph> create(
+                const std::shared_ptr<ftk::Context>&,
+                const std::shared_ptr<SceneModel>&,
+                const std::shared_ptr<ftk::IWidget>& parent = nullptr);
+
+            //! Set which parameters are drawn. The order fixes the colours, so
+            //! a channel keeps its colour as others are shown and hidden.
+            void setChannels(const std::vector<ParameterInfo>&);
+
+            ftk::Size2I getSizeHint() const override;
+            void styleEvent(const ftk::StyleEvent&) override;
+            void sizeHintEvent(const ftk::SizeHintEvent&) override;
+            void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
+            void mousePressEvent(ftk::MouseClickEvent&) override;
+            void mouseReleaseEvent(ftk::MouseClickEvent&) override;
+            void mouseMoveEvent(ftk::MouseMoveEvent&) override;
+            void keyPressEvent(ftk::KeyEvent&) override;
+
+        private:
+            //! The value range the plot covers, taken from the keys rather
+            //! than from the parameters' slider ranges: a rate that lives
+            //! between 100 and 200 should not be drawn as a flat line across
+            //! the bottom of a plot that goes to 2000.
+            ftk::RangeF _getValueRange() const;
+
+            //! Frame and value to a point in the widget, and back.
+            ftk::V2F _toPos(double frame, float value) const;
+            double _toFrame(int x) const;
+            float _toValue(int y) const;
+
+            //! The key nearest the position, within grabbing distance.
+            bool _hit(const ftk::V2I&, size_t& channel, size_t& key) const;
+
+            //! Write a key back through the parameter, and tell the model.
+            void _moveKey(size_t channel, size_t key, double frame, float value);
+
+            std::weak_ptr<SceneModel> _model;
+            std::vector<ParameterInfo> _channels;
+            ftk::RangeI _range = ftk::RangeI(1, 120);
+            int _currentFrame = 1;
+
+            //! Which key is selected, and which is being dragged. The same key
+            //! most of the time; selection outlives the drag so that Delete
+            //! has something to act on.
+            size_t _selectedChannel = 0;
+            size_t _selectedKey = 0;
+            bool _hasSelection = false;
+            bool _dragging = false;
+
+            struct SizeData
+            {
+                bool init = true;
+                int margin = 0;
+                int border = 0;
+                int handle = 0;
+                ftk::FontInfo fontInfo;
+                ftk::FontMetrics fontMetrics;
+            };
+            SizeData _size;
+
+            std::shared_ptr<ftk::Observer<ftk::RangeI> > _rangeObserver;
+            std::shared_ptr<ftk::Observer<int> > _currentFrameObserver;
+            std::shared_ptr<ftk::Observer<int> > _sceneObserver;
+        };
+    }
+}

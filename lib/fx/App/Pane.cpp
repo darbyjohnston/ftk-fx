@@ -3,6 +3,7 @@
 
 #include <fx/App/Pane.h>
 
+#include <fx/App/CurveEditor.h>
 #include <fx/App/PanePlaceholder.h>
 #include <fx/App/Viewport.h>
 
@@ -164,6 +165,10 @@ namespace fx
                     });
                 _viewport->setPointSize(_pointSize);
                 content = _viewport;
+            }
+            else if (PaneType::Curves == paneType)
+            {
+                content = CurveEditor::create(context, _model.lock());
             }
             else
             {

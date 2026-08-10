@@ -11,6 +11,7 @@
 #include <ftk/UI/FormLayout.h>
 #include <ftk/UI/IntEditSlider.h>
 #include <ftk/UI/RowLayout.h>
+#include <ftk/UI/ToolButton.h>
 
 using namespace ftk;
 
@@ -21,30 +22,142 @@ namespace fx
         // Every row gets a default, and so a reset button. The three that had
         // none looked like rows that could not be reset rather than rows whose
         // author forgot, which is worse than not offering it anywhere.
-        void ParametersPanel::_addSlider(
+        void ParametersPanel::_addRow(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<FormLayout>& layout,
-            const std::string& label,
-            core::Parameter& parameter,
-            float min,
-            float max)
+            const ParameterInfo& info)
         {
-            auto slider = FloatEditSlider::create(context);
-            slider->setRange(min, max);
-            slider->setValue(parameter.getConstant());
-            slider->setDefault(parameter.getConstant());
+            Row row;
+            row.info = info;
+
+            row.slider = FloatEditSlider::create(context);
+            row.slider->setRange(info.min, info.max);
+            row.slider->setValue(info.parameter->getConstant());
+            row.slider->setDefault(info.defaultValue);
             std::weak_ptr<SceneModel> weak(_model);
-            core::Parameter* p = &parameter;
-            slider->setCallback(
-                [weak, p](float value)
+            const ParameterInfo captured = info;
+            row.slider->setCallback(
+                [this, weak, captured](float value)
                 {
-                    p->setConstant(value);
+                    if (_updating)
+                        return;
+                    // Dragging an animated parameter moves the key at the
+                    // playhead rather than throwing the animation away.
+                    // Silently discarding a curve because a slider moved is
+                    // not something anyone would ask for.
+                    if (core::Parameter::Type::Curve == captured.parameter->getType())
+                    {
+                        core::Curve curve = captured.parameter->getCurve();
+                        core::Key key;
+                        key.frame = _currentFrame;
+                        key.value = value;
+                        curve.addKey(key);
+                        captured.parameter->setCurve(curve);
+                    }
+                    else
+                    {
+                        captured.parameter->setConstant(value);
+                    }
                     if (auto model = weak.lock())
                     {
                         model->parameterChanged();
                     }
+                    _valuesUpdate();
                 });
-            layout->addRow(label + ":", slider);
+
+            row.keyButton = ToolButton::create(context);
+            row.keyButton->setIcon("Key");
+            row.keyButton->setCheckable(true);
+            row.keyButton->setTooltip(
+                "Set a key at the current frame, or remove the one there");
+            row.keyButton->setCheckedCallback(
+                [this, captured](bool value)
+                {
+                    if (_updating)
+                        return;
+                    _key(captured, value);
+                });
+
+            // The button beside the slider rather than in a column of its own,
+            // so the form's second column stays one widget wide and the rows
+            // that have no key button still line up.
+            auto hLayout = HorizontalLayout::create(context);
+            hLayout->setSpacingRole(SizeRole::SpacingTool);
+            row.slider->setParent(hLayout);
+            row.keyButton->setParent(hLayout);
+            layout->addRow(info.name + ":", hLayout);
+
+            _rows.push_back(row);
+        }
+
+        void ParametersPanel::_key(const ParameterInfo& info, bool value)
+        {
+            auto model = _model.lock();
+            if (!model)
+                return;
+            core::Parameter* parameter = info.parameter;
+            if (value)
+            {
+                core::Curve curve =
+                    core::Parameter::Type::Curve == parameter->getType() ?
+                    parameter->getCurve() :
+                    core::Curve();
+                core::Key key;
+                key.frame = _currentFrame;
+                key.value = parameter->getValue(_currentFrame);
+                curve.addKey(key);
+                parameter->setCurve(curve);
+            }
+            else if (core::Parameter::Type::Curve == parameter->getType())
+            {
+                core::Curve curve = parameter->getCurve();
+                const auto& keys = curve.getKeys();
+                for (size_t i = 0; i < keys.size(); ++i)
+                {
+                    if (keys[i].frame == _currentFrame)
+                    {
+                        curve.removeKey(i);
+                        break;
+                    }
+                }
+                // The last key gone means the parameter is not animated any
+                // more. It returns to the constant it was holding all along
+                // rather than to whatever an empty curve evaluates to.
+                if (curve.getKeys().empty())
+                {
+                    parameter->setConstant(parameter->getConstant());
+                }
+                else
+                {
+                    parameter->setCurve(curve);
+                }
+            }
+            model->parameterChanged();
+            _valuesUpdate();
+        }
+
+        void ParametersPanel::_valuesUpdate()
+        {
+            _updating = true;
+            for (auto& row : _rows)
+            {
+                const core::Parameter* parameter = row.info.parameter;
+                row.slider->setValue(parameter->getValue(_currentFrame));
+                bool keyed = false;
+                if (core::Parameter::Type::Curve == parameter->getType())
+                {
+                    for (const auto& key : parameter->getCurve().getKeys())
+                    {
+                        if (key.frame == _currentFrame)
+                        {
+                            keyed = true;
+                            break;
+                        }
+                    }
+                }
+                row.keyButton->setChecked(keyed);
+            }
+            _updating = false;
         }
 
         void ParametersPanel::_init(
@@ -60,49 +173,52 @@ namespace fx
                 "fx::app::ParametersPanel",
                 parent);
             _model = model;
+            _currentFrame = model->getCurrentFrame();
 
             auto layout = VerticalLayout::create(context);
             layout->setSpacingRole(SizeRole::None);
 
-            // Held by raw reference into the system, which is safe because the
-            // model outlives the panel and the system is a member of it rather
-            // than something that can be replaced.
-            auto& emitter = model->getSystem().getEmitter();
-            auto& forces = model->getSystem().getForces();
             std::weak_ptr<SceneModel> weak(model);
 
-            auto emitterLayout = FormLayout::create(context);
-            emitterLayout->setMarginRole(SizeRole::MarginSmall);
-            _addSlider(context, emitterLayout, "Rate", emitter.rate, 0.F, 2000.F);
-            _addSlider(context, emitterLayout, "Speed", emitter.speed, 0.F, 30.F);
-            _addSlider(context, emitterLayout, "Speed variance", emitter.speedVariance, 0.F, 1.F);
-            _addSlider(context, emitterLayout, "Spread", emitter.spread, 0.F, 180.F);
-            _addSlider(context, emitterLayout, "Lifespan", emitter.lifespan, .1F, 10.F);
-            _addSlider(context, emitterLayout, "Lifespan variance", emitter.lifespanVariance, 0.F, 1.F);
+            // The rows come from the shared list rather than from a second
+            // copy of it here, so the panel and the curve editor cannot
+            // disagree about what exists or what it is called. The pointers in
+            // it are safe because the model outlives the panel and its system
+            // is a member rather than something that can be replaced.
+            std::map<std::string, std::shared_ptr<FormLayout> > groups;
+            std::vector<std::string> groupOrder;
+            for (const auto& info : getParameters(model->getSystem()))
+            {
+                auto i = groups.find(info.group);
+                if (i == groups.end())
+                {
+                    auto groupLayout = FormLayout::create(context);
+                    groupLayout->setMarginRole(SizeRole::MarginSmall);
+                    i = groups.insert({ info.group, groupLayout }).first;
+                    groupOrder.push_back(info.group);
+                }
+                _addRow(context, i->second, info);
+            }
+
+            // The two rows that are not parameters, and so cannot be keyed:
+            // both change the recipe rather than a value in it.
             auto seedSlider = IntEditSlider::create(context);
             seedSlider->setRange(1, 100);
-            seedSlider->setValue(static_cast<int>(emitter.seed));
-            seedSlider->setDefault(static_cast<int>(emitter.seed));
+            seedSlider->setValue(static_cast<int>(model->getSystem().getEmitter().seed));
+            seedSlider->setDefault(static_cast<int>(model->getSystem().getEmitter().seed));
             seedSlider->setTooltip("Re-roll every random choice this emitter makes");
-            sim::PointEmitter* emitterPtr = &emitter;
             seedSlider->setCallback(
-                [weak, emitterPtr](int value)
+                [weak](int value)
                 {
-                    emitterPtr->seed = static_cast<uint64_t>(value);
                     if (auto model = weak.lock())
                     {
+                        model->getSystem().getEmitter().seed =
+                            static_cast<uint64_t>(value);
                         model->parameterChanged();
                     }
                 });
-            emitterLayout->addRow("Seed:", seedSlider);
-            auto emitterBellows = Bellows::create(context, "Emitter", layout);
-            emitterBellows->setWidget(emitterLayout);
-            emitterBellows->setOpen(true);
+            groups["Emitter"]->addRow("Seed:", seedSlider);
 
-            auto forcesLayout = FormLayout::create(context);
-            forcesLayout->setMarginRole(SizeRole::MarginSmall);
-            _addSlider(context, forcesLayout, "Gravity", forces.gravity.y, -50.F, 50.F);
-            _addSlider(context, forcesLayout, "Drag", forces.drag, 0.F, 4.F);
             auto substepsSlider = IntEditSlider::create(context);
             substepsSlider->setRange(1, 8);
             substepsSlider->setValue(model->getSystem().getSubsteps());
@@ -118,10 +234,14 @@ namespace fx
                         model->parameterChanged();
                     }
                 });
-            forcesLayout->addRow("Substeps:", substepsSlider);
-            auto forcesBellows = Bellows::create(context, "Forces", layout);
-            forcesBellows->setWidget(forcesLayout);
-            forcesBellows->setOpen(true);
+            groups["Forces"]->addRow("Substeps:", substepsSlider);
+
+            for (const auto& group : groupOrder)
+            {
+                auto bellows = Bellows::create(context, group, layout);
+                bellows->setWidget(groups[group]);
+                bellows->setOpen(true);
+            }
 
             auto displayLayout = FormLayout::create(context);
             displayLayout->setMarginRole(SizeRole::MarginSmall);
@@ -144,6 +264,20 @@ namespace fx
             displayBellows->setOpen(true);
 
             _setContent(layout);
+
+            _currentFrameObserver = Observer<int>::create(
+                model->observeCurrentFrame(),
+                [this](int value)
+                {
+                    _currentFrame = value;
+                    _valuesUpdate();
+                });
+
+            // Opening a scene replaces every value at once, and the sliders
+            // would otherwise go on showing the ones from the scene before.
+            _sceneObserver = Observer<int>::create(
+                model->observeSceneChanged(),
+                [this](int) { _valuesUpdate(); });
         }
 
         ParametersPanel::~ParametersPanel()
