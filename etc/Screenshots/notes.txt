@@ -26,6 +26,7 @@ Setup steps a shot may use:
 * {"key": {"path": "Emitter/Rate", "frame": 1, "value": 100}}
                                              key a parameter, with an optional
                                              "interp" beside it
+* {"frameView": true}                        frame every viewport on the particles
 * {"undo": 2}                                undo that many steps
 * {"redo": 1}                                redo that many
 * {"save": "/tmp/a.fx"}                      write the scene

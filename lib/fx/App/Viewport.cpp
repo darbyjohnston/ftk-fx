@@ -194,12 +194,90 @@ namespace fx
             setDrawUpdate();
         }
 
+        bool Viewport::_getBounds(V3F& min, V3F& max) const
+        {
+            if (!_frame)
+                return false;
+            const core::Pool& pool = _frame->pool;
+            bool any = false;
+            for (size_t i = 0; i < pool.size(); ++i)
+            {
+                if (!pool.alive[i])
+                    continue;
+                const V3F& p = pool.position[i];
+                if (!any)
+                {
+                    min = p;
+                    max = p;
+                    any = true;
+                }
+                else
+                {
+                    min.x = std::min(min.x, p.x);
+                    min.y = std::min(min.y, p.y);
+                    min.z = std::min(min.z, p.z);
+                    max.x = std::max(max.x, p.x);
+                    max.y = std::max(max.y, p.y);
+                    max.z = std::max(max.z, p.z);
+                }
+            }
+            return any;
+        }
+
         void Viewport::frameView()
         {
-            _orbit = getViewOrbit(_viewType);
-            _center = V3F(0.F, 5.F, 0.F);
-            _distance = 30.F;
-            _orthoHeight = 30.F;
+            V3F min, max;
+            if (!_getBounds(min, max))
+            {
+                // Nothing alive to frame -- before the first particle is born,
+                // or after the last one dies. The grid is what is on screen, so
+                // it is what gets framed.
+                min = V3F(-gridExtent, 0.F, -gridExtent);
+                max = V3F(gridExtent, 0.F, gridExtent);
+            }
+            _center = (min + max) / 2.F;
+
+            const float aspect = aspectRatio(getGeometry().size());
+            const float margin = 1.1F;
+            if (isOrtho(_viewType))
+            {
+                // What the box measures on screen, which for an orthographic
+                // view is exact: the corners go through the same rotation the
+                // camera uses and the extent is read off the result. A plume
+                // seen from above is wide and shallow, and framing it as a
+                // sphere would zoom out to fit a height that is not on screen.
+                const M44F rotation = rotateX(_orbit.y) * rotateY(_orbit.x);
+                V2F extent(0.F, 0.F);
+                for (int i = 0; i < 8; ++i)
+                {
+                    const V3F corner(
+                        (i & 1) ? max.x : min.x,
+                        (i & 2) ? max.y : min.y,
+                        (i & 4) ? max.z : min.z);
+                    const V3F p = rotation * (corner - _center);
+                    extent.x = std::max(extent.x, std::abs(p.x));
+                    extent.y = std::max(extent.y, std::abs(p.y));
+                }
+                // The projection takes the height and derives the width from
+                // the aspect, so a pane taller than it is wide has to grow the
+                // height to fit the same width across.
+                _orthoHeight = 2.F * margin *
+                    std::max(std::max(extent.y, extent.x / aspect), .5F);
+            }
+            else
+            {
+                // A sphere for the perspective view, because that one orbits:
+                // a box that just fits seen face on does not when seen corner
+                // on, and a fit that changes as the camera moves is worse than
+                // one that is slightly loose.
+                const float radius = std::max(length(max - min) / 2.F, 1.F);
+                // The narrower of the two half angles decides how far back the
+                // camera has to be.
+                const float vHalf = deg2rad(_fov) / 2.F;
+                const float hHalf = std::atan(std::tan(vHalf) * aspect);
+                _distance = radius * margin / std::sin(std::min(vHalf, hHalf));
+            }
+
             _doRender = true;
             setDrawUpdate();
         }

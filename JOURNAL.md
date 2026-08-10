@@ -7,6 +7,36 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Frame was not framing
+
+"Frame" set the camera to a fixed position -- centre at (0, 5, 0), thirty units
+back -- and never looked at the particles. It was a reset dressed as a fit, and
+it happened to look right in the first week because the default emitter puts its
+plume roughly where that camera points.
+
+It measures the alive particles now, and the two projections want different
+answers:
+
+**Orthographic views get the exact fit.** The eight corners of the box go
+through the same rotation the camera uses and the extent is read off the result.
+A plume seen from above is wide and shallow, and a fit that allowed for its
+height would zoom out to make room for something not on screen.
+
+**The perspective view gets a sphere around the box**, which is looser and
+should be. That view orbits, and a box that just fits seen face on does not
+when seen corner on -- a fit that changes as the camera moves is worse than one
+that is slightly generous.
+
+Framing no longer resets the orientation. That was the old behaviour by
+accident rather than by intent, and every other application treats framing as
+"fit what is there from where I am standing". Getting back to the default
+orientation is a separate thing and does not exist yet.
+
+The harness grew a `frameView` step, which is the only way to reach it: it is a
+menu action, and the shots that need it need it applied to every pane.
+
+---
+
 ## 2026-08-09 — Undo, and two bugs it found
 
 The command stack, moved into phase 1 for the reason the `Parameter` type is

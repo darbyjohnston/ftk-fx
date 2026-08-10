@@ -12,6 +12,7 @@
 #include <fx/Core/Serialize.h>
 #include <fx/App/Pane.h>
 #include <fx/App/Panes.h>
+#include <fx/App/Viewport.h>
 
 #include <ftk/UI/ComboBox.h>
 #include <ftk/UI/IButton.h>
@@ -447,6 +448,17 @@ namespace fx
                 curve.addKey(key);
                 parameter->setCurve(curve);
                 model->systemChanged("Key " + path, before);
+            }
+            if (step.contains("frameView") && step.at("frameView").get<bool>())
+            {
+                auto panes = app->getMainWindow()->getPanes();
+                for (int i = 0; i < getPaneCount(panes->getLayout()); ++i)
+                {
+                    if (auto viewport = panes->getPane(i)->getViewport())
+                    {
+                        viewport->frameView();
+                    }
+                }
             }
             if (step.contains("undo"))
             {

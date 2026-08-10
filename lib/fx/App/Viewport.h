@@ -99,6 +99,10 @@ namespace fx
             //! and there is nothing to get wrong.
             void _pointsUpdate();
 
+            //! The box the alive particles occupy at the current frame.
+            //! False when there are none to put a box around.
+            bool _getBounds(ftk::V3F& min, ftk::V3F& max) const;
+
             void _gridUpdate();
             //! The corner tripod, drawn in pixels rather than in the scene so
             //! that it keeps its size whatever the camera is doing.

@@ -742,6 +742,33 @@
           "caption": "Two slider drags, one undone: Speed back, Rate still moved"
         }
       ]
+    },
+    {
+      "id": "frame-view",
+      "window": {
+        "w": 1100,
+        "h": 750
+      },
+      "setup": [
+        {
+          "rate": 1500
+        },
+        {
+          "layout": 4
+        },
+        {
+          "frame": 100
+        },
+        {
+          "frameView": true
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane1",
+          "caption": "Each view fitted to the particles, not reset to a default"
+        }
+      ]
     }
   ]
 }
