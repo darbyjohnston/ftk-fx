@@ -67,6 +67,34 @@ The plot had the same hole for the same reason and would not have been noticed
 as quickly: the editor only hands it channels when the set differs, so undoing
 a key move redrew nothing. Both follow every edit now.
 
+### What setPressedCallback actually is
+
+The bracketing above was wrong, and wrong in a way that only a slider drag
+showed: after dragging one, undo went grey and stayed grey for the rest of the
+session. Typing the same value in the number edit beside it worked perfectly,
+which is the clue -- typing never touches the press callback at all.
+
+`setPressedCallback` is not a press and a release. It is fired from the value
+observer on every change, carrying `_isMousePressed()` alongside the new value,
+and once more on release. So treating it as a pair called `beginEdit()` once per
+mouse move and `endEdit()` once, and the depth counter never came back to zero.
+Everything after that was applied and nothing was recorded.
+
+Two changes. The count became a flag, because the callers are widget callbacks
+that make no promise to balance and an unmatched open under a count kills undo
+silently. And the edit is opened from the *value* callback rather than the press
+one: the observer reports the value before it reports the press state, so a
+drag's opening change has already happened by the time anything says a drag has
+begun -- which put the first undo in the middle of the gesture rather than
+before it. Opening on the value change and closing when a change arrives with
+the mouse up covers a typed value and a drag with the same two lines.
+
+Sliders are tagged for the sidecar now, so a shot can drag the real widget
+instead of guessing where it is. Two drags, then one undo: Speed returns and
+Rate stays moved.
+
+### Point size
+
 Point size had no undo at all, which was a decision rather than an oversight --
 it is display state, not part of the recipe, and it deliberately stays out of
 the scene file. That distinction is real and it is also invisible: it is a

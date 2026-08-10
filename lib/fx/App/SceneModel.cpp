@@ -228,7 +228,7 @@ namespace fx
             const sim::System& beforeSystem,
             float beforePointSize)
         {
-            if (_editDepth > 0)
+            if (_editOpen)
             {
                 // Inside a drag. endEdit() records the whole of it.
                 applyState(_system, _pointSize->get());
@@ -248,8 +248,9 @@ namespace fx
 
         void SceneModel::beginEdit()
         {
-            if (0 == _editDepth++)
+            if (!_editOpen)
             {
+                _editOpen = true;
                 _editBefore = _system;
                 _editBeforePointSize = _pointSize->get();
             }
@@ -257,9 +258,11 @@ namespace fx
 
         void SceneModel::endEdit(const std::string& name)
         {
-            if (_editDepth > 0 && 0 == --_editDepth &&
-                (_editBefore != _system ||
-                    _editBeforePointSize != _pointSize->get()))
+            if (!_editOpen)
+                return;
+            _editOpen = false;
+            if (_editBefore != _system ||
+                _editBeforePointSize != _pointSize->get())
             {
                 auto command = std::make_shared<StateCommand>(
                     this,

@@ -696,6 +696,52 @@
           "caption": "Both sliders back where they started"
         }
       ]
+    },
+    {
+      "id": "undo-slider-drag",
+      "window": {
+        "w": 900,
+        "h": 600,
+        "splitter": 0.35
+      },
+      "setup": [
+        {
+          "frame": 70
+        },
+        {
+          "drag": [
+            [
+              1100,
+              194
+            ],
+            [
+              1500,
+              194
+            ]
+          ]
+        },
+        {
+          "drag": [
+            [
+              1100,
+              258
+            ],
+            [
+              1400,
+              258
+            ]
+          ]
+        },
+        {
+          "undo": 1
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Panel.Parameters",
+          "caption": "Two slider drags, one undone: Speed back, Rate still moved"
+        }
+      ]
     }
   ]
 }

@@ -134,9 +134,14 @@ namespace fx
             //!
             //! A drag is one thing the artist did, however many events it took
             //! to do it. Bracketed explicitly rather than guessed at from what
-            //! the values look like: a slider knows when it was pressed, and
-            //! two edits that happen to leave the system in the same state are
-            //! not necessarily the same edit.
+            //! the values look like: two edits that happen to leave the system
+            //! in the same state are not necessarily the same edit.
+            //!
+            //! Opening one that is already open does nothing, and closing one
+            //! that is not open does nothing. A flag rather than a count, and
+            //! deliberately: the callers are widget callbacks that do not
+            //! promise to balance, and an unmatched open under a count leaves
+            //! the edit never closing and undo silently dead from then on.
             void beginEdit();
 
             //! Close the edit and record it, unless nothing actually changed.
@@ -273,7 +278,7 @@ namespace fx
             //! not close it early.
             sim::System _editBefore;
             float _editBeforePointSize = 3.F;
-            int _editDepth = 0;
+            bool _editOpen = false;
 
             //! The scene as it is on disk, which is what "modified" is
             //! measured against.

@@ -11,6 +11,7 @@
 #include <ftk/UI/FormLayout.h>
 #include <ftk/UI/IntEditSlider.h>
 #include <ftk/UI/RowLayout.h>
+#include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/ToolButton.h>
 
 using namespace ftk;
@@ -44,6 +45,13 @@ namespace fx
                     auto model = weak.lock();
                     if (!model)
                         return;
+                    // Opened here rather than from the press callback. A
+                    // slider reports the value first and the press state
+                    // second, so a drag's opening change has already happened
+                    // by the time anything says a drag is under way -- and
+                    // recording it separately makes the first undo land in the
+                    // middle of the gesture.
+                    model->beginEdit();
                     const sim::System before = model->getSystem();
                     // Dragging an animated parameter moves the key at the
                     // playhead rather than throwing the animation away.
@@ -66,18 +74,14 @@ namespace fx
                     _valuesUpdate();
                 });
 
-            // The slider says when it was taken hold of and let go, so a drag
-            // is one undo step.
+            // Closed when the value changed with the mouse up, which is a
+            // typed value or the end of a drag. Both are one edit.
             row.slider->setPressedCallback(
                 [weak, captured](float, bool pressed)
                 {
                     if (auto model = weak.lock())
                     {
-                        if (pressed)
-                        {
-                            model->beginEdit();
-                        }
-                        else
+                        if (!pressed)
                         {
                             model->endEdit("Set " + captured.name);
                         }
@@ -105,6 +109,9 @@ namespace fx
             row.slider->setParent(hLayout);
             row.keyButton->setParent(hLayout);
             layout->addRow(info.name + ":", hLayout);
+            // Tagged so a shot can find the slider rather than guess where it
+            // is; a drag on one is the only way to reach the press callbacks.
+            setScreenshotTag(row.slider, "Parameters." + info.name);
 
             _rows.push_back(row);
         }
@@ -234,7 +241,7 @@ namespace fx
                 {
                     if (auto model = weak.lock())
                     {
-                        pressed ? model->beginEdit() : model->endEdit("Set Seed");
+                        if (!pressed) model->endEdit("Set Seed");
                     }
                 });
             seedSlider->setCallback(
@@ -242,6 +249,7 @@ namespace fx
                 {
                     if (auto model = weak.lock())
                     {
+                        model->beginEdit();
                         const sim::System before = model->getSystem();
                         model->getSystem().getEmitter().seed =
                             static_cast<uint64_t>(value);
@@ -261,7 +269,7 @@ namespace fx
                 {
                     if (auto model = weak.lock())
                     {
-                        pressed ? model->beginEdit() : model->endEdit("Set Substeps");
+                        if (!pressed) model->endEdit("Set Substeps");
                     }
                 });
             substepsSlider->setCallback(
@@ -269,6 +277,7 @@ namespace fx
                 {
                     if (auto model = weak.lock())
                     {
+                        model->beginEdit();
                         const sim::System before = model->getSystem();
                         model->getSystem().setSubsteps(value);
                         model->systemChanged("Set Substeps", before);
@@ -294,6 +303,7 @@ namespace fx
                 {
                     if (auto model = weak.lock())
                     {
+                        model->beginEdit();
                         model->setPointSize(value);
                     }
                 });
@@ -308,9 +318,7 @@ namespace fx
                 {
                     if (auto model = weak.lock())
                     {
-                        pressed ?
-                            model->beginEdit() :
-                            model->endEdit("Set Point Size");
+                        if (!pressed) model->endEdit("Set Point Size");
                     }
                 });
             displayLayout->addRow("Point size:", pointSizeSlider);
