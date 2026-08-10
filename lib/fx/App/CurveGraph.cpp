@@ -68,6 +68,20 @@ namespace fx
                     _currentFrame = value;
                     setDrawUpdate();
                 });
+            // An edit that does not change which channels exist still changes
+            // where the keys are, and the editor only hands the plot its
+            // channels when the set differs -- so nothing else would ask for
+            // this redraw.
+            _parameterObserver = Observer<int>::create(
+                model->observeParameterChanged(),
+                [this](int)
+                {
+                    if (!_dragging)
+                    {
+                        _valueRangeUpdate();
+                    }
+                    setDrawUpdate();
+                });
             _sceneObserver = Observer<int>::create(
                 model->observeSceneChanged(),
                 [this](int)

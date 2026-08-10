@@ -303,6 +303,16 @@ namespace fx
                 {
                     pointSizeSlider->setValue(value);
                 });
+            pointSizeSlider->setPressedCallback(
+                [weak](float, bool pressed)
+                {
+                    if (auto model = weak.lock())
+                    {
+                        pressed ?
+                            model->beginEdit() :
+                            model->endEdit("Set Point Size");
+                    }
+                });
             displayLayout->addRow("Point size:", pointSizeSlider);
             auto displayBellows = Bellows::create(context, "Display", layout);
             displayBellows->setWidget(displayLayout);
@@ -323,6 +333,20 @@ namespace fx
             _sceneObserver = Observer<int>::create(
                 model->observeSceneChanged(),
                 [this](int) { _valuesUpdate(); });
+
+            // And so does an undo. The panel used to refresh only on its own
+            // edits, so undoing one left the slider showing the value the
+            // viewport had already stopped using.
+            _parameterObserver = Observer<int>::create(
+                model->observeParameterChanged(),
+                [this](int) { _valuesUpdate(); });
+
+            _pointSizeObserver = Observer<float>::create(
+                model->observePointSize(),
+                [pointSizeSlider](float value)
+                {
+                    pointSizeSlider->setValue(value);
+                });
         }
 
         ParametersPanel::~ParametersPanel()

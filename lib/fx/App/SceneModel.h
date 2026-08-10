@@ -147,9 +147,10 @@ namespace fx
             void undo();
             void redo();
 
-            //! Replace the system and re-simulate, without recording anything.
-            //! For the command stack; everything else wants systemChanged().
-            void applySystem(const sim::System&);
+            //! Replace everything an edit can touch and re-simulate, without
+            //! recording anything. For the command stack; everything else
+            //! wants systemChanged() or setPointSize().
+            void applyState(const sim::System&, float pointSize);
 
             ///@}
 
@@ -158,11 +159,10 @@ namespace fx
 
             //! How big the particles draw, in points.
             //!
-            //! Not part of the scene: it is how the artist is looking at the
-            //! simulation, not what the simulation is. It lives here anyway
-            //! because two widgets have an opinion about it -- the panel that
-            //! sets it and the viewports that use it -- and the way to keep
-            //! them agreeing is to give them one thing to agree with.
+            //! Not part of the scene file yet, though §10's render presets say
+            //! it eventually should be. It is on the undo stack regardless: it
+            //! sits in the same panel as the parameters, with the same slider,
+            //! and nobody is going to remember which sliders undo.
             float getPointSize() const;
             std::shared_ptr<ftk::IObservable<float> > observePointSize() const;
             void setPointSize(float);
@@ -236,6 +236,13 @@ namespace fx
             //! Compare the scene against what was last read or written.
             void _modifiedUpdate();
 
+            //! Apply what has already been changed, and put it on the stack
+            //! unless an edit is open around it.
+            void _record(
+                const std::string& name,
+                const sim::System& beforeSystem,
+                float beforePointSize);
+
             std::shared_ptr<ftk::Context> _context;
             sim::System _system;
             core::Cache _cache;
@@ -265,6 +272,7 @@ namespace fx
             //! bracketing an edit that another widget already bracketed does
             //! not close it early.
             sim::System _editBefore;
+            float _editBeforePointSize = 3.F;
             int _editDepth = 0;
 
             //! The scene as it is on disk, which is what "modified" is

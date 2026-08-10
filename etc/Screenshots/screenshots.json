@@ -668,6 +668,34 @@
           "caption": "A drag of eight moves, undone by one step"
         }
       ]
+    },
+    {
+      "id": "undo-panel",
+      "window": {
+        "w": 900,
+        "h": 600,
+        "splitter": 0.35
+      },
+      "setup": [
+        {
+          "rate": 2000
+        },
+        {
+          "pointSize": 12
+        },
+        {
+          "undo": 2
+        },
+        {
+          "frame": 70
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Panel.Parameters",
+          "caption": "Both sliders back where they started"
+        }
+      ]
     }
   ]
 }

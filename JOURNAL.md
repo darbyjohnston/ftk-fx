@@ -58,6 +58,23 @@ deferred step defers the rest now, and a manifest runs in the order it reads.
 None of the three showed up in the values the sidecar records. They showed up in
 a number that was wrong for a reason nothing on screen would explain.
 
+### Then two more, from looking at it
+
+Darby undid a rate change and the viewport went back while the slider went on
+reading 2000. The panel refreshed on frame changes and on a new scene, which is
+every way the values could change *except* the one that had just been added.
+The plot had the same hole for the same reason and would not have been noticed
+as quickly: the editor only hands it channels when the set differs, so undoing
+a key move redrew nothing. Both follow every edit now.
+
+Point size had no undo at all, which was a decision rather than an oversight --
+it is display state, not part of the recipe, and it deliberately stays out of
+the scene file. That distinction is real and it is also invisible: it is a
+slider in the panel of sliders, and nobody is going to remember which ones
+undo. So the command holds it too. What the stack captures is no longer "the
+system" but "everything an edit can touch", which is the honest description and
+leaves room for the render presets §10 wants.
+
 ---
 
 ## 2026-08-09 — Saving a scene, and keying one

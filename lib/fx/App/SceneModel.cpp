@@ -26,32 +26,43 @@ namespace fx
             //!
             //! The model is held by raw pointer because the model owns the
             //! stack that owns this, so it cannot outlive it.
-            class SystemCommand : public ftk::ICommand
+            class StateCommand : public ftk::ICommand
             {
             public:
-                SystemCommand(
+                StateCommand(
                     SceneModel* model,
                     const std::string& name,
-                    const sim::System& before,
-                    const sim::System& after) :
+                    const sim::System& beforeSystem,
+                    float beforePointSize,
+                    const sim::System& afterSystem,
+                    float afterPointSize) :
                     _model(model),
                     _name(name),
-                    _before(before),
-                    _after(after)
+                    _beforeSystem(beforeSystem),
+                    _beforePointSize(beforePointSize),
+                    _afterSystem(afterSystem),
+                    _afterPointSize(afterPointSize)
                 {}
 
                 const std::string& getName() const { return _name; }
-                const sim::System& getAfter() const { return _after; }
-                void setAfter(const sim::System& value) { _after = value; }
 
-                void exec() override { _model->applySystem(_after); }
-                void undo() override { _model->applySystem(_before); }
+                void exec() override
+                {
+                    _model->applyState(_afterSystem, _afterPointSize);
+                }
+
+                void undo() override
+                {
+                    _model->applyState(_beforeSystem, _beforePointSize);
+                }
 
             private:
                 SceneModel* _model = nullptr;
                 std::string _name;
-                sim::System _before;
-                sim::System _after;
+                sim::System _beforeSystem;
+                float _beforePointSize = 3.F;
+                sim::System _afterSystem;
+                float _afterPointSize = 3.F;
             };
         }
 
@@ -193,9 +204,10 @@ namespace fx
             return _system;
         }
 
-        void SceneModel::applySystem(const sim::System& value)
+        void SceneModel::applyState(const sim::System& value, float pointSize)
         {
             _system = value;
+            _pointSize->setIfChanged(pointSize);
             _cache.invalidateFrom(_range->get().min());
             _simulate(_currentFrame->get());
             _modifiedUpdate();
@@ -208,14 +220,27 @@ namespace fx
         {
             // Already applied: the caller edited the system in place. What is
             // left is to record it and to throw away what it invalidated.
+            _record(name, before, _pointSize->get());
+        }
+
+        void SceneModel::_record(
+            const std::string& name,
+            const sim::System& beforeSystem,
+            float beforePointSize)
+        {
             if (_editDepth > 0)
             {
                 // Inside a drag. endEdit() records the whole of it.
-                applySystem(_system);
+                applyState(_system, _pointSize->get());
                 return;
             }
-            auto command = std::make_shared<SystemCommand>(
-                this, name, before, _system);
+            auto command = std::make_shared<StateCommand>(
+                this,
+                name,
+                beforeSystem,
+                beforePointSize,
+                _system,
+                _pointSize->get());
             _lastCommand = command;
             // push() runs exec(), which is what applies and re-simulates.
             _commands->push(command);
@@ -226,15 +251,23 @@ namespace fx
             if (0 == _editDepth++)
             {
                 _editBefore = _system;
+                _editBeforePointSize = _pointSize->get();
             }
         }
 
         void SceneModel::endEdit(const std::string& name)
         {
-            if (_editDepth > 0 && 0 == --_editDepth && _editBefore != _system)
+            if (_editDepth > 0 && 0 == --_editDepth &&
+                (_editBefore != _system ||
+                    _editBeforePointSize != _pointSize->get()))
             {
-                auto command = std::make_shared<SystemCommand>(
-                    this, name, _editBefore, _system);
+                auto command = std::make_shared<StateCommand>(
+                    this,
+                    name,
+                    _editBefore,
+                    _editBeforePointSize,
+                    _system,
+                    _pointSize->get());
                 _lastCommand = command;
                 _commands->push(command);
             }
@@ -275,7 +308,11 @@ namespace fx
 
         void SceneModel::setPointSize(float value)
         {
+            const float before = _pointSize->get();
+            if (value == before)
+                return;
             _pointSize->setIfChanged(value);
+            _record("Set Point Size", _system, before);
         }
 
         const RangeI& SceneModel::getRange() const
