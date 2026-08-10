@@ -102,7 +102,10 @@ namespace fx
             void _gridUpdate();
             //! The corner tripod, drawn in pixels rather than in the scene so
             //! that it keeps its size whatever the camera is doing.
-            void _axisDraw(const ftk::Box2I&, const ftk::DrawEvent&);
+            void _axisDraw(
+                const ftk::Box2I& geometry,
+                const ftk::Box2I& drawRect,
+                const ftk::DrawEvent&);
 
             std::shared_ptr<const core::Frame> _frame;
             float _pointSize = 3.F;

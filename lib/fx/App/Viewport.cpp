@@ -388,18 +388,31 @@ namespace fx
             _pointsVbo->copy(data, 0, data.size());
         }
 
-        void Viewport::_axisDraw(const Box2I& g, const DrawEvent& event)
+        void Viewport::_axisDraw(
+            const Box2I& g,
+            const Box2I& drawRect,
+            const DrawEvent& event)
         {
+            // Drawn over the top of the buffer rather than inside it, so
+            // nothing else is keeping it within the widget.
+            const ClipRectEnabledState clipRectEnabledState(event.render);
+            const ClipRectState clipRectState(event.render);
+            event.render->setClipRectEnabled(true);
+            event.render->setClipRect(intersect(g, drawRect));
+
             // The camera's rotation and nothing else: the tripod says which
             // way the scene is facing, not where it is or how far away.
             const M44F rotation = rotateX(_orbit.y) * rotateY(_orbit.x);
             const float length = _size.length;
-            // Inset by the stub as well as the margin, since the origin is not
-            // the bottom left of the tripod -- three of the six arms run the
-            // other way.
+            // Inset by a whole axis and a dot, not by the stub. Which way an
+            // axis points depends on the camera, so any of the six arms can be
+            // the one heading for the corner: in a top view it is the positive
+            // Z, and at a stub's inset it ran out of the pane and over the
+            // splitter below.
+            const float reach = length + _size.dot;
             const V2F origin(
-                g.min.x + _size.margin + length * axisStub,
-                g.max.y - _size.margin - length * axisStub);
+                g.min.x + _size.margin + reach,
+                g.max.y - _size.margin - reach);
 
             struct Axis
             {
@@ -468,9 +481,14 @@ namespace fx
                 _size.init = false;
                 // Resolved here because a draw event carries neither the style
                 // nor the display scale.
-                _size.line = event.style->getSizeRole(
+                const int border = event.style->getSizeRole(
                     SizeRole::Border, event.displayScale);
-                _size.dot = _size.line * 2;
+                // Twice the border: a hairline reads as part of the grid
+                // rather than as something laid over it. The dots stay where
+                // they were -- they were already the right size, and following
+                // the line width would only make them balls on sticks.
+                _size.line = border * 2;
+                _size.dot = border * 2;
                 _size.length = event.style->getSizeRole(
                     SizeRole::Swatch, event.displayScale);
                 _size.margin = event.style->getSizeRole(
@@ -586,7 +604,7 @@ namespace fx
             // the renderer rather than in OpenGL: the tripod is a screen space
             // overlay at a fixed size, which is the one part of this widget
             // that a two dimensional drawing API expresses well.
-            _axisDraw(g, event);
+            _axisDraw(g, drawRect, event);
         }
 
         void Viewport::mouseMoveEvent(MouseMoveEvent& event)
