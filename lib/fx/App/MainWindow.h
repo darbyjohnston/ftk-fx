@@ -82,6 +82,7 @@ namespace fx
             void _createEditMenu(const std::shared_ptr<ftk::Context>&);
             void _createLayoutMenu(const std::shared_ptr<ftk::Context>&);
             void _createCameraMenu(const std::shared_ptr<ftk::Context>&);
+            void _createToolBar(const std::shared_ptr<ftk::Context>&);
 
             //! Ask for a path and save to it.
             void _saveAs();
@@ -99,8 +100,18 @@ namespace fx
             std::shared_ptr<Panels> _panels;
             std::shared_ptr<TimelineBar> _timelineBar;
             std::shared_ptr<ftk::Splitter> _splitter;
+            std::shared_ptr<ftk::VerticalLayout> _layout;
             std::shared_ptr<ftk::Observer<std::filesystem::path> > _pathObserver;
             std::shared_ptr<ftk::Observer<bool> > _modifiedObserver;
+            //! The actions the tool bar shares with the menus, so that one
+            //! object carries the icon, the tooltip and the enabled state and
+            //! the two cannot disagree.
+            std::shared_ptr<ftk::Action> _newAction;
+            std::shared_ptr<ftk::Action> _openAction;
+            std::shared_ptr<ftk::Action> _saveAction;
+            std::shared_ptr<ftk::Action> _frameAction;
+            std::shared_ptr<ftk::Action> _zoomInAction;
+            std::shared_ptr<ftk::Action> _zoomOutAction;
             std::shared_ptr<ftk::Action> _undoAction;
             std::shared_ptr<ftk::Action> _redoAction;
             std::shared_ptr<ftk::Observer<bool> > _hasUndoObserver;

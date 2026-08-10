@@ -306,13 +306,13 @@
         {
           "click": [
             60,
-            80
+            138
           ]
         },
         {
           "click": [
             128,
-            242
+            300
           ]
         }
       ]
@@ -333,11 +333,11 @@
         {
           "drag": [
             [
-              776,
-              619
+              656,
+              634
             ],
             [
-              500,
+              420,
               400
             ]
           ]
@@ -555,11 +555,11 @@
           "drag": [
             [
               664,
-              158
+              216
             ],
             [
               664,
-              560
+              618
             ]
           ]
         },
@@ -647,11 +647,11 @@
           "drag": [
             [
               664,
-              158
+              216
             ],
             [
               664,
-              560
+              618
             ]
           ]
         },
@@ -712,11 +712,11 @@
           "drag": [
             [
               1100,
-              194
+              252
             ],
             [
               1500,
-              194
+              252
             ]
           ]
         },
@@ -724,11 +724,11 @@
           "drag": [
             [
               1100,
-              258
+              316
             ],
             [
               1400,
-              258
+              316
             ]
           ]
         },
@@ -791,6 +791,30 @@
         {
           "id": "MainWindow.Pane0",
           "caption": "Camera moves the view; Layout arranges the panes"
+        }
+      ]
+    },
+    {
+      "id": "tool-bar",
+      "window": {
+        "w": 1000,
+        "h": 620
+      },
+      "setup": [
+        {
+          "layout": 4
+        },
+        {
+          "rate": 800
+        },
+        {
+          "frame": 70
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.ToolBar",
+          "caption": "The same actions as the menus, sharing their enabled state"
         }
       ]
     }

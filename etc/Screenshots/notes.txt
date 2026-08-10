@@ -70,3 +70,11 @@ regenerated into a temporary directory. Remake it with:
 
 The capture is at the display scale, so it comes out twice the window size;
 1920 across is what the other feather-tk projects use.
+
+Coordinates in a shot are pixels, and pixels move. A shot that clicks or drags
+somewhere that is no longer there does not fail -- it captures a picture of
+nothing having happened, with whatever caption it was given still claiming
+otherwise. panes-four-dragged did exactly that for several commits after the
+panel column was widened and the splitter crossing moved out from under it.
+Read the coordinates back out of a sidecar after anything moves, and check the
+shot still does what it says.

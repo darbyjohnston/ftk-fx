@@ -25,6 +25,29 @@ namespace fx
                 " d=\"M 5.5,0.7 10.3,5.5 5.5,10.3 0.7,5.5 Z\" />\n"
                 "</svg>\n";
 
+            //! The pane arrangements, drawn as the arrangements themselves so
+            //! the button shows what it does. Twenty across, like the icons
+            //! feather-tk ships; the reset diamond is smaller because it sits
+            //! in a row of sliders rather than on a tool bar.
+            std::string layoutSvg(const std::string& rects)
+            {
+                return
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+                    "<svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\""
+                    " xmlns=\"http://www.w3.org/2000/svg\">\n"
+                    "  <g style=\"fill:#f0f0f0;fill-opacity:1;stroke:none\">\n" +
+                    rects +
+                    "  </g>\n</svg>\n";
+            }
+
+            const std::string rectFull   = "    <rect x=\"2\" y=\"2\" width=\"16\" height=\"16\"/>\n";
+            const std::string rectTop    = "    <rect x=\"2\" y=\"2\" width=\"16\" height=\"7\"/>\n";
+            const std::string rectBottom = "    <rect x=\"2\" y=\"11\" width=\"16\" height=\"7\"/>\n";
+            const std::string rectTopL   = "    <rect x=\"2\" y=\"2\" width=\"7\" height=\"7\"/>\n";
+            const std::string rectTopR   = "    <rect x=\"11\" y=\"2\" width=\"7\" height=\"7\"/>\n";
+            const std::string rectBotL   = "    <rect x=\"2\" y=\"11\" width=\"7\" height=\"7\"/>\n";
+            const std::string rectBotR   = "    <rect x=\"11\" y=\"11\" width=\"7\" height=\"7\"/>\n";
+
             void add(
                 const std::shared_ptr<ftk::IconSystem>& iconSystem,
                 const std::string& name,
@@ -40,6 +63,12 @@ namespace fx
         {
             auto iconSystem = context->getSystem<ftk::IconSystem>();
             add(iconSystem, "Key", keySvg);
+            add(iconSystem, "LayoutSingle", layoutSvg(rectFull));
+            add(iconSystem, "LayoutTwo", layoutSvg(rectTop + rectBottom));
+            add(iconSystem, "LayoutThree",
+                layoutSvg(rectTopL + rectTopR + rectBottom));
+            add(iconSystem, "LayoutFour",
+                layoutSvg(rectTopL + rectTopR + rectBotL + rectBotR));
         }
     }
 }

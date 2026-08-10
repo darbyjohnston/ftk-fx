@@ -7,6 +7,50 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Icons, a tool bar, and a shot that had stopped testing
+
+The menu actions carry feather-tk's icons where it has one -- FileNew, FileOpen,
+FileSave, Undo, Redo, and the ViewFrame and ViewZoom pair the camera actions
+already used. Four are new and belong to this application rather than to the
+toolkit: the pane arrangements, drawn as the arrangements themselves, so the
+button shows what it does rather than naming it.
+
+The tool bar holds the same `Action` objects the menus do. `ToolButton` takes an
+action's icon, tooltip, checkable, checked and enabled state -- but not its text
+-- so a tool bar built from actions is icon-only for free and cannot drift out
+of step with the menu. Undo greys out in both places because there is only one
+place. The layout buttons show which arrangement is current for the same reason.
+
+Two things worth remembering. A `ToolBar` is an `IContainer`, so a divider
+between groups has to go through `addWidget` rather than being parented to the
+tool bar; parented directly it is never given a geometry and simply does not
+appear. And the tool bar is built after the menus, because that is where the
+actions come from, then moved to the top of the window with `moveToBack`.
+
+### The shot that had stopped testing
+
+Adding a tool bar pushed everything below the menu bar down by fifty-eight
+pixels, which invalidated every click and drag coordinate in the manifest.
+Shifting them was mechanical. Checking them afterwards was not, and it turned up
+that `panes-four-dragged` had not been dragging anything for several commits:
+its pane boxes were identical to the shot that does no drag at all.
+
+It broke when the panel column was widened from .78 to .66. That moved the
+splitter crossing from x=780 to x=656, and the drag had been starting at 776 --
+which was the crossing when the coordinates were chosen. Nothing failed. The
+shot captured a picture of nothing having happened, with the caption "Both
+divisions moved at once" still underneath it.
+
+That is the failure mode of a coordinate in a manifest: it does not go wrong, it
+goes quiet. The harness has caught several real bugs precisely because it
+asserts on what the sidecar says rather than on how the picture looks, and this
+is the one place where that discipline was not applied to the harness itself.
+The coordinates are re-derived from a sidecar now, and the notes say to do that
+after anything moves. Making the steps relative to a tagged widget would remove
+the class entirely and is the obvious next thing.
+
+---
+
 ## 2026-08-09 — Frame was not framing
 
 "Frame" set the camera to a fixed position -- centre at (0, 5, 0), thirty units

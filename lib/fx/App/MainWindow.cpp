@@ -20,6 +20,7 @@
 #include <ftk/UI/RowLayout.h>
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/Splitter.h>
+#include <ftk/UI/ToolBar.h>
 
 #include <ftk/Core/Format.h>
 
@@ -47,19 +48,20 @@ namespace fx
             _panes->setParent(_splitter);
             _panels->setParent(_splitter);
 
-            auto layout = VerticalLayout::create(context);
-            layout->setSpacingRole(SizeRole::None);
-            _splitter->setParent(layout);
-            Divider::create(context, Orientation::Vertical, layout);
-            _timelineBar = TimelineBar::create(context, model, layout);
+            _layout = VerticalLayout::create(context);
+            _layout->setSpacingRole(SizeRole::None);
+            _splitter->setParent(_layout);
+            Divider::create(context, Orientation::Vertical, _layout);
+            _timelineBar = TimelineBar::create(context, model, _layout);
             setScreenshotTag(_timelineBar, "MainWindow.Timeline");
-            setWidget(layout);
+            setWidget(_layout);
 
             _createFileMenu(context, app);
             _createEditMenu(context);
             _createLayoutMenu(context);
             _createCameraMenu(context);
             _createPanelsMenu(context);
+            _createToolBar(context);
 
             _pathObserver = Observer<std::filesystem::path>::create(
                 model->observePath(),
@@ -144,8 +146,9 @@ namespace fx
             std::weak_ptr<MainWindow> windowWeak(
                 std::dynamic_pointer_cast<MainWindow>(shared_from_this()));
 
-            menu->addAction(Action::create(
+            _newAction = Action::create(
                 "New",
+                "FileNew",
                 KeyShortcut(Key::N, commandKeyModifier),
                 [weak]
                 {
@@ -153,10 +156,13 @@ namespace fx
                     {
                         model->newScene();
                     }
-                }));
+                });
+            _newAction->setTooltip("Start again from an empty scene");
+            menu->addAction(_newAction);
 
-            menu->addAction(Action::create(
+            _openAction = Action::create(
                 "Open",
+                "FileOpen",
                 KeyShortcut(Key::O, commandKeyModifier),
                 [this, weak, context]
                 {
@@ -181,10 +187,13 @@ namespace fx
                             }
                         },
                         options);
-                }));
+                });
+            _openAction->setTooltip("Open a scene");
+            menu->addAction(_openAction);
 
-            menu->addAction(Action::create(
+            _saveAction = Action::create(
                 "Save",
+                "FileSave",
                 KeyShortcut(Key::S, commandKeyModifier),
                 [this, weak]
                 {
@@ -206,7 +215,9 @@ namespace fx
                     {
                         _error(e.what());
                     }
-                }));
+                });
+            _saveAction->setTooltip("Save the scene");
+            menu->addAction(_saveAction);
 
             menu->addAction(Action::create(
                 "Save As",
@@ -308,17 +319,21 @@ namespace fx
 
             _undoAction = Action::create(
                 "Undo",
+                "Undo",
                 KeyShortcut(Key::Z, commandKeyModifier),
                 [weak] { if (auto model = weak.lock()) model->undo(); });
+            _undoAction->setTooltip("Undo the last edit");
             menu->addAction(_undoAction);
 
             _redoAction = Action::create(
+                "Redo",
                 "Redo",
                 KeyShortcut(
                     Key::Z,
                     static_cast<int>(commandKeyModifier) |
                     static_cast<int>(KeyModifier::Shift)),
                 [weak] { if (auto model = weak.lock()) model->redo(); });
+            _redoAction->setTooltip("Redo the last undone edit");
             menu->addAction(_redoAction);
 
             // Beside File rather than after Panels: an artist looking for undo
@@ -351,7 +366,7 @@ namespace fx
             getMenuBar()->insertMenu(3, "Camera", menu);
             std::weak_ptr<Panes> panesWeak(_panes);
 
-            menu->addAction(Action::create(
+            _frameAction = Action::create(
                 "Frame",
                 "ViewFrame",
                 Key::Backspace,
@@ -366,7 +381,10 @@ namespace fx
                             viewport->frameView();
                         }
                     }
-                }));
+                });
+            _frameAction->setTooltip("Fit the current view to the particles");
+            menu->addAction(_frameAction);
+
             menu->addAction(Action::create(
                 "Frame All",
                 KeyShortcut(Key::Backspace, commandKeyModifier),
@@ -386,7 +404,7 @@ namespace fx
                 }));
             menu->addDivider();
 
-            menu->addAction(Action::create(
+            _zoomInAction = Action::create(
                 "Zoom In",
                 "ViewZoomIn",
                 KeyShortcut(Key::Equals, commandKeyModifier),
@@ -401,8 +419,11 @@ namespace fx
                             viewport->zoomIn();
                         }
                     }
-                }));
-            menu->addAction(Action::create(
+                });
+            _zoomInAction->setTooltip("Zoom the current view in");
+            menu->addAction(_zoomInAction);
+
+            _zoomOutAction = Action::create(
                 "Zoom Out",
                 "ViewZoomOut",
                 KeyShortcut(Key::Minus, commandKeyModifier),
@@ -417,8 +438,48 @@ namespace fx
                             viewport->zoomOut();
                         }
                     }
-                }));
+                });
+            _zoomOutAction->setTooltip("Zoom the current view out");
+            menu->addAction(_zoomOutAction);
+        }
 
+        void MainWindow::_createToolBar(const std::shared_ptr<Context>& context)
+        {
+            // The same Action objects the menus hold, so an icon, a tooltip or
+            // an enabled state is written once: undo greys out in both places
+            // because there is only one place.
+            auto toolBar = ToolBar::create(context);
+            // addWidget rather than parenting to the tool bar: it is a
+            // container that manages one widget, and anything else parented to
+            // it is never given a geometry.
+            const auto divide = [context, toolBar]
+            {
+                toolBar->addWidget(
+                    Divider::create(context, Orientation::Horizontal));
+            };
+            toolBar->addAction(_newAction);
+            toolBar->addAction(_openAction);
+            toolBar->addAction(_saveAction);
+            divide();
+            toolBar->addAction(_undoAction);
+            toolBar->addAction(_redoAction);
+            divide();
+            for (size_t i = 0; i < static_cast<size_t>(PaneLayout::Count); ++i)
+            {
+                toolBar->addAction(_layoutActions[static_cast<PaneLayout>(i)]);
+            }
+            divide();
+            toolBar->addAction(_frameAction);
+            toolBar->addAction(_zoomInAction);
+            toolBar->addAction(_zoomOutAction);
+            setScreenshotTag(toolBar, "MainWindow.ToolBar");
+
+            // Built after the menus, because the actions come from them, and
+            // then moved to the top of the window where a tool bar goes.
+            auto divider = Divider::create(context, Orientation::Vertical, _layout);
+            toolBar->setParent(_layout);
+            _layout->moveToBack(divider);
+            _layout->moveToBack(toolBar);
         }
 
         void MainWindow::_createLayoutMenu(const std::shared_ptr<Context>& context)
@@ -443,8 +504,13 @@ namespace fx
             for (size_t i = 0; i < labels.size(); ++i)
             {
                 const PaneLayout layout = static_cast<PaneLayout>(i);
+                const std::vector<std::string> icons =
+                {
+                    "LayoutSingle", "LayoutTwo", "LayoutThree", "LayoutFour"
+                };
                 auto action = Action::create(
                     labels[i],
+                    icons[i],
                     shortcuts[i],
                     [panesWeak, layout](bool value)
                     {
