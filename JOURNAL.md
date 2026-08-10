@@ -54,6 +54,18 @@ fails without it.
 Three loops here, two in tlRender, one in objview. Each becomes one call
 saying which index is current.
 
+### Built is not the same as compiled
+
+The sweep reached into feather-tk's examples and tlRender's play application,
+neither of which this configuration builds -- `ftk_EXAMPLES` and
+`TLRENDER_PROGRAMS` are off, because nothing here needs them. So the edits
+compiled in the sense that the build went green, and had never been near a
+compiler. One of them was missing an include and would not have built at all.
+
+Turning the options on is a line in `etc/Config/local.cmake`, which is exactly
+what that file is for. The rule is the boring one: switch on whatever the
+change touches before making the change, not after.
+
 ---
 
 ## 2026-08-09 — Icons, a tool bar, and a shot that had stopped testing
