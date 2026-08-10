@@ -817,6 +817,36 @@
           "caption": "The same actions as the menus, sharing their enabled state"
         }
       ]
+    },
+    {
+      "id": "layout-menu",
+      "window": {
+        "w": 820,
+        "h": 520
+      },
+      "setup": [
+        {
+          "layout": 2
+        },
+        {
+          "click": [
+            198,
+            26
+          ]
+        },
+        {
+          "click": [
+            240,
+            135
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "Picking the current arrangement again leaves it current"
+        }
+      ]
     }
   ]
 }

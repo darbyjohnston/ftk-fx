@@ -508,21 +508,24 @@ namespace fx
                 {
                     "LayoutSingle", "LayoutTwo", "LayoutThree", "LayoutFour"
                 };
+                // A plain callback rather than a checked one, which leaves the
+                // action not checkable -- so picking it always means "use this
+                // arrangement" and can never mean "stop using it". The tick is
+                // still shown, driven by the observer below from what the panes
+                // actually are.
+                //
+                // This is one-of-many, which feather-tk knows about for buttons
+                // (ButtonGroupType::Radio) and not for actions. Until it does,
+                // this is how tlRender's playback actions do it too.
                 auto action = Action::create(
                     labels[i],
                     icons[i],
                     shortcuts[i],
-                    [panesWeak, layout](bool value)
+                    [panesWeak, layout]
                     {
-                        // Only ever switching to an arrangement. Unchecking the
-                        // current one would leave no arrangement at all, so the
-                        // observer below puts the tick straight back.
-                        if (value)
+                        if (auto panes = panesWeak.lock())
                         {
-                            if (auto panes = panesWeak.lock())
-                            {
-                                panes->setLayout(layout);
-                            }
+                            panes->setLayout(layout);
                         }
                     });
                 action->setTooltip(labels[i] + " viewport layout");

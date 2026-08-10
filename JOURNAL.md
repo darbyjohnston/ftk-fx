@@ -27,6 +27,26 @@ tool bar; parented directly it is never given a geometry and simply does not
 appear. And the tool bar is built after the menus, because that is where the
 actions come from, then moved to the top of the window with `moveToBack`.
 
+### One of many, without a checkbox
+
+The layout actions were created with a checked callback, which makes them
+checkable -- so the menu offered to un-tick the current arrangement, which is
+not a thing that can happen. The code compensated by ignoring `false` and
+letting an observer put the tick straight back, which works and reads as though
+un-ticking were meaningful.
+
+Darby pointed at tlRender's playback actions, which have the same shape --
+stop, forward and reverse are one-of-three -- and solve it by not making the
+actions checkable at all. A plain callback means picking one always means "use
+this" and can never mean "stop using this"; the tick is still drawn, driven from
+what the model actually is. The layout actions do that now.
+
+It is a workaround rather than an answer, and feather-tk already has the word
+for what is wanted: `ButtonGroupType::Radio`. Actions have `checkable` and
+nothing else, so every application that wants a radio group in a menu has to
+know that "not checkable, but call setChecked on it" is the way. That is worth
+fixing in the toolkit rather than in each application that trips over it.
+
 ### The shot that had stopped testing
 
 Adding a tool bar pushed everything below the menu bar down by fifty-eight
