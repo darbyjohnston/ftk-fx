@@ -66,8 +66,8 @@ namespace fx
                 });
 
             auto duplicateButton = ToolButton::create(context);
-            duplicateButton->setIcon("Copy");
-            duplicateButton->setTooltip("Copy the current system");
+            duplicateButton->setIcon("SystemDuplicate");
+            duplicateButton->setTooltip("Duplicate the current system");
             duplicateButton->setClickedCallback(
                 [weak]
                 {

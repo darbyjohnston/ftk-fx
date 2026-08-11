@@ -83,6 +83,19 @@ at.
 
 ### Still open
 
+- **Columns in the list.** A row is a checkbox and a name today because those
+  are the only two things a system has that belong in a list. As more of them
+  arrive -- a solo, a lock, a particle count, a colour swatch -- the row wants
+  to be a grid with headings rather than a hand-packed horizontal layout, and
+  the widget it wants is closer to feather-tk's `ListItemsWidget` than to what
+  is here. Worth doing when there is a third column, not before: the shape of
+  the columns is a guess until something has to fit in one.
+- **Copy and paste of systems.** Deliberately not what the duplicate button
+  does, and the icon says so: feather-tk's `Copy` is a clipboard, so duplicate
+  got its own two-sheets glyph and `Copy` stays free for the day a system can
+  be put on a clipboard and pasted into another scene. That day the clipboard
+  needs a format, which is very nearly the scene file's `systems` array
+  already.
 - Renaming happens in the parameters panel rather than in the list. Double
   click to rename in place is what an artist would reach for; it needs a widget
   swap in a row, and this did not.

@@ -65,6 +65,21 @@ namespace fx
             const std::string barH = "    <rect x=\"4\" y=\"9\" width=\"12\" height=\"2\"/>\n";
             const std::string barV = "    <rect x=\"9\" y=\"4\" width=\"2\" height=\"12\"/>\n";
 
+            //! One sheet in front of another, drawn as outlines so it does not
+            //! read as a solid block at twenty pixels. Not feather-tk's Copy,
+            //! which is a clipboard: this makes another system rather than
+            //! putting one somewhere to be pasted, and the day systems can be
+            //! copied and pasted that icon should still mean that.
+            const std::string duplicate =
+                // The sheet behind, showing at its top left corner only.
+                "    <rect x=\"3\" y=\"3\" width=\"9\" height=\"2\"/>\n"
+                "    <rect x=\"3\" y=\"3\" width=\"2\" height=\"9\"/>\n"
+                // The sheet in front.
+                "    <rect x=\"7\" y=\"7\" width=\"10\" height=\"2\"/>\n"
+                "    <rect x=\"7\" y=\"15\" width=\"10\" height=\"2\"/>\n"
+                "    <rect x=\"7\" y=\"7\" width=\"2\" height=\"10\"/>\n"
+                "    <rect x=\"15\" y=\"7\" width=\"2\" height=\"10\"/>\n";
+
             void add(
                 const std::shared_ptr<ftk::IconSystem>& iconSystem,
                 const std::string& name,
@@ -88,6 +103,7 @@ namespace fx
                 layoutSvg(rectTopL + rectTopR + rectBotL + rectBotR));
             add(iconSystem, "SystemAdd", barsSvg(barH + barV));
             add(iconSystem, "SystemRemove", barsSvg(barH));
+            add(iconSystem, "SystemDuplicate", barsSvg(duplicate));
         }
     }
 }
