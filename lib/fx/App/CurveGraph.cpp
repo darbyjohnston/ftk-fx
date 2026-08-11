@@ -115,41 +115,75 @@ namespace fx
             setDrawUpdate();
         }
 
+        namespace
+        {
+            //! A little air above and below, and a range that is never zero
+            //! high: a curve with one key is a horizontal line, and it should
+            //! be a horizontal line through the middle rather than a division
+            //! by zero.
+            RangeF padded(float min, float max)
+            {
+                const float pad = std::max(
+                    (max - min) * .1F,
+                    std::max(std::abs(max), 1.F) * .1F);
+                return RangeF(min - pad, max + pad);
+            }
+        }
+
         void CurveGraph::_valueRangeUpdate()
         {
-            float min = 0.F;
-            float max = 0.F;
-            bool first = true;
-            for (const auto& info : _channels)
+            _channelRanges.assign(_channels.size(), RangeF(0.F, 1.F));
+            float allMin = 0.F;
+            float allMax = 0.F;
+            bool any = false;
+            for (size_t c = 0; c < _channels.size(); ++c)
             {
-                if (core::Parameter::Type::Curve != info.parameter->getType())
+                const auto* parameter = _channels[c].parameter;
+                if (core::Parameter::Type::Curve != parameter->getType())
                     continue;
-                for (const auto& key : info.parameter->getCurve().getKeys())
+                float min = 0.F;
+                float max = 0.F;
+                bool first = true;
+                for (const auto& key : parameter->getCurve().getKeys())
                 {
                     min = first ? key.value : std::min(min, key.value);
                     max = first ? key.value : std::max(max, key.value);
                     first = false;
                 }
+                if (first)
+                    continue;
+                _channelRanges[c] = padded(min, max);
+                allMin = any ? std::min(allMin, min) : min;
+                allMax = any ? std::max(allMax, max) : max;
+                any = true;
             }
-            if (first)
-            {
-                _valueRange = RangeF(0.F, 1.F);
-                return;
-            }
-            // A little air above and below, and a range that is never zero
-            // high: a curve with one key is a horizontal line, and it should
-            // be a horizontal line through the middle rather than a division
-            // by zero.
-            const float pad = std::max((max - min) * .1F, std::max(std::abs(max), 1.F) * .1F);
-            _valueRange = RangeF(min - pad, max + pad);
+            _valueRange = any ? padded(allMin, allMax) : RangeF(0.F, 1.F);
         }
 
-        V2F CurveGraph::_toPos(double frame, float value) const
+        const RangeF& CurveGraph::_getValueRange(size_t channel) const
+        {
+            if (CurveValueMode::Normalized == _valueMode &&
+                channel < _channelRanges.size())
+            {
+                return _channelRanges[channel];
+            }
+            return _valueRange;
+        }
+
+        void CurveGraph::setValueMode(CurveValueMode value)
+        {
+            if (value == _valueMode)
+                return;
+            _valueMode = value;
+            setDrawUpdate();
+        }
+
+        V2F CurveGraph::_toPos(size_t channel, double frame, float value) const
         {
             const Box2I g = margin(getGeometry(), -_size.margin);
             const RangeI& r = _range;
             const double frames = std::max(1, r.max() - r.min());
-            const RangeF& v = _valueRange;
+            const RangeF& v = _getValueRange(channel);
             const float span = std::max(v.max() - v.min(), .0001F);
             return V2F(
                 g.min.x + (frame - r.min()) / frames * g.w(),
@@ -166,12 +200,12 @@ namespace fx
             return _range.min() + (x - g.min.x) / static_cast<double>(g.w()) * frames;
         }
 
-        float CurveGraph::_toValue(int y) const
+        float CurveGraph::_toValue(size_t channel, int y) const
         {
             const Box2I g = margin(getGeometry(), -_size.margin);
             if (g.h() <= 0)
                 return 0.F;
-            const RangeF& v = _valueRange;
+            const RangeF& v = _getValueRange(channel);
             return v.min() +
                 (g.max.y - y) / static_cast<float>(g.h()) * (v.max() - v.min());
         }
@@ -189,7 +223,7 @@ namespace fx
                 const auto& keys = parameter->getCurve().getKeys();
                 for (size_t k = 0; k < keys.size(); ++k)
                 {
-                    const V2F p = _toPos(keys[k].frame, keys[k].value);
+                    const V2F p = _toPos(c, keys[k].frame, keys[k].value);
                     const int dx = static_cast<int>(p.x) - pos.x;
                     const int dy = static_cast<int>(p.y) - pos.y;
                     const int d = dx * dx + dy * dy;
@@ -303,11 +337,13 @@ namespace fx
             }
             const RangeF& v = _valueRange;
 
-            // Where zero is, when zero is on screen. It is the line an artist
-            // reads a curve against.
-            if (v.min() < 0.F && v.max() > 0.F)
+            // Where zero is, when zero is on screen and means the same thing
+            // for every channel. Normalized, each curve has its own zero and a
+            // single line would be a lie.
+            if (CurveValueMode::Absolute == _valueMode &&
+                v.min() < 0.F && v.max() > 0.F)
             {
-                const V2F zero = _toPos(_range.min(), 0.F);
+                const V2F zero = _toPos(0, _range.min(), 0.F);
                 event.render->drawRect(
                     Box2I(g.min.x, static_cast<int>(zero.y), g.w(), _size.border),
                     event.style->getColorRole(ColorRole::Border));
@@ -315,7 +351,7 @@ namespace fx
 
             // The playhead, so the plot and the timeline agree about where
             // "now" is.
-            const V2F playhead = _toPos(_currentFrame, v.min());
+            const V2F playhead = _toPos(0, _currentFrame, v.min());
             event.render->drawRect(
                 Box2I(
                     static_cast<int>(playhead.x),
@@ -343,7 +379,7 @@ namespace fx
                 for (int x = 0; x <= inside.w(); ++x)
                 {
                     const double frame = _toFrame(inside.min.x + x);
-                    const V2F p = _toPos(frame, curve.getValue(frame));
+                    const V2F p = _toPos(c, frame, curve.getValue(frame));
                     if (x > 0)
                     {
                         lines.push_back(std::make_pair(prev, p));
@@ -355,7 +391,7 @@ namespace fx
                 const auto& keys = curve.getKeys();
                 for (size_t k = 0; k < keys.size(); ++k)
                 {
-                    const V2F p = _toPos(keys[k].frame, keys[k].value);
+                    const V2F p = _toPos(c, keys[k].frame, keys[k].value);
                     const bool selected =
                         _hasSelection && c == _selectedChannel && k == _selectedKey;
                     const int radius = _size.handle / (selected ? 2 : 3);
@@ -426,7 +462,7 @@ namespace fx
                     _selectedChannel,
                     _selectedKey,
                     _toFrame(event.pos.x),
-                    _toValue(event.pos.y));
+                    _toValue(_selectedChannel, event.pos.y));
                 setDrawUpdate();
             }
             else if (auto model = _model.lock())

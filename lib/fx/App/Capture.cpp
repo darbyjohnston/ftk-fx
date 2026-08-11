@@ -14,6 +14,7 @@
 #include <fx/Core/Serialize.h>
 #include <fx/App/Pane.h>
 #include <fx/App/Panes.h>
+#include <fx/App/CurveEditor.h>
 #include <fx/App/Viewport.h>
 
 #include <ftk/UI/ComboBox.h>
@@ -507,6 +508,25 @@ namespace fx
             if (step.contains("open"))
             {
                 model->open(step.at("open").get<std::string>());
+            }
+            if (step.contains("curveValueMode"))
+            {
+                const std::string name =
+                    step.at("curveValueMode").get<std::string>();
+                const auto labels = getCurveValueModeLabels();
+                const auto i = std::find(labels.begin(), labels.end(), name);
+                if (i == labels.end())
+                    throw std::runtime_error(ftk::Format(
+                        "unknown curve value mode \"{0}\"").arg(name));
+                auto panes = app->getMainWindow()->getPanes();
+                for (int j = 0; j < paneCountMax; ++j)
+                {
+                    if (auto editor = panes->getPane(j)->getCurveEditor())
+                    {
+                        editor->setValueMode(static_cast<CurveValueMode>(
+                            std::distance(labels.begin(), i)));
+                    }
+                }
             }
             if (step.contains("transform"))
             {

@@ -164,7 +164,8 @@ namespace fx
             }
             else if (PaneType::Curves == paneType)
             {
-                content = CurveEditor::create(context, _model.lock());
+                _curveEditor = CurveEditor::create(context, _model.lock());
+                content = _curveEditor;
             }
             else
             {
@@ -227,6 +228,11 @@ namespace fx
                 _menuBar->removeMenu(getLabel(_viewType));
                 _viewMenu.reset();
             }
+        }
+
+        const std::shared_ptr<CurveEditor>& Pane::getCurveEditor() const
+        {
+            return _curveEditor;
         }
 
         void Pane::setDrawType(DrawType value)

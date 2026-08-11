@@ -6,6 +6,7 @@
 #include <fx/App/SceneModel.h>
 
 #include <ftk/UI/CheckBox.h>
+#include <ftk/UI/ComboBox.h>
 #include <ftk/UI/Label.h>
 #include <ftk/UI/RowLayout.h>
 #include <ftk/UI/ScrollWidget.h>
@@ -19,6 +20,11 @@ namespace fx
 {
     namespace app
     {
+        std::vector<std::string> getCurveValueModeLabels()
+        {
+            return { "Absolute", "Normalized" };
+        }
+
         void CurveEditor::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
@@ -31,6 +37,21 @@ namespace fx
 
             _graph = CurveGraph::create(context, model);
 
+            // Above the channels rather than over the plot: it says how to
+            // read the vertical axis, and the channels are what it is read
+            // against.
+            _valueModeComboBox = ComboBox::create(
+                context, getCurveValueModeLabels());
+            _valueModeComboBox->setCurrentIndex(0);
+            _valueModeComboBox->setTooltip(
+                "Absolute compares the channels' values; normalized compares "
+                "their shapes");
+            _valueModeComboBox->setIndexCallback(
+                [this](int value)
+                {
+                    _graph->setValueMode(static_cast<CurveValueMode>(value));
+                });
+
             _channelLayout = VerticalLayout::create(context);
             _channelLayout->setMarginRole(SizeRole::MarginSmall);
             _channelLayout->setSpacingRole(SizeRole::SpacingSmall);
@@ -38,9 +59,14 @@ namespace fx
             scrollWidget->setWidget(_channelLayout);
             scrollWidget->setBorder(false);
 
+            auto channelColumn = VerticalLayout::create(context);
+            channelColumn->setSpacingRole(SizeRole::None);
+            _valueModeComboBox->setParent(channelColumn);
+            scrollWidget->setParent(channelColumn);
+
             auto splitter = Splitter::create(context, Orientation::Horizontal);
             splitter->setSplit(.3F);
-            splitter->setWidgets({ scrollWidget, _graph });
+            splitter->setWidgets({ channelColumn, _graph });
             _setWidget(splitter);
 
             _channelsUpdate();
@@ -82,6 +108,12 @@ namespace fx
             auto out = std::shared_ptr<CurveEditor>(new CurveEditor);
             out->_init(context, model, parent);
             return out;
+        }
+
+        void CurveEditor::setValueMode(CurveValueMode value)
+        {
+            _valueModeComboBox->setCurrentIndex(static_cast<int>(value));
+            _graph->setValueMode(value);
         }
 
         void CurveEditor::_graphUpdate()

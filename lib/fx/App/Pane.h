@@ -23,6 +23,7 @@ namespace fx
     namespace app
     {
         class SceneModel;
+        class CurveEditor;
         class Viewport;
 
         //! One slot in the main region, and whatever it is showing.
@@ -85,6 +86,9 @@ namespace fx
             //! not it has one yet.
             void setDrawType(DrawType);
 
+            //! Get the curve editor, when this pane is showing one.
+            const std::shared_ptr<CurveEditor>& getCurveEditor() const;
+
             //! Set whether this is the pane actions apply to. The current pane
             //! draws a border so that it is obvious which one that is.
             void setCurrent(bool);
@@ -117,6 +121,7 @@ namespace fx
             ViewType _viewType = ViewType::Perspective;
             std::map<PaneType, std::shared_ptr<IWidget> > _content;
             std::shared_ptr<Viewport> _viewport;
+            std::shared_ptr<CurveEditor> _curveEditor;
 
             bool _current = false;
             std::function<void(void)> _pressCallback;

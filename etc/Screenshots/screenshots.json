@@ -971,6 +971,81 @@
           "caption": "Turn the emitter and the spray turns with it"
         }
       ]
+    },
+    {
+      "id": "curves-normalized",
+      "window": {
+        "w": 760,
+        "h": 480
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 1,
+            "value": 50
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 40,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 120,
+            "value": 900
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 1,
+            "value": -2
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 70,
+            "value": -30
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 120,
+            "value": -6
+          }
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "pane": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "curveValueMode": "Normalized"
+        },
+        {
+          "frame": 60
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "Each channel to its own range; absolute puts gravity flat under rate"
+        }
+      ]
     }
   ]
 }

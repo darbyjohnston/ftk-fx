@@ -9,9 +9,13 @@
 
 #include <ftk/Core/Observable.h>
 
+#include <string>
+#include <vector>
+
 namespace ftk
 {
     class ButtonGroup;
+    class ComboBox;
     class VerticalLayout;
 }
 
@@ -19,6 +23,24 @@ namespace fx
 {
     namespace app
     {
+        //! How the plot scales its vertical axis.
+        enum class CurveValueMode
+        {
+            //! One range for every channel, so their values can be compared
+            //! against each other.
+            Absolute,
+
+            //! Each channel scaled to its own range, so a curve that lives
+            //! between -30 and -2 is not a flat line under one that reaches
+            //! 1800. Their shapes can be compared; their values cannot.
+            Normalized,
+
+            Count,
+            First = Absolute
+        };
+
+        std::vector<std::string> getCurveValueModeLabels();
+
         class CurveGraph;
         class SceneModel;
 
@@ -42,6 +64,9 @@ namespace fx
                 const std::shared_ptr<SceneModel>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
+            //! Set how the plot scales its vertical axis.
+            void setValueMode(CurveValueMode);
+
         private:
             //! Rebuild the channel list, which changes as parameters become
             //! animated and stop being animated.
@@ -53,6 +78,7 @@ namespace fx
             std::weak_ptr<SceneModel> _model;
             std::shared_ptr<CurveGraph> _graph;
             std::shared_ptr<ftk::VerticalLayout> _channelLayout;
+            std::shared_ptr<ftk::ComboBox> _valueModeComboBox;
             std::vector<ParameterInfo> _channels;
 
             //! The channels the artist has ticked, by path so that they

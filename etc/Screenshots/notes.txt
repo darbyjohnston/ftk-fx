@@ -23,6 +23,8 @@ Setup steps a shot may use:
 * {"panelStyle": "Tabs"}                     stack the panels or tab them
 * {"particleSize": 12}                       how big the particles draw
 * {"draw": "Sphere"}                         discs or shaded spheres
+* {"curveValueMode": "Normalized"}           how the curve plot scales its
+                                             vertical axis
 * {"rate": 2000}                             particles emitted per second
 * {"transform": {"translate": [0, 2, 0], "rotate": [0, 0, 45], "scale": [1, 1, 1]}}
                                              where the emitter is; every part

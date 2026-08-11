@@ -7,6 +7,37 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Two ways to read a vertical axis
+
+The curve editor drew every channel against one range, which is right when the
+channels are comparable and useless when they are not: a gravity curve between
+-30 and -2 is a flat line along the bottom of a plot that goes to 1800. Both
+curves are there and only one of them can be read.
+
+§4a already had the answer -- "normalized and absolute value views" -- and both
+are worth having, for different questions. Absolute answers "which of these is
+bigger". Normalized answers "what shape is this one", which is the question
+being asked when a curve is being edited.
+
+So the plot keeps a range per channel as well as the shared one, and the mode
+picks which is used. Two consequences worth writing down:
+
+The zero line is only drawn in absolute mode. Normalized, each curve has its
+own zero at its own height, and a single line across the plot would be a
+statement about all of them that is true of none.
+
+Dragging goes back through the same range it came from. That falls out of
+passing the channel to the mapping rather than reading a member, and it is the
+part that would have been wrong if the range had stayed global -- a key would
+have jumped to wherever the shared range put it.
+
+Verified by dragging a gravity key in normalized mode and reading the panel:
+-30 became -11.03, in gravity's units rather than the rate curve's.
+
+Still missing from §4a's list: axis labels, framing, box selection, tangent
+handles. All additions.
+---
+
 ## 2026-08-09 — Transforms, and a shot that captured nothing
 
 ### The emitter has a transform

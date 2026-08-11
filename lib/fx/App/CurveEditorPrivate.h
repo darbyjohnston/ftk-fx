@@ -38,6 +38,8 @@ namespace fx
             //! a channel keeps its colour as others are shown and hidden.
             void setChannels(const std::vector<ParameterInfo>&);
 
+            void setValueMode(CurveValueMode);
+
             ftk::Size2I getSizeHint() const override;
             void styleEvent(const ftk::StyleEvent&) override;
             void sizeHintEvent(const ftk::SizeHintEvent&) override;
@@ -60,10 +62,14 @@ namespace fx
             //! of them chose.
             void _valueRangeUpdate();
 
+            //! The range a channel is drawn against: its own when normalized,
+            //! the one shared by all of them when not.
+            const ftk::RangeF& _getValueRange(size_t channel) const;
+
             //! Frame and value to a point in the widget, and back.
-            ftk::V2F _toPos(double frame, float value) const;
+            ftk::V2F _toPos(size_t channel, double frame, float value) const;
             double _toFrame(int x) const;
-            float _toValue(int y) const;
+            float _toValue(size_t channel, int y) const;
 
             //! The key nearest the position, within grabbing distance.
             bool _hit(const ftk::V2I&, size_t& channel, size_t& key) const;
@@ -74,7 +80,11 @@ namespace fx
             std::weak_ptr<SceneModel> _model;
             std::vector<ParameterInfo> _channels;
             ftk::RangeI _range = ftk::RangeI(1, 120);
+            CurveValueMode _valueMode = CurveValueMode::Absolute;
+
+            //! The range shared by every channel, and one per channel.
             ftk::RangeF _valueRange = ftk::RangeF(0.F, 1.F);
+            std::vector<ftk::RangeF> _channelRanges;
             int _currentFrame = 1;
 
             //! Which key is selected, and which is being dragged. The same key
