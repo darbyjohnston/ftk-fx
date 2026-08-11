@@ -56,23 +56,7 @@ namespace fx
                     // middle of the gesture.
                     model->beginEdit();
                     const sim::System before = model->getSystem();
-                    // Dragging an animated parameter moves the key at the
-                    // playhead rather than throwing the animation away.
-                    // Silently discarding a curve because a slider moved is
-                    // not something anyone would ask for.
-                    if (core::Parameter::Type::Curve == captured.parameter->getType())
-                    {
-                        core::Curve curve = captured.parameter->getCurve();
-                        core::Key key;
-                        key.frame = _currentFrame;
-                        key.value = value;
-                        curve.addKey(key);
-                        captured.parameter->setCurve(curve);
-                    }
-                    else
-                    {
-                        captured.parameter->setConstant(value);
-                    }
+                    setValue(*captured.parameter, _currentFrame, value);
                     model->systemChanged("Set " + captured.name, before);
                     _valuesUpdate();
                 });

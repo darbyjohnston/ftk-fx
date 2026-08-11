@@ -1135,6 +1135,76 @@
           "caption": "Back to smoke's rate, not sparks'"
         }
       ]
+    },
+    {
+      "id": "manipulator",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "systemName": "smoke",
+          "rate": 300,
+          "transform": {
+            "translate": [
+              3,
+              2,
+              -1
+            ]
+          }
+        },
+        {
+          "frame": 40
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "The arms are drawn in pixels, so they keep their size as the camera moves"
+        }
+      ]
+    },
+    {
+      "id": "manipulator-drag",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "systemName": "smoke",
+          "rate": 300,
+          "transform": {
+            "translate": [
+              3,
+              2,
+              -1
+            ]
+          }
+        },
+        {
+          "frame": 40
+        },
+        {
+          "drag": [
+            [
+              740,
+              683
+            ],
+            [
+              900,
+              640
+            ]
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "Parameters.Translate X",
+          "caption": "Dragged along the arm; the whole gesture is one undo step"
+        }
+      ]
     }
   ]
 }

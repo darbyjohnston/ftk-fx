@@ -63,5 +63,25 @@ namespace fx
                     defaultForces.drag.getConstant() }
             };
         }
+
+        void setValue(core::Parameter& parameter, double frame, float value)
+        {
+            if (core::Parameter::Type::Curve == parameter.getType())
+            {
+                core::Curve curve = parameter.getCurve();
+                core::Key key;
+                key.frame = frame;
+                key.value = value;
+                // addKey replaces the one already at that frame, so a drag
+                // moves the key it started on instead of laying down one per
+                // mouse move.
+                curve.addKey(key);
+                parameter.setCurve(curve);
+            }
+            else
+            {
+                parameter.setConstant(value);
+            }
+        }
     }
 }

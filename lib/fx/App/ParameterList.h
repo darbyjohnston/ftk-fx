@@ -44,5 +44,14 @@ namespace fx
         //! have to agree about what exists and what it is called, and the way
         //! to make two things agree is to not have two things.
         std::vector<ParameterInfo> getParameters(sim::System&);
+
+        //! Set what a parameter is worth at a frame.
+        //!
+        //! An animated parameter gets a key at that frame; a constant one is
+        //! just set. Silently dropping a curve because something moved a value
+        //! is not what anyone dragging a slider or a manipulator is asking
+        //! for, and every widget that writes a value has to agree about that --
+        //! so they share this rather than each remembering it.
+        void setValue(core::Parameter&, double frame, float value);
     }
 }

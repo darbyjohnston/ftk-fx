@@ -7,6 +7,76 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — A manipulator that lives in two dimensions
+
+Translate arms on the current system's emitter, grabbed and dragged in the
+viewport. §15 has wanted this since Phase 2 was written and gated it on there
+being more than one thing to move, which there now is.
+
+### The projection does the work twice
+
+The arms are drawn in pixels, not in the scene. Project the emitter origin,
+project the origin plus one unit along each axis, and the difference is both
+things a manipulator needs at once:
+
+- **normalised**, it is the direction to draw the arm in;
+- **its length**, it is how many pixels a world unit covers along that axis.
+
+So the drag is `dot(mouseDelta, dir) / pixelsPerUnit` and there is no second
+derivation of the camera to disagree with the first. A gizmo whose arm points
+one way and whose drag goes another is the classic version of this bug, and it
+cannot happen when both come out of the same subtraction.
+
+Constant screen size falls out for free, which is what a manipulator wants: it
+is a control, and controls do not get smaller as you back away from them.
+
+Two things the same maths gives without asking:
+
+- An arm pointing at the camera projects to almost nothing. Guarded at one
+  pixel, which drops it from both the drawing and the picking -- in a front
+  view the Z arm simply is not there, rather than being a dot you can grab and
+  then send the emitter to infinity with.
+- Perspective needs `w > 0` checked, or a point behind the camera projects to
+  somewhere perfectly plausible on screen, mirrored. Orthographic never does
+  this, which is exactly why it would have been found late.
+
+### Measured from the press, not the last move
+
+The drag sets the value from the *whole gesture* -- press position to now --
+rather than adding each move's delta. Accumulating would drift, and worse, it
+would have each move re-measuring the arm against a scene the previous move had
+already moved. Reading the start once and treating the rest as an offset is
+what makes the gesture idempotent.
+
+### What it cost elsewhere
+
+Nothing, which is the point. `beginEdit`/`endEdit` and `systemChanged` were
+already there for the sliders, so a whole 8-step drag arrives as one undo step
+without the manipulator knowing how undo works. The one thing it did need was
+the rule for setting a value at a frame -- key it when animated, set the
+constant when not -- which the parameters panel had inline. The manipulator
+would have been the third copy, so it moved to `setValue()` in ParameterList
+next to the list everything else already shares.
+
+Verified by dragging each arm in turn and reading the panel out of the sidecar:
+X moved X and left Y and Z alone, Y moved Y, a drag in empty space orbited the
+camera and moved nothing. One undo took a dragged value all the way back.
+Dragging an animated transform left the keys at 1 and 80 where they were and
+put the dragged value at 40.
+
+### Still open
+
+- **No toggle.** The arms are always drawn, in every viewport, on top of the
+  particles -- which in the four-up shot is four of them at the origin, inside
+  the plume. The corner tripod has wanted a toggle for a while and now there
+  are two overlays wanting the same switch.
+- **Translate only.** Rotate and scale are the same picking with different
+  maths, and worth doing once the drag has been used in anger.
+- **No object picking.** Which system the manipulator is on comes from the
+  systems list, not from clicking a particle. That is the piece Phase 2 still
+  owes, and it is a different problem: the arms are three known segments, and a
+  system is a cloud.
+
 ## 2026-08-11 — Panes became editors, and systems stayed systems
 
 Two naming questions, three days after the words started mattering.

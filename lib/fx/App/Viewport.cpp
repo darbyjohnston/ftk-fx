@@ -162,6 +162,7 @@ namespace fx
 
             _viewType = viewType;
             _orbit = getViewOrbit(viewType);
+            _model = model;
 
             _frameObserver = Observer<std::shared_ptr<const core::Frame> >::create(
                 model->observeFrame(),
@@ -172,6 +173,25 @@ namespace fx
                     _doRender = true;
                     setDrawUpdate();
                 });
+
+            // The manipulator sits on a transform that can be animated, belong
+            // to a different system from one moment to the next, and be moved
+            // by the panel while the viewport is only watching. All three move
+            // it, and none of them change the particles on their own, so they
+            // ask for a draw rather than a render.
+            _currentFrameObserver = Observer<int>::create(
+                model->observeCurrentFrame(),
+                [this](int value)
+                {
+                    _currentFrame = value;
+                    setDrawUpdate();
+                });
+            _currentSystemObserver = Observer<size_t>::create(
+                model->observeCurrentSystem(),
+                [this](size_t) { setDrawUpdate(); });
+            _parameterObserver = Observer<int>::create(
+                model->observeParameterChanged(),
+                [this](int) { setDrawUpdate(); });
         }
 
         Viewport::~Viewport()
@@ -504,6 +524,179 @@ namespace fx
             _pointsVbo->copy(data, 0, data.size());
         }
 
+        bool Viewport::_project(const V3F& world, V2F& out) const
+        {
+            const Box2I& g = getGeometry();
+            if (!g.isValid())
+                return false;
+            const V4F clip =
+                _getProjection() * _getView() * V4F(world.x, world.y, world.z, 1.F);
+            // Behind the camera the divide flips the point through the origin
+            // and puts it on screen looking perfectly reasonable. Orthographic
+            // views never do this; perspective ones do it the moment the
+            // emitter goes behind the viewer.
+            if (clip.w <= .0001F)
+                return false;
+            const V2F ndc(clip.x / clip.w, clip.y / clip.w);
+            out = V2F(
+                g.min.x + (ndc.x * .5F + .5F) * g.w(),
+                // Screen y runs the other way to the camera's.
+                g.min.y + (.5F - ndc.y * .5F) * g.h());
+            return true;
+        }
+
+        bool Viewport::_gizmoOrigin(V3F& out) const
+        {
+            auto model = _model.lock();
+            if (!model)
+                return false;
+            const auto& transform = model->getSystem().getEmitter().transform;
+            // The transform's own origin, which is its translation: rotation
+            // and scale leave the point they turn about where it is.
+            const double frame = _currentFrame;
+            out = V3F(
+                transform.translate.x.getValue(frame),
+                transform.translate.y.getValue(frame),
+                transform.translate.z.getValue(frame));
+            return true;
+        }
+
+        std::array<Viewport::ArmScreen, 3> Viewport::_gizmoArms() const
+        {
+            std::array<ArmScreen, 3> out;
+            V3F origin;
+            if (!_gizmoOrigin(origin))
+                return out;
+            V2F o;
+            if (!_project(origin, o))
+                return out;
+
+            const std::array<V3F, 3> axes =
+            {
+                V3F(1.F, 0.F, 0.F),
+                V3F(0.F, 1.F, 0.F),
+                V3F(0.F, 0.F, 1.F)
+            };
+            for (size_t i = 0; i < axes.size(); ++i)
+            {
+                // A unit along the axis, projected. Its length on screen is
+                // the scale a drag needs, and its direction is the arm: both
+                // come out of the same projection, so they cannot disagree
+                // about which way the axis points.
+                V2F p;
+                if (!_project(origin + axes[i], p))
+                    continue;
+                const V2F d = p - o;
+                const float length = std::sqrt(d.x * d.x + d.y * d.y);
+                // An arm pointing at or away from the camera lands on a few
+                // pixels, where a direction is noise and a drag along it would
+                // fly. Left invalid: not drawn, not grabbable.
+                if (length < 1.F)
+                    continue;
+                out[i].valid = true;
+                out[i].origin = o;
+                out[i].dir = V2F(d.x / length, d.y / length);
+                out[i].pixelsPerUnit = length;
+                out[i].tip = V2F(
+                    o.x + out[i].dir.x * _size.gizmo,
+                    o.y + out[i].dir.y * _size.gizmo);
+            }
+            return out;
+        }
+
+        namespace
+        {
+            //! How far a point is from a segment, in pixels.
+            float distanceToSegment(const V2F& p, const V2F& a, const V2F& b)
+            {
+                const V2F ab(b.x - a.x, b.y - a.y);
+                const float lengthSquared = ab.x * ab.x + ab.y * ab.y;
+                float t = 0.F;
+                if (lengthSquared > 0.F)
+                {
+                    t = ((p.x - a.x) * ab.x + (p.y - a.y) * ab.y) / lengthSquared;
+                    t = clamp(t, 0.F, 1.F);
+                }
+                const V2F near(a.x + ab.x * t, a.y + ab.y * t);
+                const V2F d(p.x - near.x, p.y - near.y);
+                return std::sqrt(d.x * d.x + d.y * d.y);
+            }
+        }
+
+        Viewport::Arm Viewport::_gizmoPick(const V2I& pos) const
+        {
+            const auto arms = _gizmoArms();
+            const V2F p(pos.x, pos.y);
+            Arm out = Arm::None;
+            float best = static_cast<float>(_size.grab);
+            for (size_t i = 0; i < arms.size(); ++i)
+            {
+                if (!arms[i].valid)
+                    continue;
+                const float d = distanceToSegment(p, arms[i].origin, arms[i].tip);
+                // Nearest wins rather than first, so the arm on top where two
+                // cross is the one that grabs.
+                if (d <= best)
+                {
+                    best = d;
+                    out = static_cast<Arm>(i + 1);
+                }
+            }
+            return out;
+        }
+
+        void Viewport::_gizmoDraw(
+            const Box2I& g,
+            const Box2I& drawRect,
+            const DrawEvent& event)
+        {
+            const auto arms = _gizmoArms();
+            bool any = false;
+            for (const auto& arm : arms)
+            {
+                any |= arm.valid;
+            }
+            if (!any)
+                return;
+
+            const ClipRectEnabledState clipRectEnabledState(event.render);
+            const ClipRectState clipRectState(event.render);
+            event.render->setClipRectEnabled(true);
+            event.render->setClipRect(intersect(g, drawRect));
+
+            const std::array<Color4F, 3> colors =
+            {
+                Color4F(.92F, .30F, .30F),
+                Color4F(.40F, .84F, .36F),
+                Color4F(.36F, .54F, .95F)
+            };
+
+            LineOptions lineOptions;
+            lineOptions.width = _size.line;
+            for (size_t i = 0; i < arms.size(); ++i)
+            {
+                if (!arms[i].valid)
+                    continue;
+                const Arm arm = static_cast<Arm>(i + 1);
+                // White while it is the one being dragged or aimed at, so the
+                // arm says what will move before the mouse goes down.
+                const bool lit = arm == _gizmoDrag ||
+                    (Arm::None == _gizmoDrag && arm == _gizmoHover);
+                const Color4F color = lit ?
+                    Color4F(1.F, 1.F, 1.F) :
+                    colors[i];
+                event.render->drawLine(
+                    arms[i].origin, arms[i].tip, color, lineOptions);
+                event.render->drawMesh(
+                    circle(
+                        V2I(
+                            static_cast<int>(arms[i].tip.x),
+                            static_cast<int>(arms[i].tip.y)),
+                        _size.dot),
+                    color);
+            }
+        }
+
         void Viewport::_axisDraw(
             const Box2I& g,
             const Box2I& drawRect,
@@ -609,6 +802,10 @@ namespace fx
                     SizeRole::Swatch, event.displayScale);
                 _size.margin = event.style->getSizeRole(
                     SizeRole::Margin, event.displayScale);
+                _size.gizmo = event.style->getSizeRole(
+                    SizeRole::Handle, event.displayScale) * 6;
+                _size.grab = event.style->getSizeRole(
+                    SizeRole::Handle, event.displayScale);
             }
         }
 
@@ -719,7 +916,10 @@ namespace fx
             // Over the top of the buffer rather than inside it, and through
             // the renderer rather than in OpenGL: the tripod is a screen space
             // overlay at a fixed size, which is the one part of this widget
-            // that a two dimensional drawing API expresses well.
+            // that a two dimensional drawing API expresses well. The
+            // manipulator is the same, and for the same reason -- it is
+            // grabbed in pixels, so it may as well be drawn in them.
+            _gizmoDraw(g, drawRect, event);
             _axisDraw(g, drawRect, event);
         }
 
@@ -727,6 +927,25 @@ namespace fx
         {
             event.accept = true;
             const V2I d = event.pos - event.prev;
+
+            if (Arm::None != _gizmoDrag)
+            {
+                _gizmoMove(event.pos);
+                return;
+            }
+
+            // Nothing held: light the arm the pointer is on, so that it is
+            // clear what a press would grab before it grabs it.
+            if (MouseButton::None == event.button)
+            {
+                const Arm hover = _gizmoPick(event.pos);
+                if (hover != _gizmoHover)
+                {
+                    _gizmoHover = hover;
+                    setDrawUpdate();
+                }
+                return;
+            }
 
             // Middle drag pans, and so does the left button with the alt key,
             // for the sake of anyone on a trackpad with no middle button.
@@ -753,6 +972,95 @@ namespace fx
             {
                 _pressCallback();
             }
+
+            // The camera keeps the alt key and the middle button, so a
+            // manipulator can only take a plain left press -- which means
+            // grabbing an arm never costs a way to move the view.
+            const bool alt = event.modifiers & static_cast<int>(KeyModifier::Alt);
+            if (MouseButton::Left != event.button || alt)
+                return;
+            const Arm arm = _gizmoPick(event.pos);
+            if (Arm::None == arm)
+                return;
+            V3F origin;
+            if (!_gizmoOrigin(origin))
+                return;
+            _gizmoDrag = arm;
+            _gizmoHover = arm;
+            _gizmoStart = origin;
+            _gizmoPress = event.pos;
+            if (auto model = _model.lock())
+            {
+                model->beginEdit();
+            }
+            setDrawUpdate();
+        }
+
+        void Viewport::mouseReleaseEvent(MouseClickEvent& event)
+        {
+            event.accept = true;
+            if (Arm::None == _gizmoDrag)
+                return;
+            _gizmoDrag = Arm::None;
+            if (auto model = _model.lock())
+            {
+                // Closed even when nothing moved: endEdit() records nothing
+                // when the state matches, and leaving an edit open is how undo
+                // goes quiet for the rest of the session.
+                model->endEdit("Move System");
+            }
+            setDrawUpdate();
+        }
+
+        void Viewport::mouseLeaveEvent()
+        {
+            if (Arm::None != _gizmoHover)
+            {
+                _gizmoHover = Arm::None;
+                setDrawUpdate();
+            }
+        }
+
+        void Viewport::_gizmoMove(const V2I& pos)
+        {
+            auto model = _model.lock();
+            if (!model || Arm::None == _gizmoDrag)
+                return;
+            const size_t index = static_cast<size_t>(_gizmoDrag) - 1;
+            const auto arms = _gizmoArms();
+            if (!arms[index].valid)
+                return;
+
+            // Measured from where the press was rather than from the last
+            // move. Accumulating would drift, and it would also mean the arm
+            // re-measuring itself against a scene it has already moved.
+            const V2F d(
+                static_cast<float>(pos.x - _gizmoPress.x),
+                static_cast<float>(pos.y - _gizmoPress.y));
+            const auto& arm = arms[index];
+            const float pixels = d.x * arm.dir.x + d.y * arm.dir.y;
+            const float distance = pixels / arm.pixelsPerUnit;
+
+            V3F value = _gizmoStart;
+            switch (_gizmoDrag)
+            {
+            case Arm::X: value.x = _gizmoStart.x + distance; break;
+            case Arm::Y: value.y = _gizmoStart.y + distance; break;
+            case Arm::Z: value.z = _gizmoStart.z + distance; break;
+            default: break;
+            }
+
+            const sim::System before = model->getSystem();
+            auto& translate = model->getSystem().getEmitter().transform.translate;
+            const double frame = _currentFrame;
+            switch (_gizmoDrag)
+            {
+            case Arm::X: setValue(translate.x, frame, value.x); break;
+            case Arm::Y: setValue(translate.y, frame, value.y); break;
+            case Arm::Z: setValue(translate.z, frame, value.z); break;
+            default: break;
+            }
+            model->systemChanged("Move System", before);
         }
 
         void Viewport::scrollEvent(ScrollEvent& event)

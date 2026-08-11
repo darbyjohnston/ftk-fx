@@ -4,6 +4,7 @@
 #pragma once
 
 #include <fx/App/EditorOptions.h>
+#include <fx/App/ParameterList.h>
 
 #include <fx/Core/Frame.h>
 
@@ -12,6 +13,8 @@
 #include <ftk/GL/Mesh.h>
 #include <ftk/GL/OffscreenBuffer.h>
 #include <ftk/GL/Shader.h>
+
+#include <array>
 
 namespace fx
 {
@@ -84,9 +87,34 @@ namespace fx
             void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void mouseMoveEvent(ftk::MouseMoveEvent&) override;
             void mousePressEvent(ftk::MouseClickEvent&) override;
+            void mouseReleaseEvent(ftk::MouseClickEvent&) override;
+            void mouseLeaveEvent() override;
             void scrollEvent(ftk::ScrollEvent&) override;
 
         private:
+            //! Which arm of the manipulator something is on.
+            enum class Arm
+            {
+                None,
+                X,
+                Y,
+                Z
+            };
+
+            //! An arm as it lands on screen: where it starts, where it ends,
+            //! and how many pixels a world unit covers along it. The last is
+            //! what turns a drag in pixels back into a distance in the scene,
+            //! and it falls out of the projection rather than being derived
+            //! again from the camera.
+            struct ArmScreen
+            {
+                bool valid = false;
+                ftk::V2F origin;
+                ftk::V2F tip;
+                ftk::V2F dir;
+                float pixelsPerUnit = 0.F;
+            };
+
             void _setOrbit(const ftk::V2F&);
             void _setZoom(float);
             void _pan(const ftk::V2I& delta);
@@ -115,7 +143,48 @@ namespace fx
                 const ftk::Box2I& drawRect,
                 const ftk::DrawEvent&);
 
+            //! A point in the scene, in widget pixels. False when it is behind
+            //! the camera, where a projection gives a point that is on screen
+            //! and mirrored rather than off it.
+            bool _project(const ftk::V3F& world, ftk::V2F& out) const;
+
+            //! Where the manipulator is: the current system's emitter, at the
+            //! current frame. False when there is no model to ask.
+            bool _gizmoOrigin(ftk::V3F& out) const;
+
+            //! The three arms on screen. Empty valid flags where an arm points
+            //! at the camera and has nowhere to go.
+            std::array<ArmScreen, 3> _gizmoArms() const;
+
+            //! The arm under the pointer, or None.
+            Arm _gizmoPick(const ftk::V2I&) const;
+
+            //! Move the current system to where the drag has taken the arm.
+            void _gizmoMove(const ftk::V2I& pos);
+
+            //! The manipulator, drawn over the buffer like the tripod.
+            void _gizmoDraw(
+                const ftk::Box2I& geometry,
+                const ftk::Box2I& drawRect,
+                const ftk::DrawEvent&);
+
+            std::weak_ptr<SceneModel> _model;
             std::shared_ptr<const core::Frame> _frame;
+            int _currentFrame = 1;
+
+            //! The arm the pointer is over, and the one being dragged. Kept
+            //! apart because a drag holds its arm however far the pointer
+            //! wanders off it.
+            Arm _gizmoHover = Arm::None;
+            Arm _gizmoDrag = Arm::None;
+
+            //! Where the drag started, in the scene and on screen. The value
+            //! is set from the whole gesture rather than accumulated from each
+            //! move, so a drag that leaves and re-enters the widget does not
+            //! quietly lose the distance it covered while away.
+            ftk::V3F _gizmoStart;
+            ftk::V2I _gizmoPress;
+
             float _particleSize = 3.F;
             DrawType _drawType = DrawType::Point;
             std::function<void(void)> _pressCallback;
@@ -155,12 +224,21 @@ namespace fx
                 int dot = 0;
                 int length = 0;
                 int margin = 0;
+
+                //! How long the manipulator's arms are and how near the
+                //! pointer has to be to grab one. Longer than the tripod's:
+                //! the tripod is read, and this is aimed at.
+                int gizmo = 0;
+                int grab = 0;
             };
             SizeData _size;
             std::shared_ptr<ftk::gl::OffscreenBuffer> _buffer;
 
             std::shared_ptr<ftk::Observer<std::shared_ptr<const core::Frame> > >
                 _frameObserver;
+            std::shared_ptr<ftk::Observer<int> > _currentFrameObserver;
+            std::shared_ptr<ftk::Observer<size_t> > _currentSystemObserver;
+            std::shared_ptr<ftk::Observer<int> > _parameterObserver;
         };
     }
 }
