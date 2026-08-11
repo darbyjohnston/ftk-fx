@@ -1,10 +1,12 @@
 set(HEADERS
     Scene.h
-    System.h)
+    System.h
+    Transform.h)
 
 set(SOURCE
     Scene.cpp
-    System.cpp)
+    System.cpp
+    Transform.cpp)
 
 add_library(fxSim ${HEADERS} ${SOURCE})
 

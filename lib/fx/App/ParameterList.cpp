@@ -18,8 +18,27 @@ namespace fx
             auto& forces = system.getForces();
             const sim::Emitter defaultEmitter;
             const sim::Forces defaultForces;
+            const sim::Transform defaultTransform;
             return
             {
+                { "Transform", "Translate X", &emitter.transform.translate.x, -50.F, 50.F,
+                    defaultTransform.translate.x.getConstant() },
+                { "Transform", "Translate Y", &emitter.transform.translate.y, -50.F, 50.F,
+                    defaultTransform.translate.y.getConstant() },
+                { "Transform", "Translate Z", &emitter.transform.translate.z, -50.F, 50.F,
+                    defaultTransform.translate.z.getConstant() },
+                { "Transform", "Rotate X", &emitter.transform.rotate.x, -180.F, 180.F,
+                    defaultTransform.rotate.x.getConstant() },
+                { "Transform", "Rotate Y", &emitter.transform.rotate.y, -180.F, 180.F,
+                    defaultTransform.rotate.y.getConstant() },
+                { "Transform", "Rotate Z", &emitter.transform.rotate.z, -180.F, 180.F,
+                    defaultTransform.rotate.z.getConstant() },
+                { "Transform", "Scale X", &emitter.transform.scale.x, 0.F, 10.F,
+                    defaultTransform.scale.x.getConstant() },
+                { "Transform", "Scale Y", &emitter.transform.scale.y, 0.F, 10.F,
+                    defaultTransform.scale.y.getConstant() },
+                { "Transform", "Scale Z", &emitter.transform.scale.z, 0.F, 10.F,
+                    defaultTransform.scale.z.getConstant() },
                 { "Emitter", "Rate", &emitter.rate, 0.F, 2000.F,
                     defaultEmitter.rate.getConstant() },
                 { "Emitter", "Speed", &emitter.speed, 0.F, 30.F,

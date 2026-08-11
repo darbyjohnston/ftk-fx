@@ -7,6 +7,8 @@
 #include <fx/App/MainWindow.h>
 #include <fx/App/Panels.h>
 #include <fx/App/ParameterList.h>
+
+#include <ftk/Core/LogSystem.h>
 #include <fx/App/SceneModel.h>
 
 #include <fx/Core/Serialize.h>
@@ -140,6 +142,12 @@ namespace fx
             std::vector<nlohmann::json> lateSteps;
             size_t lateNext = 0;
 
+            //! Errors the application logged while the shot was being set up
+            //! and drawn. A shot that provokes one is not worth keeping,
+            //! however good the picture looks.
+            std::vector<std::string> errors;
+            std::shared_ptr<ftk::ListObserver<ftk::LogItem> > logObserver;
+
             bool done = false;
             bool success = false;
         };
@@ -259,6 +267,24 @@ namespace fx
             // Nobody is watching a capture run, and a window on screen can be
             // hovered or clicked while the shot is being taken, which puts a
             // highlight or a tooltip into it.
+            // Watched from before the setup runs. A shader that will not
+            // compile, a file that will not open: the application logs it and
+            // carries on drawing something, and the sidecar cannot tell.
+            p.logObserver = ftk::ListObserver<ftk::LogItem>::create(
+                context->getLogSystem()->observeLogItems(),
+                [this](const std::vector<ftk::LogItem>& value)
+                {
+                    FTK_P();
+                    for (const auto& item : value)
+                    {
+                        if (ftk::LogType::Error == item.type)
+                        {
+                            p.errors.push_back(item.prefix + ": " + item.message);
+                        }
+                    }
+                },
+                ftk::ObserverAction::Suppress);
+
             app->setOffscreen(true);
             window->show();
 
@@ -482,6 +508,22 @@ namespace fx
             {
                 model->open(step.at("open").get<std::string>());
             }
+            if (step.contains("transform"))
+            {
+                const auto& t = step.at("transform");
+                const sim::System before = model->getSystem();
+                auto& transform = model->getSystem().getEmitter().transform;
+                const auto set = [](core::V3Parameter& p, const nlohmann::json& v)
+                {
+                    p.x.setConstant(v[0].get<float>());
+                    p.y.setConstant(v[1].get<float>());
+                    p.z.setConstant(v[2].get<float>());
+                };
+                if (t.contains("translate")) set(transform.translate, t.at("translate"));
+                if (t.contains("rotate")) set(transform.rotate, t.at("rotate"));
+                if (t.contains("scale")) set(transform.scale, t.at("scale"));
+                model->systemChanged("Set Transform", before);
+            }
             if (step.contains("shape"))
             {
                 const auto& v = step.at("shape");
@@ -573,6 +615,14 @@ namespace fx
                     return;
                 }
                 p.settleLeft = p.settleTicksShot;
+                return;
+            }
+
+            if (!p.errors.empty())
+            {
+                note(p.shotId, ftk::Format("the application logged: {0}").
+                    arg(p.errors.front()));
+                _finish(false);
                 return;
             }
 

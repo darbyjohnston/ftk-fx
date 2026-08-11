@@ -29,6 +29,24 @@ namespace fx
             return !(*this == other);
         }
 
+        void to_json(nlohmann::json& json, const Transform& value)
+        {
+            json = nlohmann::json
+            {
+                { "translate", value.translate },
+                { "rotate", value.rotate },
+                { "scale", value.scale }
+            };
+        }
+
+        void from_json(const nlohmann::json& json, Transform& out)
+        {
+            out = Transform();
+            if (json.contains("translate")) json.at("translate").get_to(out.translate);
+            if (json.contains("rotate")) json.at("rotate").get_to(out.rotate);
+            if (json.contains("scale")) json.at("scale").get_to(out.scale);
+        }
+
         void to_json(nlohmann::json& json, const Emitter& value)
         {
             json = nlohmann::json
@@ -37,10 +55,9 @@ namespace fx
                 { "seed", value.seed },
                 { "shape", getLabel(value.shape) },
                 { "surface", value.surface },
-                { "position", value.position },
+                { "transform", value.transform },
                 { "size", value.size },
                 { "rate", value.rate },
-                { "direction", value.direction },
                 { "spread", value.spread },
                 { "speed", value.speed },
                 { "speedVariance", value.speedVariance },
@@ -67,9 +84,8 @@ namespace fx
             }
             if (json.contains("surface")) json.at("surface").get_to(out.surface);
             if (json.contains("size")) json.at("size").get_to(out.size);
-            if (json.contains("position")) json.at("position").get_to(out.position);
+            if (json.contains("transform")) json.at("transform").get_to(out.transform);
             if (json.contains("rate")) json.at("rate").get_to(out.rate);
-            if (json.contains("direction")) json.at("direction").get_to(out.direction);
             if (json.contains("spread")) json.at("spread").get_to(out.spread);
             if (json.contains("speed")) json.at("speed").get_to(out.speed);
             if (json.contains("speedVariance")) json.at("speedVariance").get_to(out.speedVariance);

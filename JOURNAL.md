@@ -7,6 +7,57 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Transforms, and a shot that captured nothing
+
+### The emitter has a transform
+
+Translate, rotate and scale, built from Parameters like everything else, so a
+transform is animatable by construction rather than by a later retrofit. That is
+§4a's argument for the Parameter type, applied to the thing every object will
+need.
+
+It replaces a bare position and a bare direction. The spray goes along the
+emitter's own up axis, so turning the emitter turns what comes out of it --
+which is what turning an emitter means, and which the two separate fields could
+not express. Nothing was lost: the direction was the only orientation there
+was.
+
+It exists now, with one emitter, because everything after this needs it.
+Multiple objects each need one, and a thing with no transform has nowhere to
+put a manipulator.
+
+### Renaming into a shader
+
+"Point size" now sizes a sphere as much as a disc, so it became "particle
+size" -- in the label, the model, the panes and the capture step, but not in
+the shader, where the uniform feeds `gl_PointSize` and really is a point size.
+
+The rename was a search and replace over the file, then a revert of the three
+strings that belong to the shader. It missed a fourth: the vertex shader
+declared `uniform float pointSize` and assigned `gl_PointSize = particleSize`.
+The shader failed to compile, the exception was caught and logged, and the
+viewport drew nothing at all -- no particles, no grid.
+
+Twenty-eight shots captured. All twenty-eight succeeded. One of them is the
+screenshot at the top of the README, which I regenerated and committed
+completely black.
+
+### The harness now listens to the log
+
+This is the third time a silent visual failure has got past the sidecar, and
+the second time the reason was that the sidecar reads state and the breakage
+was in pixels. There is no general fix for that. There is a specific one that
+would have caught all three in this case and costs nothing: the application
+*told* us. It logged the shader error, every frame, and nothing was listening.
+
+A shot now fails if the application logs an error while it is being set up or
+drawn. Verified by breaking the shader deliberately: the shot fails instead of
+capturing a black picture of a working-looking window.
+
+That does not replace looking at the pictures. It does mean the failures that
+announce themselves stop being silent.
+---
+
 ## 2026-08-09 — The end of phase 1
 
 Two things left on §15's list, and reading it again changed what one of them

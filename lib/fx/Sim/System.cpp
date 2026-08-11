@@ -54,9 +54,8 @@ namespace fx
                 shape == other.shape &&
                 surface == other.surface &&
                 size == other.size &&
-                position == other.position &&
+                transform == other.transform &&
                 rate == other.rate &&
-                direction == other.direction &&
                 spread == other.spread &&
                 speed == other.speed &&
                 speedVariance == other.speedVariance &&
@@ -270,11 +269,14 @@ namespace fx
             size_t count,
             double subFrame) const
         {
-            const V3F origin = _emitter.position.getValue(subFrame);
+            const M44F matrix = _emitter.transform.getMatrix(subFrame);
+            const M44F rotation = _emitter.transform.getRotation(subFrame);
             const V3F size = _emitter.size.getValue(subFrame);
             const EmitterShape shape = _emitter.shape;
             const bool surface = _emitter.surface;
-            const V3F axis = normalize(_emitter.direction.getValue(subFrame));
+            // Up, turned by the emitter. An emitter with no rotation sprays
+            // the way it always did.
+            const V3F axis = normalize(rotation * V3F(0.F, 1.F, 0.F));
             const float spread = _emitter.spread.getValue(subFrame);
             const float speed = _emitter.speed.getValue(subFrame);
             const float speedVariance = _emitter.speedVariance.getValue(subFrame);
@@ -299,7 +301,7 @@ namespace fx
                     core::randF(seed, id, channelLifespan, -1.F, 1.F));
 
                 const V3F offset = shapeOffset(shape, surface, size, seed, id);
-                pool.position[i] = origin + V3F(
+                pool.position[i] = matrix * V3F(
                     offset.x * size.x,
                     offset.y * size.y,
                     offset.z * size.z);

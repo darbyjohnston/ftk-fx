@@ -72,7 +72,9 @@ namespace fx
                 emitter.size.z.setConstant(.25F);
                 emitter.rate.setConstant(1234.5F);
                 emitter.rate.setCurve(testCurve());
-                emitter.position.y.setConstant(2.5F);
+                emitter.transform.translate.y.setConstant(2.5F);
+                emitter.transform.rotate.z.setConstant(35.F);
+                emitter.transform.scale.x.setConstant(2.F);
                 emitter.spread.setConstant(45.F);
                 out.system.getForces().gravity.y.setConstant(-3.5F);
                 out.system.getForces().drag.setConstant(.75F);
@@ -139,6 +141,12 @@ namespace fx
             FTK_CHECK(changed != scene);
             changed = scene;
             changed.system.getEmitter().size.y.setConstant(9.F);
+            FTK_CHECK(changed != scene);
+            changed = scene;
+            changed.system.getEmitter().transform.rotate.x.setConstant(1.F);
+            FTK_CHECK(changed != scene);
+            changed = scene;
+            changed.system.getEmitter().transform.scale.z.setConstant(3.F);
             FTK_CHECK(changed != scene);
             changed = scene;
             changed.range = ftk::RangeI(1, 10);

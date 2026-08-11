@@ -5,6 +5,7 @@
 
 #include <fx/Core/Frame.h>
 #include <fx/Core/Parameter.h>
+#include <fx/Sim/Transform.h>
 
 #include <string>
 #include <vector>
@@ -63,7 +64,11 @@ namespace fx
             //! Meaningless for a point, which is all surface.
             bool surface = false;
 
-            core::V3Parameter position;
+            //! Where the emitter is, how it is turned, and how big it is.
+            //! Replaces a bare position and a bare direction: the spray goes
+            //! along the emitter's own up axis, so turning the emitter turns
+            //! what comes out of it, which is what turning an emitter means.
+            Transform transform;
 
             //! Radii for a sphere, half extents for a box, ignored for a
             //! point.
@@ -71,8 +76,6 @@ namespace fx
 
             //! Particles per second.
             core::Parameter rate = core::Parameter(200.F);
-
-            core::V3Parameter direction = core::V3Parameter(ftk::V3F(0.F, 1.F, 0.F));
 
             //! Half-angle of the emission cone, in degrees.
             core::Parameter spread = core::Parameter(25.F);

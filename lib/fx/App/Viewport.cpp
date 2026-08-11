@@ -66,7 +66,7 @@ namespace fx
                     "void main()\n"
                     "{\n"
                     "    gl_Position = mvp * vec4(vPos, 1.0);\n"
-                    "    gl_ParticleSize = particleSize;\n"
+                    "    gl_PointSize = pointSize;\n"
                     "    fColor = vColor;\n"
                     "}\n";
             }

@@ -918,6 +918,59 @@
           "caption": "The same disc, shaded as the silhouette of a sphere"
         }
       ]
+    },
+    {
+      "id": "emitter-transform",
+      "window": {
+        "w": 560,
+        "h": 440
+      },
+      "setup": [
+        {
+          "transform": {
+            "translate": [
+              -6,
+              4,
+              0
+            ],
+            "rotate": [
+              0,
+              0,
+              -40
+            ]
+          }
+        },
+        {
+          "rate": 900
+        },
+        {
+          "particleSize": 7
+        },
+        {
+          "draw": "Sphere"
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "view": {
+            "index": 0,
+            "type": "Front"
+          }
+        },
+        {
+          "frame": 55
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "Turn the emitter and the spray turns with it"
+        }
+      ]
     }
   ]
 }

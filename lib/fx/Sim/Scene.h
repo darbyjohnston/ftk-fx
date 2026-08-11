@@ -31,6 +31,9 @@ namespace fx
             bool operator != (const Scene&) const;
         };
 
+        void to_json(nlohmann::json&, const Transform&);
+        void from_json(const nlohmann::json&, Transform&);
+
         void to_json(nlohmann::json&, const Emitter&);
         void from_json(const nlohmann::json&, Emitter&);
 
