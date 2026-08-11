@@ -7,6 +7,8 @@
 #include <fx/App/Panes.h>
 
 #include <ftk/UI/Bellows.h>
+#include <ftk/UI/CheckBox.h>
+#include <ftk/UI/ComboBox.h>
 #include <ftk/UI/FloatEditSlider.h>
 #include <ftk/UI/FormLayout.h>
 #include <ftk/UI/IntEditSlider.h>
@@ -168,6 +170,21 @@ namespace fx
         void ParametersPanel::_valuesUpdate()
         {
             _updating = true;
+            if (auto model = _model.lock())
+            {
+                const auto& emitter = model->getSystem().getEmitter();
+                _shapeComboBox->setCurrentIndex(static_cast<int>(emitter.shape));
+                _surfaceCheckBox->setChecked(emitter.surface);
+                // The size only means something for a shape that has one.
+                for (auto& row : _rows)
+                {
+                    if (0 == row.info.name.compare(0, 4, "Size"))
+                    {
+                        row.slider->setEnabled(sim::hasVolume(emitter.shape));
+                    }
+                }
+                _surfaceCheckBox->setEnabled(sim::hasVolume(emitter.shape));
+            }
             for (auto& row : _rows)
             {
                 const core::Parameter* parameter = row.info.parameter;
@@ -257,6 +274,45 @@ namespace fx
                     }
                 });
             groups["Emitter"]->addRow("Seed:", seedSlider);
+
+            // The shape is not a parameter -- it changes what the other values
+            // mean rather than being one of them -- so it is a combo box among
+            // the sliders, like the seed.
+            auto shapeComboBox = ComboBox::create(
+                context, sim::getEmitterShapeLabels());
+            shapeComboBox->setCurrentIndex(
+                static_cast<int>(model->getSystem().getEmitter().shape));
+            shapeComboBox->setTooltip("Where in the emitter particles are born");
+            shapeComboBox->setIndexCallback(
+                [weak](int value)
+                {
+                    if (auto model = weak.lock())
+                    {
+                        const sim::System before = model->getSystem();
+                        model->getSystem().getEmitter().shape =
+                            static_cast<sim::EmitterShape>(value);
+                        model->systemChanged("Set Shape", before);
+                    }
+                });
+            groups["Emitter"]->addRow("Shape:", shapeComboBox);
+
+            auto surfaceCheckBox = CheckBox::create(context, "Surface");
+            surfaceCheckBox->setChecked(model->getSystem().getEmitter().surface);
+            surfaceCheckBox->setTooltip(
+                "Born on the shape rather than anywhere inside it");
+            surfaceCheckBox->setCheckedCallback(
+                [weak](bool value)
+                {
+                    if (auto model = weak.lock())
+                    {
+                        const sim::System before = model->getSystem();
+                        model->getSystem().getEmitter().surface = value;
+                        model->systemChanged("Set Surface", before);
+                    }
+                });
+            groups["Emitter"]->addRow("", surfaceCheckBox);
+            _shapeComboBox = shapeComboBox;
+            _surfaceCheckBox = surfaceCheckBox;
 
             auto substepsSlider = IntEditSlider::create(context);
             substepsSlider->setRange(1, 8);

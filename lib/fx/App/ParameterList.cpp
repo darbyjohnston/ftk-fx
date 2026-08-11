@@ -16,7 +16,7 @@ namespace fx
         {
             auto& emitter = system.getEmitter();
             auto& forces = system.getForces();
-            const sim::PointEmitter defaultEmitter;
+            const sim::Emitter defaultEmitter;
             const sim::Forces defaultForces;
             return
             {
@@ -28,6 +28,12 @@ namespace fx
                     defaultEmitter.speedVariance.getConstant() },
                 { "Emitter", "Spread", &emitter.spread, 0.F, 180.F,
                     defaultEmitter.spread.getConstant() },
+                { "Emitter", "Size X", &emitter.size.x, 0.F, 20.F,
+                    defaultEmitter.size.x.getConstant() },
+                { "Emitter", "Size Y", &emitter.size.y, 0.F, 20.F,
+                    defaultEmitter.size.y.getConstant() },
+                { "Emitter", "Size Z", &emitter.size.z, 0.F, 20.F,
+                    defaultEmitter.size.z.getConstant() },
                 { "Emitter", "Lifespan", &emitter.lifespan, .1F, 10.F,
                     defaultEmitter.lifespan.getConstant() },
                 { "Emitter", "Lifespan variance", &emitter.lifespanVariance, 0.F, 1.F,

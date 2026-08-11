@@ -847,6 +847,41 @@
           "caption": "Picking the current arrangement again leaves it current"
         }
       ]
+    },
+    {
+      "id": "emitter-shapes",
+      "window": {
+        "w": 1000,
+        "h": 650
+      },
+      "setup": [
+        {
+          "shape": {
+            "type": "Box",
+            "size": [
+              6,
+              0.5,
+              6
+            ],
+            "surface": true
+          }
+        },
+        {
+          "rate": 1200
+        },
+        {
+          "layout": 4
+        },
+        {
+          "frame": 60
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane1",
+          "caption": "Born on the surface of a flat box, weighted by face area"
+        }
+      ]
     }
   ]
 }

@@ -482,6 +482,30 @@ namespace fx
             {
                 model->open(step.at("open").get<std::string>());
             }
+            if (step.contains("shape"))
+            {
+                const auto& v = step.at("shape");
+                const std::string name = v.at("type").get<std::string>();
+                sim::EmitterShape shape = sim::EmitterShape::First;
+                if (!fromString(name, shape))
+                    throw std::runtime_error(ftk::Format(
+                        "unknown emitter shape \"{0}\"").arg(name));
+                const sim::System before = model->getSystem();
+                auto& emitter = model->getSystem().getEmitter();
+                emitter.shape = shape;
+                if (v.contains("surface"))
+                {
+                    emitter.surface = v.at("surface").get<bool>();
+                }
+                if (v.contains("size"))
+                {
+                    const auto& size = v.at("size");
+                    emitter.size.x.setConstant(size[0].get<float>());
+                    emitter.size.y.setConstant(size[1].get<float>());
+                    emitter.size.z.setConstant(size[2].get<float>());
+                }
+                model->systemChanged("Set Shape", before);
+            }
             if (step.contains("rate"))
             {
                 // The one simulation parameter a shot can set. Frame time is

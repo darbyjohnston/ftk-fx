@@ -12,6 +12,8 @@
 
 namespace ftk
 {
+    class CheckBox;
+    class ComboBox;
     class FloatEditSlider;
     class FormLayout;
     class ToolButton;
@@ -68,6 +70,8 @@ namespace fx
 
             std::weak_ptr<SceneModel> _model;
             std::vector<Row> _rows;
+            std::shared_ptr<ftk::ComboBox> _shapeComboBox;
+            std::shared_ptr<ftk::CheckBox> _surfaceCheckBox;
             int _currentFrame = 1;
 
             //! Set while the panel is writing its own widgets, so that the

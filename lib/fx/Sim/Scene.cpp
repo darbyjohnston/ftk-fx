@@ -29,13 +29,16 @@ namespace fx
             return !(*this == other);
         }
 
-        void to_json(nlohmann::json& json, const PointEmitter& value)
+        void to_json(nlohmann::json& json, const Emitter& value)
         {
             json = nlohmann::json
             {
                 { "enabled", value.enabled },
                 { "seed", value.seed },
+                { "shape", getLabel(value.shape) },
+                { "surface", value.surface },
                 { "position", value.position },
+                { "size", value.size },
                 { "rate", value.rate },
                 { "direction", value.direction },
                 { "spread", value.spread },
@@ -46,15 +49,24 @@ namespace fx
             };
         }
 
-        void from_json(const nlohmann::json& json, PointEmitter& out)
+        void from_json(const nlohmann::json& json, Emitter& out)
         {
             // Every field optional and defaulted from a fresh emitter, so that
             // a scene written by an older build still loads when a field is
             // added. The alternative is a version number that has to be bumped
             // for every addition and a migration for every bump.
-            out = PointEmitter();
+            out = Emitter();
             if (json.contains("enabled")) json.at("enabled").get_to(out.enabled);
             if (json.contains("seed")) json.at("seed").get_to(out.seed);
+            if (json.contains("shape"))
+            {
+                const std::string name = json.at("shape").get<std::string>();
+                if (!fromString(name, out.shape))
+                    throw std::runtime_error(ftk::Format(
+                        "unknown emitter shape \"{0}\"").arg(name));
+            }
+            if (json.contains("surface")) json.at("surface").get_to(out.surface);
+            if (json.contains("size")) json.at("size").get_to(out.size);
             if (json.contains("position")) json.at("position").get_to(out.position);
             if (json.contains("rate")) json.at("rate").get_to(out.rate);
             if (json.contains("direction")) json.at("direction").get_to(out.direction);

@@ -23,6 +23,9 @@ Setup steps a shot may use:
 * {"panelStyle": "Tabs"}                     stack the panels or tab them
 * {"pointSize": 12}                          how big the particles draw
 * {"rate": 2000}                             particles emitted per second
+* {"shape": {"type": "Sphere", "size": [4, 1, 4], "surface": true}}
+                                             where particles are born; size and
+                                             surface are optional
 * {"key": {"path": "Emitter/Rate", "frame": 1, "value": 100}}
                                              key a parameter, with an optional
                                              "interp" beside it

@@ -7,16 +7,48 @@
 #include <fx/Core/Parameter.h>
 
 #include <string>
+#include <vector>
 
 namespace fx
 {
     namespace sim
     {
-        //! A point emitter.
+        //! The shape particles are born in.
         //!
-        //! Particles are born at one place, in a cone about a direction. Every
-        //! value here is a Parameter, so all of it is already animatable.
-        struct PointEmitter
+        //! One emitter with a shape rather than an emitter class per shape:
+        //! §6 lists the volumetric primitives as one kind, and they differ
+        //! only in where a point inside them is. The emitters that will need
+        //! their own implementations -- curve, geometry, texture driven,
+        //! secondary -- differ in more than that, and can have one then.
+        enum class EmitterShape
+        {
+            //! One place. A sphere of no size, and treated as one.
+            Point,
+
+            //! Radii rather than a radius, so it is an ellipsoid when they
+            //! differ. Costs nothing and is worth having.
+            Sphere,
+
+            //! Half extents.
+            Box,
+
+            Count,
+            First = Point
+        };
+
+        std::vector<std::string> getEmitterShapeLabels();
+        std::string getLabel(EmitterShape);
+        bool fromString(const std::string&, EmitterShape&);
+
+        //! Whether a shape has an inside to emit from.
+        bool hasVolume(EmitterShape);
+
+        //! An emitter.
+        //!
+        //! Particles are born somewhere in a shape, moving in a cone about a
+        //! direction. Every value here is a Parameter, so all of it is already
+        //! animatable.
+        struct Emitter
         {
             bool enabled = true;
 
@@ -25,7 +57,17 @@ namespace fx
             //! version of the same effect.
             uint64_t seed = 1;
 
+            EmitterShape shape = EmitterShape::Point;
+
+            //! Born on the shape's surface rather than anywhere inside it.
+            //! Meaningless for a point, which is all surface.
+            bool surface = false;
+
             core::V3Parameter position;
+
+            //! Radii for a sphere, half extents for a box, ignored for a
+            //! point.
+            core::V3Parameter size = core::V3Parameter(ftk::V3F(1.F, 1.F, 1.F));
 
             //! Particles per second.
             core::Parameter rate = core::Parameter(200.F);
@@ -47,8 +89,8 @@ namespace fx
             //! Spread of the lifespan, as a fraction of it.
             core::Parameter lifespanVariance = core::Parameter(.25F);
 
-            bool operator == (const PointEmitter&) const;
-            bool operator != (const PointEmitter&) const;
+            bool operator == (const Emitter&) const;
+            bool operator != (const Emitter&) const;
         };
 
         //! The force fields acting on a system.
@@ -80,8 +122,8 @@ namespace fx
             bool isEnabled() const;
             void setEnabled(bool);
 
-            const PointEmitter& getEmitter() const;
-            PointEmitter& getEmitter();
+            const Emitter& getEmitter() const;
+            Emitter& getEmitter();
 
             const Forces& getForces() const;
             Forces& getForces();
@@ -115,7 +157,7 @@ namespace fx
 
             std::string _name = "particles";
             bool _enabled = true;
-            PointEmitter _emitter;
+            Emitter _emitter;
             Forces _forces;
             int _substeps = 1;
         };

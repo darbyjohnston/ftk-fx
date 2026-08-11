@@ -31,8 +31,8 @@ namespace fx
             bool operator != (const Scene&) const;
         };
 
-        void to_json(nlohmann::json&, const PointEmitter&);
-        void from_json(const nlohmann::json&, PointEmitter&);
+        void to_json(nlohmann::json&, const Emitter&);
+        void from_json(const nlohmann::json&, Emitter&);
 
         void to_json(nlohmann::json&, const Forces&);
         void from_json(const nlohmann::json&, Forces&);

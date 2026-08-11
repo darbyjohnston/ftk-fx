@@ -15,11 +15,45 @@ namespace fx
 {
     namespace sim
     {
-        bool PointEmitter::operator == (const PointEmitter& other) const
+        std::vector<std::string> getEmitterShapeLabels()
+        {
+            return { "Point", "Sphere", "Box" };
+        }
+
+        std::string getLabel(EmitterShape value)
+        {
+            const auto labels = getEmitterShapeLabels();
+            const size_t i = static_cast<size_t>(value);
+            return i < labels.size() ? labels[i] : std::string();
+        }
+
+        bool fromString(const std::string& name, EmitterShape& out)
+        {
+            const auto labels = getEmitterShapeLabels();
+            for (size_t i = 0; i < labels.size(); ++i)
+            {
+                if (labels[i] == name)
+                {
+                    out = static_cast<EmitterShape>(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        bool hasVolume(EmitterShape value)
+        {
+            return EmitterShape::Point != value;
+        }
+
+        bool Emitter::operator == (const Emitter& other) const
         {
             return
                 enabled == other.enabled &&
                 seed == other.seed &&
+                shape == other.shape &&
+                surface == other.surface &&
+                size == other.size &&
                 position == other.position &&
                 rate == other.rate &&
                 direction == other.direction &&
@@ -30,7 +64,7 @@ namespace fx
                 lifespanVariance == other.lifespanVariance;
         }
 
-        bool PointEmitter::operator != (const PointEmitter& other) const
+        bool Emitter::operator != (const Emitter& other) const
         {
             return !(*this == other);
         }
@@ -69,6 +103,83 @@ namespace fx
             const uint32_t channelPhi = 1;
             const uint32_t channelSpeed = 2;
             const uint32_t channelLifespan = 3;
+            const uint32_t channelShapeU = 4;
+            const uint32_t channelShapeV = 5;
+            const uint32_t channelShapeR = 6;
+            const uint32_t channelShapeFace = 7;
+
+            //! Where in a shape a particle is born, in units of the shape's
+            //! size. Keyed on the particle's id like every other draw, so a
+            //! re-simulation puts it in the same place.
+            ftk::V3F shapeOffset(
+                EmitterShape shape,
+                bool surface,
+                const ftk::V3F& size,
+                uint64_t seed,
+                uint64_t id)
+            {
+                switch (shape)
+                {
+                case EmitterShape::Sphere:
+                {
+                    // A direction spread evenly over the sphere rather than
+                    // evenly over the angles, which would bunch at the poles.
+                    const float z = core::randF(seed, id, channelShapeU, -1.F, 1.F);
+                    const float phi = core::randF(
+                        seed, id, channelShapeV, 0.F, ftk::pi2);
+                    const float r = std::sqrt(std::max(0.F, 1.F - z * z));
+                    const ftk::V3F dir(r * std::cos(phi), z, r * std::sin(phi));
+                    // Even over a sphere. Scaled into an ellipsoid afterwards
+                    // it is no longer even over that surface -- the stretched
+                    // parts get fewer per unit area -- which is a refinement
+                    // worth having when it matters and is not worth a
+                    // rejection loop here.
+                    if (surface)
+                        return dir;
+                    // The cube root spreads them evenly through the volume;
+                    // a plain random radius would crowd the centre.
+                    return dir * std::cbrt(core::randF(seed, id, channelShapeR));
+                }
+                case EmitterShape::Box:
+                {
+                    ftk::V3F out(
+                        core::randF(seed, id, channelShapeU, -1.F, 1.F),
+                        core::randF(seed, id, channelShapeV, -1.F, 1.F),
+                        core::randF(seed, id, channelShapeR, -1.F, 1.F));
+                    if (surface)
+                    {
+                        // Which pair of faces, weighted by their area, so a
+                        // flat box puts most of its particles on the two large
+                        // faces rather than a third of them on each pair. The
+                        // point inside is then pushed out to that face.
+                        const float areaX = size.y * size.z;
+                        const float areaY = size.x * size.z;
+                        const float areaZ = size.x * size.y;
+                        const float total = areaX + areaY + areaZ;
+                        if (total > 0.F)
+                        {
+                            const float pick = core::randF(
+                                seed, id, channelShapeFace, 0.F, total);
+                            if (pick < areaX)
+                            {
+                                out.x = out.x < 0.F ? -1.F : 1.F;
+                            }
+                            else if (pick < areaX + areaY)
+                            {
+                                out.y = out.y < 0.F ? -1.F : 1.F;
+                            }
+                            else
+                            {
+                                out.z = out.z < 0.F ? -1.F : 1.F;
+                            }
+                        }
+                    }
+                    return out;
+                }
+                default:
+                    return ftk::V3F(0.F, 0.F, 0.F);
+                }
+            }
 
             //! Get any unit vector perpendicular to the given one.
             V3F perpendicular(const V3F& v)
@@ -123,12 +234,12 @@ namespace fx
             _enabled = value;
         }
 
-        const PointEmitter& System::getEmitter() const
+        const Emitter& System::getEmitter() const
         {
             return _emitter;
         }
 
-        PointEmitter& System::getEmitter()
+        Emitter& System::getEmitter()
         {
             return _emitter;
         }
@@ -160,6 +271,9 @@ namespace fx
             double subFrame) const
         {
             const V3F origin = _emitter.position.getValue(subFrame);
+            const V3F size = _emitter.size.getValue(subFrame);
+            const EmitterShape shape = _emitter.shape;
+            const bool surface = _emitter.surface;
             const V3F axis = normalize(_emitter.direction.getValue(subFrame));
             const float spread = _emitter.spread.getValue(subFrame);
             const float speed = _emitter.speed.getValue(subFrame);
@@ -184,7 +298,11 @@ namespace fx
                 const float l = lifespan * (1.F + lifespanVariance *
                     core::randF(seed, id, channelLifespan, -1.F, 1.F));
 
-                pool.position[i] = origin;
+                const V3F offset = shapeOffset(shape, surface, size, seed, id);
+                pool.position[i] = origin + V3F(
+                    offset.x * size.x,
+                    offset.y * size.y,
+                    offset.z * size.z);
                 pool.velocity[i] = direction * s;
                 pool.age[i] = 0.F;
                 pool.lifespan[i] = std::max(0.F, l);

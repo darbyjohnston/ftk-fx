@@ -66,6 +66,10 @@ namespace fx
                 out.system.setSubsteps(3);
                 auto& emitter = out.system.getEmitter();
                 emitter.seed = 17;
+                emitter.shape = EmitterShape::Box;
+                emitter.surface = true;
+                emitter.size.x.setConstant(3.5F);
+                emitter.size.z.setConstant(.25F);
                 emitter.rate.setConstant(1234.5F);
                 emitter.rate.setCurve(testCurve());
                 emitter.position.y.setConstant(2.5F);
@@ -128,6 +132,15 @@ namespace fx
             changed.system.getForces().gravity.z.setConstant(1.F);
             FTK_CHECK(changed != scene);
             changed = scene;
+            changed.system.getEmitter().shape = EmitterShape::Sphere;
+            FTK_CHECK(changed != scene);
+            changed = scene;
+            changed.system.getEmitter().surface = false;
+            FTK_CHECK(changed != scene);
+            changed = scene;
+            changed.system.getEmitter().size.y.setConstant(9.F);
+            FTK_CHECK(changed != scene);
+            changed = scene;
             changed.range = ftk::RangeI(1, 10);
             FTK_CHECK(changed != scene);
         }
@@ -178,6 +191,17 @@ namespace fx
             {
                 std::ofstream os(bad);
                 os << R"({ "range": { "min": 90, "max": 10 } })";
+            }
+            try
+            {
+                read(bad);
+                FTK_CHECK(false);
+            }
+            catch (const std::exception&)
+            {}
+            {
+                std::ofstream os(bad);
+                os << R"({ "systems": [ { "emitter": { "shape": "Blob" } } ] })";
             }
             try
             {
