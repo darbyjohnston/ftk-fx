@@ -79,7 +79,7 @@ namespace fx
             //! Set the point size of this pane's viewport, whether or not it
             //! is the content on screen. A display setting should still be in
             //! force when a pane is switched back to.
-            void setPointSize(float);
+            void setParticleSize(float);
 
             //! Set how the particles draw in this pane's viewport, whether or
             //! not it has one yet.
@@ -121,7 +121,7 @@ namespace fx
             bool _current = false;
             std::function<void(void)> _pressCallback;
             int _border = 0;
-            float _pointSize = 3.F;
+            float _particleSize = 3.F;
             DrawType _drawType = DrawType::Point;
 
             //! Set when the menus need rebuilding, acted on at the next tick.

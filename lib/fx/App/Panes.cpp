@@ -46,9 +46,9 @@ namespace fx
 
             _layoutUpdate();
 
-            _pointSizeObserver = Observer<float>::create(
-                model->observePointSize(),
-                [this](float value) { setPointSize(value); });
+            _particleSizeObserver = Observer<float>::create(
+                model->observeParticleSize(),
+                [this](float value) { setParticleSize(value); });
             _drawTypeObserver = Observer<DrawType>::create(
                 model->observeDrawType(),
                 [this](DrawType value) { setDrawType(value); });
@@ -123,11 +123,11 @@ namespace fx
             }
         }
 
-        void Panes::setPointSize(float value)
+        void Panes::setParticleSize(float value)
         {
             for (const auto& pane : _panes)
             {
-                pane->setPointSize(value);
+                pane->setParticleSize(value);
             }
         }
 

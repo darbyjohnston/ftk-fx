@@ -367,7 +367,7 @@
           }
         },
         {
-          "pointSize": 14
+          "particleSize": 14
         }
       ],
       "annotate": [
@@ -589,7 +589,7 @@
           "rate": 2000
         },
         {
-          "pointSize": 9
+          "particleSize": 9
         },
         {
           "draw": "Sphere"
@@ -684,7 +684,7 @@
           "rate": 2000
         },
         {
-          "pointSize": 12
+          "particleSize": 12
         },
         {
           "undo": 2
@@ -897,7 +897,7 @@
           "rate": 600
         },
         {
-          "pointSize": 14
+          "particleSize": 14
         },
         {
           "draw": "Sphere"

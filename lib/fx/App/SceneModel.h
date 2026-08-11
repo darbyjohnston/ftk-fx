@@ -155,8 +155,8 @@ namespace fx
 
             //! Replace everything an edit can touch and re-simulate, without
             //! recording anything. For the command stack; everything else
-            //! wants systemChanged() or setPointSize().
-            void applyState(const sim::System&, float pointSize);
+            //! wants systemChanged() or setParticleSize().
+            void applyState(const sim::System&, float particleSize);
 
             ///@}
 
@@ -165,13 +165,17 @@ namespace fx
 
             //! How big the particles draw, in points.
             //!
+            //! Named for the particle rather than the point primitive, because
+            //! it sizes a sphere just as much as a disc. Only the shader still
+            //! calls it a point size, where it really is one.
+            //!
             //! Not part of the scene file yet, though §10's render presets say
             //! it eventually should be. It is on the undo stack regardless: it
             //! sits in the same panel as the parameters, with the same slider,
             //! and nobody is going to remember which sliders undo.
-            float getPointSize() const;
-            std::shared_ptr<ftk::IObservable<float> > observePointSize() const;
-            void setPointSize(float);
+            float getParticleSize() const;
+            std::shared_ptr<ftk::IObservable<float> > observeParticleSize() const;
+            void setParticleSize(float);
 
             //! How the particles draw. A display setting like the point size.
             DrawType getDrawType() const;
@@ -252,7 +256,7 @@ namespace fx
             void _record(
                 const std::string& name,
                 const sim::System& beforeSystem,
-                float beforePointSize);
+                float beforeParticleSize);
 
             std::shared_ptr<ftk::Context> _context;
             sim::System _system;
@@ -269,7 +273,7 @@ namespace fx
             std::shared_ptr<ftk::Observable<bool> > _modified;
             std::shared_ptr<ftk::Observable<int> > _sceneChanged;
             std::shared_ptr<ftk::Observable<int> > _parameterChanged;
-            std::shared_ptr<ftk::Observable<float> > _pointSize;
+            std::shared_ptr<ftk::Observable<float> > _particleSize;
             std::shared_ptr<ftk::Observable<DrawType> > _drawType;
             std::shared_ptr<ftk::CommandStack> _commands;
 
@@ -284,7 +288,7 @@ namespace fx
             //! bracketing an edit that another widget already bracketed does
             //! not close it early.
             sim::System _editBefore;
-            float _editBeforePointSize = 3.F;
+            float _editBeforeParticleSize = 3.F;
             bool _editOpen = false;
 
             //! The scene as it is on disk, which is what "modified" is

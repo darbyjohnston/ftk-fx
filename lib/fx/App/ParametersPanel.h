@@ -82,7 +82,7 @@ namespace fx
             std::shared_ptr<ftk::Observer<int> > _currentFrameObserver;
             std::shared_ptr<ftk::Observer<int> > _sceneObserver;
             std::shared_ptr<ftk::Observer<int> > _parameterObserver;
-            std::shared_ptr<ftk::Observer<float> > _pointSizeObserver;
+            std::shared_ptr<ftk::Observer<float> > _particleSizeObserver;
         };
     }
 }

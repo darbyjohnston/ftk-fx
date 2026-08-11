@@ -33,36 +33,36 @@ namespace fx
                     SceneModel* model,
                     const std::string& name,
                     const sim::System& beforeSystem,
-                    float beforePointSize,
+                    float beforeParticleSize,
                     const sim::System& afterSystem,
-                    float afterPointSize) :
+                    float afterParticleSize) :
                     _model(model),
                     _name(name),
                     _beforeSystem(beforeSystem),
-                    _beforePointSize(beforePointSize),
+                    _beforeParticleSize(beforeParticleSize),
                     _afterSystem(afterSystem),
-                    _afterPointSize(afterPointSize)
+                    _afterParticleSize(afterParticleSize)
                 {}
 
                 const std::string& getName() const { return _name; }
 
                 void exec() override
                 {
-                    _model->applyState(_afterSystem, _afterPointSize);
+                    _model->applyState(_afterSystem, _afterParticleSize);
                 }
 
                 void undo() override
                 {
-                    _model->applyState(_beforeSystem, _beforePointSize);
+                    _model->applyState(_beforeSystem, _beforeParticleSize);
                 }
 
             private:
                 SceneModel* _model = nullptr;
                 std::string _name;
                 sim::System _beforeSystem;
-                float _beforePointSize = 3.F;
+                float _beforeParticleSize = 3.F;
                 sim::System _afterSystem;
-                float _afterPointSize = 3.F;
+                float _afterParticleSize = 3.F;
             };
         }
 
@@ -80,7 +80,7 @@ namespace fx
             _modified = Observable<bool>::create(false);
             _sceneChanged = Observable<int>::create(0);
             _parameterChanged = Observable<int>::create(0);
-            _pointSize = Observable<float>::create(3.F);
+            _particleSize = Observable<float>::create(3.F);
             _drawType = Observable<DrawType>::create(DrawType::Point);
             _commands = CommandStack::create();
             _saved = getScene();
@@ -205,10 +205,10 @@ namespace fx
             return _system;
         }
 
-        void SceneModel::applyState(const sim::System& value, float pointSize)
+        void SceneModel::applyState(const sim::System& value, float particleSize)
         {
             _system = value;
-            _pointSize->setIfChanged(pointSize);
+            _particleSize->setIfChanged(particleSize);
             _cache.invalidateFrom(_range->get().min());
             _simulate(_currentFrame->get());
             _modifiedUpdate();
@@ -221,27 +221,27 @@ namespace fx
         {
             // Already applied: the caller edited the system in place. What is
             // left is to record it and to throw away what it invalidated.
-            _record(name, before, _pointSize->get());
+            _record(name, before, _particleSize->get());
         }
 
         void SceneModel::_record(
             const std::string& name,
             const sim::System& beforeSystem,
-            float beforePointSize)
+            float beforeParticleSize)
         {
             if (_editOpen)
             {
                 // Inside a drag. endEdit() records the whole of it.
-                applyState(_system, _pointSize->get());
+                applyState(_system, _particleSize->get());
                 return;
             }
             auto command = std::make_shared<StateCommand>(
                 this,
                 name,
                 beforeSystem,
-                beforePointSize,
+                beforeParticleSize,
                 _system,
-                _pointSize->get());
+                _particleSize->get());
             _lastCommand = command;
             // push() runs exec(), which is what applies and re-simulates.
             _commands->push(command);
@@ -253,7 +253,7 @@ namespace fx
             {
                 _editOpen = true;
                 _editBefore = _system;
-                _editBeforePointSize = _pointSize->get();
+                _editBeforeParticleSize = _particleSize->get();
             }
         }
 
@@ -263,15 +263,15 @@ namespace fx
                 return;
             _editOpen = false;
             if (_editBefore != _system ||
-                _editBeforePointSize != _pointSize->get())
+                _editBeforeParticleSize != _particleSize->get())
             {
                 auto command = std::make_shared<StateCommand>(
                     this,
                     name,
                     _editBefore,
-                    _editBeforePointSize,
+                    _editBeforeParticleSize,
                     _system,
-                    _pointSize->get());
+                    _particleSize->get());
                 _lastCommand = command;
                 _commands->push(command);
             }
@@ -300,22 +300,22 @@ namespace fx
             _commands->redo();
         }
 
-        float SceneModel::getPointSize() const
+        float SceneModel::getParticleSize() const
         {
-            return _pointSize->get();
+            return _particleSize->get();
         }
 
-        std::shared_ptr<IObservable<float> > SceneModel::observePointSize() const
+        std::shared_ptr<IObservable<float> > SceneModel::observeParticleSize() const
         {
-            return _pointSize;
+            return _particleSize;
         }
 
-        void SceneModel::setPointSize(float value)
+        void SceneModel::setParticleSize(float value)
         {
-            const float before = _pointSize->get();
+            const float before = _particleSize->get();
             if (value == before)
                 return;
-            _pointSize->setIfChanged(value);
+            _particleSize->setIfChanged(value);
             _record("Set Point Size", _system, before);
         }
 

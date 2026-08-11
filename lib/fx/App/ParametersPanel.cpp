@@ -352,26 +352,26 @@ namespace fx
 
             auto displayLayout = FormLayout::create(context);
             displayLayout->setMarginRole(SizeRole::MarginSmall);
-            auto pointSizeSlider = FloatEditSlider::create(context);
-            pointSizeSlider->setRange(1.F, 16.F);
-            pointSizeSlider->setValue(model->getPointSize());
-            pointSizeSlider->setDefault(model->getPointSize());
-            pointSizeSlider->setCallback(
+            auto particleSizeSlider = FloatEditSlider::create(context);
+            particleSizeSlider->setRange(1.F, 16.F);
+            particleSizeSlider->setValue(model->getParticleSize());
+            particleSizeSlider->setDefault(model->getParticleSize());
+            particleSizeSlider->setCallback(
                 [weak](float value)
                 {
                     if (auto model = weak.lock())
                     {
                         model->beginEdit();
-                        model->setPointSize(value);
+                        model->setParticleSize(value);
                     }
                 });
-            _pointSizeObserver = Observer<float>::create(
-                model->observePointSize(),
-                [pointSizeSlider](float value)
+            _particleSizeObserver = Observer<float>::create(
+                model->observeParticleSize(),
+                [particleSizeSlider](float value)
                 {
-                    pointSizeSlider->setValue(value);
+                    particleSizeSlider->setValue(value);
                 });
-            pointSizeSlider->setPressedCallback(
+            particleSizeSlider->setPressedCallback(
                 [weak](float, bool pressed)
                 {
                     if (auto model = weak.lock())
@@ -379,7 +379,7 @@ namespace fx
                         if (!pressed) model->endEdit("Set Point Size");
                     }
                 });
-            displayLayout->addRow("Point size:", pointSizeSlider);
+            displayLayout->addRow("Particle size:", particleSizeSlider);
 
             auto drawTypeComboBox = ComboBox::create(context, getDrawTypeLabels());
             drawTypeComboBox->setCurrentIndex(
@@ -423,11 +423,11 @@ namespace fx
                 model->observeParameterChanged(),
                 [this](int) { _valuesUpdate(); });
 
-            _pointSizeObserver = Observer<float>::create(
-                model->observePointSize(),
-                [pointSizeSlider](float value)
+            _particleSizeObserver = Observer<float>::create(
+                model->observeParticleSize(),
+                [particleSizeSlider](float value)
                 {
-                    pointSizeSlider->setValue(value);
+                    particleSizeSlider->setValue(value);
                 });
         }
 

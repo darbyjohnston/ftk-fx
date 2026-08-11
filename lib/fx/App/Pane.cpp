@@ -158,7 +158,7 @@ namespace fx
                             _pressCallback();
                         }
                     });
-                _viewport->setPointSize(_pointSize);
+                _viewport->setParticleSize(_particleSize);
                 _viewport->setDrawType(_drawType);
                 content = _viewport;
             }
@@ -238,12 +238,12 @@ namespace fx
             }
         }
 
-        void Pane::setPointSize(float value)
+        void Pane::setParticleSize(float value)
         {
-            _pointSize = value;
+            _particleSize = value;
             if (_viewport)
             {
-                _viewport->setPointSize(value);
+                _viewport->setParticleSize(value);
             }
         }
 

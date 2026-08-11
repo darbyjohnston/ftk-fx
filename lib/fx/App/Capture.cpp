@@ -525,9 +525,9 @@ namespace fx
                         "unknown draw type \"{0}\"").arg(name));
                 model->setDrawType(drawType);
             }
-            if (step.contains("pointSize"))
+            if (step.contains("particleSize"))
             {
-                model->setPointSize(step.at("pointSize").get<float>());
+                model->setParticleSize(step.at("particleSize").get<float>());
             }
             if (step.contains("playing"))
             {

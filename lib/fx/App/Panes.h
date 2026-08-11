@@ -70,7 +70,7 @@ namespace fx
 
             //! Set the point size in every viewport. Display settings are the
             //! same everywhere; it is the camera that differs between them.
-            void setPointSize(float);
+            void setParticleSize(float);
 
             //! Set how the particles draw in every viewport.
             void setDrawType(DrawType);
@@ -87,7 +87,7 @@ namespace fx
             //! The root of the splitter tree, which is a pane itself when the
             //! arrangement is a single one.
             std::shared_ptr<ftk::IWidget> _root;
-            std::shared_ptr<ftk::Observer<float> > _pointSizeObserver;
+            std::shared_ptr<ftk::Observer<float> > _particleSizeObserver;
             std::shared_ptr<ftk::Observer<DrawType> > _drawTypeObserver;
         };
     }

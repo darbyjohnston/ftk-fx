@@ -66,7 +66,7 @@ namespace fx
                     "void main()\n"
                     "{\n"
                     "    gl_Position = mvp * vec4(vPos, 1.0);\n"
-                    "    gl_PointSize = pointSize;\n"
+                    "    gl_ParticleSize = particleSize;\n"
                     "    fColor = vColor;\n"
                     "}\n";
             }
@@ -320,16 +320,16 @@ namespace fx
             setDrawUpdate();
         }
 
-        float Viewport::getPointSize() const
+        float Viewport::getParticleSize() const
         {
-            return _pointSize;
+            return _particleSize;
         }
 
-        void Viewport::setPointSize(float value)
+        void Viewport::setParticleSize(float value)
         {
-            if (value == _pointSize)
+            if (value == _particleSize)
                 return;
-            _pointSize = value;
+            _particleSize = value;
             _doRender = true;
             setDrawUpdate();
         }
@@ -679,7 +679,7 @@ namespace fx
                         // Additive, and without writing depth: sparks and
                         // embers read as light rather than as surfaces, and it
                         // means the points do not have to be sorted.
-                        _shader->setUniform("pointSize", _pointSize);
+                        _shader->setUniform("pointSize", _particleSize);
                         _shader->setUniform("drawType", DrawType::Sphere == _drawType ? 2 : 1);
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE);

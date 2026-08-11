@@ -65,8 +65,8 @@ namespace fx
             //! \name Display
             ///@{
 
-            float getPointSize() const;
-            void setPointSize(float);
+            float getParticleSize() const;
+            void setParticleSize(float);
 
             DrawType getDrawType() const;
             void setDrawType(DrawType);
@@ -115,7 +115,7 @@ namespace fx
                 const ftk::DrawEvent&);
 
             std::shared_ptr<const core::Frame> _frame;
-            float _pointSize = 3.F;
+            float _particleSize = 3.F;
             DrawType _drawType = DrawType::Point;
             std::function<void(void)> _pressCallback;
 
