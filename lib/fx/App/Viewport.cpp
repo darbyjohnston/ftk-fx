@@ -80,25 +80,39 @@ namespace fx
                     "out vec4 outColor;\n"
                     "\n"
                     "uniform float pointSize;\n"
-                    "uniform float round;\n"
+                    // 0 draws whatever this is flat -- the grid, where
+                    // gl_PointCoord means nothing. 1 cuts a point back to the
+                    // disc inside it. 2 shades that disc as a sphere.
+                    "uniform int drawType;\n"
                     "\n"
                     "void main()\n"
                     "{\n"
+                    "    float a = 1.0;\n"
+                    "    vec3 rgb = fColor.rgb;\n"
+                    "    if (drawType > 0)\n"
+                    "    {\n"
                     // A point is a square, which is plain to see by the time it
                     // is a few pixels across. Cut it back to the disc inside,
                     // and fade the last pixel of the edge rather than stepping
                     // it: unsoftened, the disc looks worse than the square did.
-                    // gl_PointCoord means nothing outside a point, hence the
-                    // switch for the grid lines sharing this shader.
-                    "    float a = 1.0;\n"
-                    "    if (round > 0.0)\n"
-                    "    {\n"
-                    "        float d = length(gl_PointCoord - vec2(0.5));\n"
-                    "        float aa = 1.0 / max(pointSize, 1.0);\n"
-                    "        a = 1.0 - smoothstep(0.5 - aa, 0.5, d);\n"
+                    "        vec2 p = (gl_PointCoord - vec2(0.5)) * 2.0;\n"
+                    "        float r2 = dot(p, p);\n"
+                    "        float aa = 2.0 / max(pointSize, 1.0);\n"
+                    "        a = 1.0 - smoothstep(1.0 - aa, 1.0, sqrt(r2));\n"
                     "        if (a <= 0.0) discard;\n"
+                    "        if (drawType > 1)\n"
+                    "        {\n"
+                    // The impostor: the disc is the silhouette of a unit
+                    // sphere, so the surface normal falls out of where in the
+                    // disc this pixel is. Lit from the camera with a little
+                    // wrap, which reads as volume without needing a light in
+                    // the scene or a depth pass to sort them.
+                    "            vec3 n = vec3(p, sqrt(max(0.0, 1.0 - r2)));\n"
+                    "            float d = clamp(n.z * 0.85 + 0.15, 0.0, 1.0);\n"
+                    "            rgb *= d;\n"
+                    "        }\n"
                     "    }\n"
-                    "    outColor = vec4(fColor.rgb, fColor.a * a);\n"
+                    "    outColor = vec4(rgb, fColor.a * a);\n"
                     "}\n";
             }
 
@@ -290,6 +304,20 @@ namespace fx
         void Viewport::zoomOut()
         {
             _setZoom(1.1F);
+        }
+
+        DrawType Viewport::getDrawType() const
+        {
+            return _drawType;
+        }
+
+        void Viewport::setDrawType(DrawType value)
+        {
+            if (value == _drawType)
+                return;
+            _drawType = value;
+            _doRender = true;
+            setDrawUpdate();
         }
 
         float Viewport::getPointSize() const
@@ -640,7 +668,7 @@ namespace fx
                     if (_gridVao && _gridCount > 0)
                     {
                         _shader->setUniform("pointSize", 1.F);
-                        _shader->setUniform("round", 0.F);
+                        _shader->setUniform("drawType", 0);
                         glEnable(GL_DEPTH_TEST);
                         _gridVao->bind();
                         _gridVao->draw(GL_LINES, 0, _gridCount);
@@ -652,7 +680,7 @@ namespace fx
                         // embers read as light rather than as surfaces, and it
                         // means the points do not have to be sorted.
                         _shader->setUniform("pointSize", _pointSize);
-                        _shader->setUniform("round", 1.F);
+                        _shader->setUniform("drawType", DrawType::Sphere == _drawType ? 2 : 1);
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                         glDepthMask(GL_FALSE);

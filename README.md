@@ -7,10 +7,12 @@ built on [feather-tk](https://github.com/grizzlypeak3d/feather-tk). See
 
 ![Screenshot](etc/Images/ftk-fx_screenshot1.png)
 
-Where it is now: a vertical slice. A point emitter fills a pool, gravity and
-drag move it, particles die at their lifespan, the frames are cached, and the
-whole thing scrubs and plays back. Everything the artist can reach is already a
-`Parameter`, so it is already animatable.
+Where it is now: the end of phase 1. An emitter with a shape fills a pool,
+gravity and drag move it, particles die at their lifespan, and they draw as
+discs or as shaded spheres. The frames are cached, and the whole thing scrubs
+and plays back. Every value the artist can reach is a `Parameter`, animatable
+from the curve editor; every edit goes on an undo stack; and scenes save and
+load.
 
 ## Layout
 

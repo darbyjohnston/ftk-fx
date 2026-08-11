@@ -184,6 +184,8 @@ namespace fx
                     }
                 }
                 _surfaceCheckBox->setEnabled(sim::hasVolume(emitter.shape));
+                _drawTypeComboBox->setCurrentIndex(
+                    static_cast<int>(model->getDrawType()));
             }
             for (auto& row : _rows)
             {
@@ -378,6 +380,22 @@ namespace fx
                     }
                 });
             displayLayout->addRow("Point size:", pointSizeSlider);
+
+            auto drawTypeComboBox = ComboBox::create(context, getDrawTypeLabels());
+            drawTypeComboBox->setCurrentIndex(
+                static_cast<int>(model->getDrawType()));
+            drawTypeComboBox->setTooltip(
+                "Draw the particles as flat discs or as shaded spheres");
+            drawTypeComboBox->setIndexCallback(
+                [weak](int value)
+                {
+                    if (auto model = weak.lock())
+                    {
+                        model->setDrawType(static_cast<DrawType>(value));
+                    }
+                });
+            displayLayout->addRow("Draw:", drawTypeComboBox);
+            _drawTypeComboBox = drawTypeComboBox;
             auto displayBellows = Bellows::create(context, "Display", layout);
             displayBellows->setWidget(displayLayout);
             displayBellows->setOpen(true);

@@ -592,6 +592,9 @@
           "pointSize": 9
         },
         {
+          "draw": "Sphere"
+        },
+        {
           "frame": 90
         }
       ]
@@ -880,6 +883,39 @@
         {
           "id": "MainWindow.Pane1",
           "caption": "Born on the surface of a flat box, weighted by face area"
+        }
+      ]
+    },
+    {
+      "id": "draw-spheres",
+      "window": {
+        "w": 620,
+        "h": 460
+      },
+      "setup": [
+        {
+          "rate": 600
+        },
+        {
+          "pointSize": 14
+        },
+        {
+          "draw": "Sphere"
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "frame": 60
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "The same disc, shaded as the silhouette of a sphere"
         }
       ]
     }

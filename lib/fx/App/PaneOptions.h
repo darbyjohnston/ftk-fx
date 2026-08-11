@@ -104,6 +104,28 @@ namespace fx
         std::vector<std::string> getPaneLayoutLabels();
         std::string getLabel(PaneLayout);
 
+        //! How the particles are drawn.
+        //!
+        //! A display setting rather than a scene one, like the point size:
+        //! it is how the artist is looking at the simulation. §10's render
+        //! types are the scene's own answer and are a later thing.
+        enum class DrawType
+        {
+            //! A flat disc.
+            Point,
+
+            //! The same disc shaded as the silhouette of a sphere, which is
+            //! what makes a plume read as volume rather than as confetti.
+            Sphere,
+
+            Count,
+            First = Point
+        };
+
+        std::vector<std::string> getDrawTypeLabels();
+        std::string getLabel(DrawType);
+        bool fromString(const std::string&, DrawType&);
+
         //! Get the number of panes an arrangement shows.
         int getPaneCount(PaneLayout);
 

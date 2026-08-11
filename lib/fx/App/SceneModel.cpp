@@ -81,6 +81,7 @@ namespace fx
             _sceneChanged = Observable<int>::create(0);
             _parameterChanged = Observable<int>::create(0);
             _pointSize = Observable<float>::create(3.F);
+            _drawType = Observable<DrawType>::create(DrawType::Point);
             _commands = CommandStack::create();
             _saved = getScene();
 
@@ -316,6 +317,21 @@ namespace fx
                 return;
             _pointSize->setIfChanged(value);
             _record("Set Point Size", _system, before);
+        }
+
+        DrawType SceneModel::getDrawType() const
+        {
+            return _drawType->get();
+        }
+
+        std::shared_ptr<IObservable<DrawType> > SceneModel::observeDrawType() const
+        {
+            return _drawType;
+        }
+
+        void SceneModel::setDrawType(DrawType value)
+        {
+            _drawType->setIfChanged(value);
         }
 
         const RangeI& SceneModel::getRange() const

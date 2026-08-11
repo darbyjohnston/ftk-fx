@@ -49,6 +49,9 @@ namespace fx
             _pointSizeObserver = Observer<float>::create(
                 model->observePointSize(),
                 [this](float value) { setPointSize(value); });
+            _drawTypeObserver = Observer<DrawType>::create(
+                model->observeDrawType(),
+                [this](DrawType value) { setDrawType(value); });
         }
 
         Panes::~Panes()
@@ -110,6 +113,14 @@ namespace fx
             _panes[_currentIndex]->setCurrent(false);
             _currentIndex = index;
             _panes[_currentIndex]->setCurrent(true);
+        }
+
+        void Panes::setDrawType(DrawType value)
+        {
+            for (const auto& pane : _panes)
+            {
+                pane->setDrawType(value);
+            }
         }
 
         void Panes::setPointSize(float value)

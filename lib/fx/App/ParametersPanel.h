@@ -72,6 +72,7 @@ namespace fx
             std::vector<Row> _rows;
             std::shared_ptr<ftk::ComboBox> _shapeComboBox;
             std::shared_ptr<ftk::CheckBox> _surfaceCheckBox;
+            std::shared_ptr<ftk::ComboBox> _drawTypeComboBox;
             int _currentFrame = 1;
 
             //! Set while the panel is writing its own widgets, so that the

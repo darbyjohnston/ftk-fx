@@ -103,6 +103,21 @@ namespace fx
             return { "Single", "Two", "Three", "Four" };
         }
 
+        std::vector<std::string> getDrawTypeLabels()
+        {
+            return { "Point", "Sphere" };
+        }
+
+        std::string getLabel(DrawType value)
+        {
+            return enumToLabel(getDrawTypeLabels(), value);
+        }
+
+        bool fromString(const std::string& name, DrawType& out)
+        {
+            return labelToEnum(getDrawTypeLabels(), name, out);
+        }
+
         std::string getLabel(PaneLayout value)
         {
             return enumToLabel(getPaneLayoutLabels(), value);

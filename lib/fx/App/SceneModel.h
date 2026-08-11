@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <fx/App/PaneOptions.h>
 #include <fx/Core/Cache.h>
 #include <fx/Sim/Scene.h>
 
@@ -172,6 +173,11 @@ namespace fx
             std::shared_ptr<ftk::IObservable<float> > observePointSize() const;
             void setPointSize(float);
 
+            //! How the particles draw. A display setting like the point size.
+            DrawType getDrawType() const;
+            std::shared_ptr<ftk::IObservable<DrawType> > observeDrawType() const;
+            void setDrawType(DrawType);
+
             ///@}
 
             //! \name Time
@@ -264,6 +270,7 @@ namespace fx
             std::shared_ptr<ftk::Observable<int> > _sceneChanged;
             std::shared_ptr<ftk::Observable<int> > _parameterChanged;
             std::shared_ptr<ftk::Observable<float> > _pointSize;
+            std::shared_ptr<ftk::Observable<DrawType> > _drawType;
             std::shared_ptr<ftk::CommandStack> _commands;
 
             //! The command at the top of the stack, when it is still the one

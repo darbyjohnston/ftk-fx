@@ -7,6 +7,55 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — The end of phase 1
+
+Two things left on §15's list, and reading it again changed what one of them
+was.
+
+### An emitter with a shape, not two emitters
+
+I had said the volume emitter would make the emitter an interface with two
+implementations, which is the boundary nothing had tested. §6 does not say
+that. The volumetric primitives -- sphere, box, cone, disc, cylinder -- are one
+bullet, and they differ only in where inside them a point is. A point is a
+sphere of no size. So it is one emitter with a shape, and the interface waits
+for the kinds that genuinely differ: curve, geometry, texture driven,
+secondary.
+
+Radii rather than a radius, so a sphere is an ellipsoid when they differ. That
+costs nothing and a flattened emitter is immediately useful.
+
+Two distribution details that are easy to get wrong and hard to see:
+
+A sphere's radius is the cube root of a uniform. A plain uniform radius crowds
+the centre, because the shells further out have more room in them.
+
+A box's surface picks a face weighted by area. The first version picked an axis
+uniformly, which puts a third of the particles on each pair of faces however
+big they are -- so a flat box came out with a bright rim, its thin sides
+getting as many particles as its broad faces. Visible from directly above as a
+dense border, and not visible at all from anywhere else.
+
+Both are keyed on the particle's id like every other draw, so a re-simulation
+puts each particle back where it was.
+
+### Spheres, which are the first step of the distance fields
+
+§10 describes blobs as raymarched distance fields, and a shaded sphere as the
+same trick one step earlier. That is what this is: the disc the viewport
+already cuts out of a point is the silhouette of a unit sphere, so the surface
+normal falls out of where in the disc the pixel is. Lit from the camera with a
+little wrap. No geometry, no light in the scene, no depth pass.
+
+It is the difference between a plume that reads as volume and one that reads as
+confetti, for about ten lines of shader.
+
+The `round` uniform became `drawType`, because there are three answers now and
+two of them are not booleans -- flat for the grid, a disc for a point, a shaded
+disc for a sphere.
+
+---
+
 ## 2026-08-09 — ActionGroup
 
 The layout menu offering to un-tick the current arrangement turned out to be

@@ -516,6 +516,15 @@ namespace fx
                     step.at("rate").get<float>());
                 model->systemChanged("Set Rate", before);
             }
+            if (step.contains("draw"))
+            {
+                const std::string name = step.at("draw").get<std::string>();
+                DrawType drawType = DrawType::First;
+                if (!fromString(name, drawType))
+                    throw std::runtime_error(ftk::Format(
+                        "unknown draw type \"{0}\"").arg(name));
+                model->setDrawType(drawType);
+            }
             if (step.contains("pointSize"))
             {
                 model->setPointSize(step.at("pointSize").get<float>());

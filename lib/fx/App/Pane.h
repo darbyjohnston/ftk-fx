@@ -81,6 +81,10 @@ namespace fx
             //! force when a pane is switched back to.
             void setPointSize(float);
 
+            //! Set how the particles draw in this pane's viewport, whether or
+            //! not it has one yet.
+            void setDrawType(DrawType);
+
             //! Set whether this is the pane actions apply to. The current pane
             //! draws a border so that it is obvious which one that is.
             void setCurrent(bool);
@@ -118,6 +122,7 @@ namespace fx
             std::function<void(void)> _pressCallback;
             int _border = 0;
             float _pointSize = 3.F;
+            DrawType _drawType = DrawType::Point;
 
             //! Set when the menus need rebuilding, acted on at the next tick.
             //!

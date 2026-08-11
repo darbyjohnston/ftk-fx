@@ -72,6 +72,9 @@ namespace fx
             //! same everywhere; it is the camera that differs between them.
             void setPointSize(float);
 
+            //! Set how the particles draw in every viewport.
+            void setDrawType(DrawType);
+
         private:
             //! Tear down the tree of splitters and build the one the current
             //! arrangement calls for.
@@ -85,6 +88,7 @@ namespace fx
             //! arrangement is a single one.
             std::shared_ptr<ftk::IWidget> _root;
             std::shared_ptr<ftk::Observer<float> > _pointSizeObserver;
+            std::shared_ptr<ftk::Observer<DrawType> > _drawTypeObserver;
         };
     }
 }

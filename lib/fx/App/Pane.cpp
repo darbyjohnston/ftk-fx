@@ -159,6 +159,7 @@ namespace fx
                         }
                     });
                 _viewport->setPointSize(_pointSize);
+                _viewport->setDrawType(_drawType);
                 content = _viewport;
             }
             else if (PaneType::Curves == paneType)
@@ -225,6 +226,15 @@ namespace fx
             {
                 _menuBar->removeMenu(getLabel(_viewType));
                 _viewMenu.reset();
+            }
+        }
+
+        void Pane::setDrawType(DrawType value)
+        {
+            _drawType = value;
+            if (_viewport)
+            {
+                _viewport->setDrawType(value);
             }
         }
 

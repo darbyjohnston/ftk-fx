@@ -68,6 +68,9 @@ namespace fx
             float getPointSize() const;
             void setPointSize(float);
 
+            DrawType getDrawType() const;
+            void setDrawType(DrawType);
+
             //! Set the callback for the viewport being clicked in, which is how
             //! its pane becomes the current one.
             void setPressCallback(const std::function<void(void)>&);
@@ -113,6 +116,7 @@ namespace fx
 
             std::shared_ptr<const core::Frame> _frame;
             float _pointSize = 3.F;
+            DrawType _drawType = DrawType::Point;
             std::function<void(void)> _pressCallback;
 
             ViewType _viewType = ViewType::Perspective;
