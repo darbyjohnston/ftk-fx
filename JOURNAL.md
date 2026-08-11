@@ -54,6 +54,27 @@ fails without it.
 Three loops here, two in tlRender, one in objview. Each becomes one call
 saying which index is current.
 
+### The tool bar was not talking to the actions
+
+Then the layout buttons on the tool bar could be un-checked, and pressing one
+switched the layout without checking it, while the same actions in the menu
+behaved. The difference was in feather-tk and older than any of this: a menu
+button writes a click back to the action and then reports it, and a tool button
+only reported it. So an action shown in both had a checked state that only one
+of them could change, and anything watching the action heard nothing from the
+tool bar.
+
+Why it looked like "activates but does not check": `IButton::click()` runs the
+clicked callback before it toggles. The callback set the layout, which came
+back through the model and checked the action, which checked the button -- and
+then the button flipped itself the other way and told nobody. The menu path
+survived it because writing back gave the group a chance to put it right.
+
+This is the second bug in two days that only exists where two widgets are
+driven by one object, and the first was the same shape: `MenuBar` renaming a
+menu whose button had cached its glyphs. Shared state needs both sides to agree
+about who writes it, and "one of them forgot" does not announce itself.
+
 ### Built is not the same as compiled
 
 The sweep reached into feather-tk's examples and tlRender's play application,
