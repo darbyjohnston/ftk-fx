@@ -7,6 +7,75 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — The manipulator answers to the mouse, not to the scene
+
+Reported again, in a different dress: from an emitter at X = 118, dragging the
+X arm down and to the left sends it off the viewport by the time the mouse has
+gone a third of the way. Accelerating away, again.
+
+And the tracking was exact. Both are true, and the gap between them is the
+whole entry.
+
+### Keeping a point still is not the same as keeping the manipulator still
+
+What the drag guaranteed was that *the point the pointer grabbed* stayed under
+the pointer. What nobody asked for is the point the pointer grabbed. They asked
+for the manipulator.
+
+Those are different points. The grab lands wherever the pointer's ray meets the
+drag plane, and when the axis is near edge-on -- which is what an emitter at
+X = 118 looks like from a camera aimed at the origin -- a press twenty pixels
+along the arm can be hundreds of units down the axis. That far point tracked
+the mouse perfectly. The emitter, at a different place and a different depth,
+translated by the same world vector, and crossed the viewport doing it.
+
+So the model was wrong rather than the arithmetic. The manipulator is a control
+and the mouse is what drives it, so the thing to hold fixed is the relationship
+on screen:
+
+> the emitter's own origin moves as many pixels along the arm's line as the
+> pointer did.
+
+A line in the scene projects to a line on screen, and a point sliding along one
+slides along the other -- unevenly, but by a ratio of linear terms. So the
+distance that lands the origin on a given pixel is a division, not a search:
+
+    t = (ndc·w₀ − c₀) / (cₐ − ndc·wₐ)
+
+Measured, dragging along the arm: pointer 49.65 pixels along the line, origin
+49.65; pointer 249.633, origin 249.633. Locked, while the world distance behind
+it runs 1.86, 5.12, 7.91, 10.28 -- perspective is still perspective, it just no
+longer leaks into how fast the control moves.
+
+The plane is gone with it. Nothing left to be edge-on to.
+
+### The pole moved somewhere you can see
+
+Every version of this has had a singularity. The nearest-point solve collapsed
+where the ray aimed along the axis; the plane solve collapsed where the ray
+swung parallel to the plane; this one collapses at the axis's *vanishing point*,
+where every remaining point of the axis lands on one pixel. Dragging past it
+flipped the sign, which is how it was found -- two shots that had read -69 and
+-131 came back +348 and +597.
+
+Same fix as before, and it fits better here: the side of the pole the drag
+started on is recorded, and crossing it is refused. This time the pole is a
+place on screen the artist can watch the arm converge towards, rather than an
+angle to a plane nobody drew.
+
+Orthographic views have no vanishing point at all -- `cₐ.w` is zero, the
+denominator is constant, and none of this can happen. That is a good sign about
+the formulation: the degeneracy is exactly where the geometry says it should
+be, and nowhere else.
+
+### Three solves for one drag
+
+Nearest-point between two lines, then a drag plane, now the projection. Not a
+proud sequence, but each one was replaced for a reason found by measuring, and
+the third is the first to be driven by the thing the artist is actually holding.
+The lesson worth keeping is the one from the middle of it: *exact* and *right*
+are different claims, and the first was true all three times.
+
 ## 2026-08-11 — A guard set too tight, and a constraint nobody could see
 
 Two reports on the manipulator, and only one of them was a defect.

@@ -597,84 +597,52 @@ namespace fx
             return true;
         }
 
-        bool Viewport::_gizmoPlane(const V3F& axis, V3F& out) const
+        bool Viewport::_axisDistance(
+            const V3F& point,
+            const V3F& axis,
+            const V2F& target,
+            bool useX,
+            float& denomOut,
+            float& out) const
         {
             const Box2I& g = getGeometry();
             if (!g.isValid())
                 return false;
-            V3F origin, view;
-            if (!_ray(
-                V2I(g.min.x + g.w() / 2, g.min.y + g.h() / 2), origin, view))
-                return false;
-            // The plane holding the axis that most faces the camera, which is
-            // the axis and whatever is left of the view direction once the
-            // axis has been taken out of it. Nothing is left when the axis
-            // points at the camera -- the case where there is no plane to drag
-            // against, and no arm drawn to grab either.
-            const V3F n = view - axis * dot(axis, view);
-            if (length(n) < .001F)
-                return false;
-            out = normalize(n);
-            return true;
-        }
 
-        bool Viewport::_gizmoPlaneFacing(
-            const V2I& pos,
-            const V3F& axis,
-            V3F& out) const
-        {
-            if (!_gizmoPlane(axis, out))
-                return false;
-            V3F rayOrigin, rayDir;
-            if (!_ray(pos, rayOrigin, rayDir))
-                return false;
-            // Turned to face the ray that is grabbing, so that "the cursor has
-            // swung round to the plane's edge" is one comparison afterwards
-            // rather than a sign to keep track of.
-            if (dot(rayDir, out) < 0.F)
-            {
-                out = out * -1.F;
-            }
-            return std::abs(dot(rayDir, out)) >= .08F;
-        }
+            // A straight line in the scene projects to a straight line on
+            // screen, and a point sliding along it projects to a point sliding
+            // along that -- but not evenly. The two are related by a ratio of
+            // linear terms, so the distance that puts the point at a given
+            // pixel comes out of one division rather than a search.
+            const M44F m = _getProjection() * _getView();
+            const V4F c0 = m * V4F(point.x, point.y, point.z, 1.F);
+            const V4F ca = m * V4F(axis.x, axis.y, axis.z, 0.F);
 
-        bool Viewport::_axisParam(
-            const V2I& pos,
-            const V3F& point,
-            const V3F& axis,
-            const V3F& normal,
-            float& out) const
-        {
-            V3F rayOrigin, rayDir;
-            if (!_ray(pos, rayOrigin, rayDir))
-                return false;
+            // Solved against whichever of the two the arm covers more of on
+            // screen, decided once at the press. An axis running almost level
+            // says almost nothing about distance through the vertical, and
+            // choosing afresh each move would let the answer hop between two
+            // measurements that disagree about sign.
+            const float ndc = useX ?
+                (target.x - g.min.x) / static_cast<float>(g.w()) * 2.F - 1.F :
+                1.F - (target.y - g.min.y) / static_cast<float>(g.h()) * 2.F;
+            const float c0c = useX ? c0.x : c0.y;
+            const float cac = useX ? ca.x : ca.y;
 
-            // Where the cursor meets the plane, then how far along the axis
-            // that is. Not the nearest point between the axis and the cursor's
-            // line: that reads beautifully and is unusable, because its
-            // denominator is 1 - (axis . ray)^2, which collapses wherever the
-            // cursor happens to aim along the axis. That is not a far-fetched
-            // corner -- it is a region of the viewport, and dragging into it
-            // sends the answer to infinity and out the other side with its
-            // sign flipped.
+            // Zero where the axis vanishes: every point beyond that lands on
+            // the same pixel, so no distance is the answer and the sign of
+            // the answer is different either side. Crossing it is what sends
+            // the emitter to the far end of the axis and back again facing the
+            // other way, so the drag holds at it instead -- and unlike the
+            // plane it was measured against before, this one is a place on
+            // screen the artist can see the arm converging towards.
             //
-            // The normal is turned to face the ray that grabbed the arm, so
-            // this is positive at the press and falls as the cursor swings
-            // round towards the plane's edge. Refused before it reaches it:
-            // at the plane the ray meets it nowhere, and past the plane it
-            // meets it behind the camera, which is what sends the emitter
-            // backwards -- the arm appears to reverse when the cursor keeps
-            // going the same way.
-            //
-            // Held rather than clamped. A manipulator that stops when the
-            // cursor asks for something it cannot answer is one the artist can
-            // recover from by coming back; one that guesses is not.
-            const float denom = dot(rayDir, normal);
-            if (denom < .08F)
+            // An orthographic view has no vanishing point: ca.w is zero there,
+            // so denom is constant and this never bites.
+            denomOut = cac - ndc * ca.w;
+            if (std::abs(denomOut) < .000001F)
                 return false;
-            const float s = dot(point - rayOrigin, normal) / denom;
-            const V3F hit = rayOrigin + rayDir * s;
-            out = dot(hit - point, axis);
+            out = (ndc * c0.w - c0c) / denomOut;
             return true;
         }
 
@@ -1162,17 +1130,31 @@ namespace fx
             // after this is measured against it, so the point that was grabbed
             // is the point that stays under the pointer -- rather than the
             // emitter's own origin jumping to the cursor on the first move.
-            V3F normal;
-            if (!_gizmoPlaneFacing(event.pos, _gizmoAxis(arm), normal))
-                return;
-            float t = 0.F;
-            if (!_axisParam(event.pos, origin, _gizmoAxis(arm), normal, t))
+            const size_t index = static_cast<size_t>(arm) - 1;
+            const auto arms = _gizmoArms();
+            if (!arms[index].valid)
                 return;
             _gizmoDrag = arm;
             _gizmoHover = arm;
             _gizmoStart = origin;
-            _gizmoNormal = normal;
-            _gizmoT = t;
+            // The arm's line on screen, held for the whole drag. The axis it
+            // comes from does not move -- the emitter slides along it -- so
+            // neither does the line.
+            _gizmoScreen = arms[index].origin;
+            _gizmoDir = arms[index].dir;
+            _gizmoU = (event.pos.x - _gizmoScreen.x) * _gizmoDir.x +
+                (event.pos.y - _gizmoScreen.y) * _gizmoDir.y;
+            _gizmoUseX = std::abs(_gizmoDir.x) >= std::abs(_gizmoDir.y);
+            float denom = 0.F;
+            float distance = 0.F;
+            if (!_axisDistance(
+                origin, _gizmoAxis(arm), arms[index].origin,
+                _gizmoUseX, denom, distance))
+            {
+                _gizmoDrag = Arm::None;
+                return;
+            }
+            _gizmoDenom = denom;
             if (auto model = _model.lock())
             {
                 model->beginEdit();
@@ -1216,11 +1198,32 @@ namespace fx
             // would be a loop: the answer moves the emitter, the emitter moves
             // the arm, and the next answer is measured against the arm the
             // last one moved.
+            // How far the pointer has run along the arm's line, in pixels,
+            // and then the distance that carries the emitter's own origin the
+            // same number of pixels along it.
+            //
+            // Driven by what the pointer did on screen rather than by keeping
+            // a point in the scene underneath it. The two are the same thing
+            // in an orthographic view and are not in perspective: the point
+            // that was grabbed can be a long way down the axis when the axis
+            // is near edge-on, and holding *that* under the pointer throws the
+            // manipulator across the viewport for a small movement of the
+            // mouse. It tracked faithfully and it was unusable.
             const V3F axis = _gizmoAxis(_gizmoDrag);
-            float t = 0.F;
-            if (!_axisParam(pos, _gizmoStart, axis, _gizmoNormal, t))
+            const float u =
+                (pos.x - _gizmoScreen.x) * _gizmoDir.x +
+                (pos.y - _gizmoScreen.y) * _gizmoDir.y;
+            const V2F target(
+                _gizmoScreen.x + _gizmoDir.x * (u - _gizmoU),
+                _gizmoScreen.y + _gizmoDir.y * (u - _gizmoU));
+            float distance = 0.F;
+            float denom = 0.F;
+            if (!_axisDistance(
+                _gizmoStart, axis, target, _gizmoUseX, denom, distance))
                 return;
-            const float distance = t - _gizmoT;
+            // Still on the side of the vanishing point the drag started on.
+            if (denom * _gizmoDenom <= 0.F)
+                return;
 
             V3F value = _gizmoStart;
             switch (_gizmoDrag)

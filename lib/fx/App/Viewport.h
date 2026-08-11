@@ -157,26 +157,15 @@ namespace fx
             //! all parallel.
             bool _ray(const ftk::V2I& pos, ftk::V3F& origin, ftk::V3F& dir) const;
 
-            //! The plane to drag an axis against: the one holding the axis
-            //! that most faces the camera. False when the axis points at the
-            //! camera and there is no such plane.
-            bool _gizmoPlane(const ftk::V3F& axis, ftk::V3F& out) const;
-
-            //! The same plane, turned to face the ray at the given position,
-            //! and refused when that ray is already too near its edge to drag
-            //! against.
-            bool _gizmoPlaneFacing(
-                const ftk::V2I& pos,
-                const ftk::V3F& axis,
-                ftk::V3F& out) const;
-
-            //! How far along an axis through a point the cursor is aiming, in
-            //! world units, by way of the plane the axis is dragged against.
-            bool _axisParam(
-                const ftk::V2I& pos,
+            //! The distance along an axis through a point that puts that
+            //! point at the given pixel. False at the vanishing point, where
+            //! no distance does.
+            bool _axisDistance(
                 const ftk::V3F& point,
                 const ftk::V3F& axis,
-                const ftk::V3F& normal,
+                const ftk::V2F& target,
+                bool useX,
+                float& denom,
                 float& out) const;
 
             //! The world axis an arm runs along.
@@ -217,8 +206,16 @@ namespace fx
             //! measured against these rather than against the last move, so a
             //! drag cannot drift and cannot chase itself.
             ftk::V3F _gizmoStart;
-            ftk::V3F _gizmoNormal;
-            float _gizmoT = 0.F;
+            //! The arm's line on screen at the press, and where along it the
+            //! pointer grabbed.
+            ftk::V2F _gizmoScreen;
+            ftk::V2F _gizmoDir;
+            float _gizmoU = 0.F;
+
+            //! Which screen axis the distance is solved against, and which
+            //! side of the vanishing point the drag began on.
+            bool _gizmoUseX = true;
+            float _gizmoDenom = 0.F;
 
             float _particleSize = 3.F;
             DrawType _drawType = DrawType::Point;
