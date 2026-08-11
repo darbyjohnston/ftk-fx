@@ -545,58 +545,136 @@ namespace fx
             return true;
         }
 
+        M44F Viewport::_getViewInverse() const
+        {
+            // Built from the same parts as _getView(), reversed, rather than
+            // inverted numerically: it is a rigid transform, so the inverse is
+            // known exactly and costs nothing.
+            const float distance = isOrtho(_viewType) ? 0.F : _distance;
+            return
+                translate(_center) *
+                rotateY(-_orbit.x) *
+                rotateX(-_orbit.y) *
+                translate(V3F(0.F, 0.F, distance));
+        }
+
         bool Viewport::_ray(const V2I& pos, V3F& origin, V3F& dir) const
         {
             const Box2I& g = getGeometry();
             if (!g.isValid())
-                return false;
-            M44F inv;
-            if (!invert(_getProjection() * _getView(), inv))
                 return false;
             const float x =
                 (pos.x - g.min.x) / static_cast<float>(g.w()) * 2.F - 1.F;
             // Screen y runs the other way to the camera's.
             const float y =
                 1.F - (pos.y - g.min.y) / static_cast<float>(g.h()) * 2.F;
-            const V4F a = inv * V4F(x, y, -1.F, 1.F);
-            const V4F b = inv * V4F(x, y, 1.F, 1.F);
-            if (std::abs(a.w) < .00001F || std::abs(b.w) < .00001F)
-                return false;
-            origin = V3F(a.x / a.w, a.y / a.w, a.z / a.w);
-            const V3F far(b.x / b.w, b.y / b.w, b.z / b.w);
-            const V3F d = far - origin;
-            if (length(d) < .00001F)
-                return false;
-            dir = normalize(d);
+            const float aspect = aspectRatio(g.size());
+            const M44F inv = _getViewInverse();
+
+            // Built from the camera rather than by unprojecting a point on the
+            // far plane. Unprojecting is exact inside the frustum and nonsense
+            // outside it: past the edge the homogeneous w changes sign and the
+            // ray comes back pointing the other way. A drag is entitled to
+            // leave the window, so the ray has to be defined out there too.
+            //
+            // As a tangent it is: the angle off the view axis approaches a
+            // right angle as the cursor runs away and never passes it, which
+            // is the property that was missing.
+            if (isOrtho(_viewType))
+            {
+                const float h = _orthoHeight / 2.F;
+                origin = inv * V3F(x * h * aspect, y * h, 0.F);
+                const V3F ahead = inv * V3F(x * h * aspect, y * h, -1.F);
+                dir = normalize(ahead - origin);
+            }
+            else
+            {
+                const float t = std::tan(deg2rad(_fov) / 2.F);
+                origin = inv * V3F(0.F, 0.F, 0.F);
+                const V3F ahead = inv * V3F(x * t * aspect, y * t, -1.F);
+                dir = normalize(ahead - origin);
+            }
             return true;
+        }
+
+        bool Viewport::_gizmoPlane(const V3F& axis, V3F& out) const
+        {
+            const Box2I& g = getGeometry();
+            if (!g.isValid())
+                return false;
+            V3F origin, view;
+            if (!_ray(
+                V2I(g.min.x + g.w() / 2, g.min.y + g.h() / 2), origin, view))
+                return false;
+            // The plane holding the axis that most faces the camera, which is
+            // the axis and whatever is left of the view direction once the
+            // axis has been taken out of it. Nothing is left when the axis
+            // points at the camera -- the case where there is no plane to drag
+            // against, and no arm drawn to grab either.
+            const V3F n = view - axis * dot(axis, view);
+            if (length(n) < .001F)
+                return false;
+            out = normalize(n);
+            return true;
+        }
+
+        bool Viewport::_gizmoPlaneFacing(
+            const V2I& pos,
+            const V3F& axis,
+            V3F& out) const
+        {
+            if (!_gizmoPlane(axis, out))
+                return false;
+            V3F rayOrigin, rayDir;
+            if (!_ray(pos, rayOrigin, rayDir))
+                return false;
+            // Turned to face the ray that is grabbing, so that "the cursor has
+            // swung round to the plane's edge" is one comparison afterwards
+            // rather than a sign to keep track of.
+            if (dot(rayDir, out) < 0.F)
+            {
+                out = out * -1.F;
+            }
+            return std::abs(dot(rayDir, out)) >= .3F;
         }
 
         bool Viewport::_axisParam(
             const V2I& pos,
             const V3F& point,
             const V3F& axis,
+            const V3F& normal,
             float& out) const
         {
             V3F rayOrigin, rayDir;
             if (!_ray(pos, rayOrigin, rayDir))
                 return false;
 
-            // Where the axis line and the line the cursor points along come
-            // nearest each other. The pointer never lands exactly on the axis,
-            // so "under the cursor" has to mean the point on the axis closest
-            // to where the cursor is aiming.
-            const V3F w0 = point - rayOrigin;
-            const float b = dot(axis, rayDir);
-            const float d = dot(axis, w0);
-            const float e = dot(rayDir, w0);
-            // Both directions are unit, so a and c are one and this is the
-            // whole determinant. It goes to zero as the axis lines up with the
-            // view, where every point on the axis is equally under the cursor
-            // and the answer is meaningless rather than merely imprecise.
-            const float denom = 1.F - b * b;
-            if (std::abs(denom) < .0001F)
+            // Where the cursor meets the plane, then how far along the axis
+            // that is. Not the nearest point between the axis and the cursor's
+            // line: that reads beautifully and is unusable, because its
+            // denominator is 1 - (axis . ray)^2, which collapses wherever the
+            // cursor happens to aim along the axis. That is not a far-fetched
+            // corner -- it is a region of the viewport, and dragging into it
+            // sends the answer to infinity and out the other side with its
+            // sign flipped.
+            //
+            // The normal is turned to face the ray that grabbed the arm, so
+            // this is positive at the press and falls as the cursor swings
+            // round towards the plane's edge. Refused before it reaches it:
+            // at the plane the ray meets it nowhere, and past the plane it
+            // meets it behind the camera, which is what sends the emitter
+            // backwards -- the arm appears to reverse when the cursor keeps
+            // going the same way.
+            //
+            // Held rather than clamped. A manipulator that stops when the
+            // cursor asks for something it cannot answer is one the artist can
+            // recover from by coming back; one that guesses is not.
+            const float denom = dot(rayDir, normal);
+            if (denom < .3F)
                 return false;
-            out = (b * e - d) / denom;
+            const float s = dot(point - rayOrigin, normal) / denom;
+            const V3F hit = rayOrigin + rayDir * s;
+            out = dot(hit - point, axis);
             return true;
         }
 
@@ -1056,12 +1134,16 @@ namespace fx
             // after this is measured against it, so the point that was grabbed
             // is the point that stays under the pointer -- rather than the
             // emitter's own origin jumping to the cursor on the first move.
+            V3F normal;
+            if (!_gizmoPlaneFacing(event.pos, _gizmoAxis(arm), normal))
+                return;
             float t = 0.F;
-            if (!_axisParam(event.pos, origin, _gizmoAxis(arm), t))
+            if (!_axisParam(event.pos, origin, _gizmoAxis(arm), normal, t))
                 return;
             _gizmoDrag = arm;
             _gizmoHover = arm;
             _gizmoStart = origin;
+            _gizmoNormal = normal;
             _gizmoT = t;
             if (auto model = _model.lock())
             {
@@ -1108,7 +1190,7 @@ namespace fx
             // last one moved.
             const V3F axis = _gizmoAxis(_gizmoDrag);
             float t = 0.F;
-            if (!_axisParam(pos, _gizmoStart, axis, t))
+            if (!_axisParam(pos, _gizmoStart, axis, _gizmoNormal, t))
                 return;
             const float distance = t - _gizmoT;
 

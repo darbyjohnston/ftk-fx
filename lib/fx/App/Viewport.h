@@ -122,6 +122,10 @@ namespace fx
             ftk::M44F _getProjection() const;
             ftk::M44F _getView() const;
 
+            //! The camera's placement in the scene, which is _getView()
+            //! undone.
+            ftk::M44F _getViewInverse() const;
+
             //! Get the world distance one pixel covers, which is what makes a
             //! pan follow the cursor rather than merely go the right way.
             float _getWorldPerPixel() const;
@@ -153,13 +157,26 @@ namespace fx
             //! all parallel.
             bool _ray(const ftk::V2I& pos, ftk::V3F& origin, ftk::V3F& dir) const;
 
+            //! The plane to drag an axis against: the one holding the axis
+            //! that most faces the camera. False when the axis points at the
+            //! camera and there is no such plane.
+            bool _gizmoPlane(const ftk::V3F& axis, ftk::V3F& out) const;
+
+            //! The same plane, turned to face the ray at the given position,
+            //! and refused when that ray is already too near its edge to drag
+            //! against.
+            bool _gizmoPlaneFacing(
+                const ftk::V2I& pos,
+                const ftk::V3F& axis,
+                ftk::V3F& out) const;
+
             //! How far along an axis through a point the cursor is aiming, in
-            //! world units. False when the axis lines up with the view, where
-            //! the whole axis is under the cursor at once.
+            //! world units, by way of the plane the axis is dragged against.
             bool _axisParam(
                 const ftk::V2I& pos,
                 const ftk::V3F& point,
                 const ftk::V3F& axis,
+                const ftk::V3F& normal,
                 float& out) const;
 
             //! The world axis an arm runs along.
@@ -200,6 +217,7 @@ namespace fx
             //! measured against these rather than against the last move, so a
             //! drag cannot drift and cannot chase itself.
             ftk::V3F _gizmoStart;
+            ftk::V3F _gizmoNormal;
             float _gizmoT = 0.F;
 
             float _particleSize = 3.F;

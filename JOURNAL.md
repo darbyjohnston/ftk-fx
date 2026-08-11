@@ -7,6 +7,75 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — Dragging past the edge, and two wrong diagnoses first
+
+Reported: drag the Z arm up and to the left to the edge of the window, keep
+going outside it in another direction, and the emitter starts going backwards.
+
+The instrumented drag says it plainly:
+
+    pos=730,745    denom=0.744   t=3.20
+    pos=173,259    denom=0.251   t=-64.88
+    pos=-385,-227  denom=-0.129  t=+199.11
+
+`t` is where the cursor's ray meets the plane the axis is dragged against.
+`denom` is the ray against that plane's normal, and it *crosses zero*. Past
+zero the ray meets the plane behind the camera, so `t` comes back with its sign
+flipped -- the arm reverses while the cursor keeps going the same way.
+
+### Two things I was sure of that were wrong
+
+**First** I thought the nearest-point-between-two-lines solve was to blame --
+its denominator is `1 - (axis·ray)²`, which collapses wherever the cursor
+happens to aim along the axis. That is a real defect and I replaced it with the
+plane solve. The numbers did not move. Both formulations were failing for the
+same reason, one layer down.
+
+**Second** I decided my ray was wrong: unprojecting a far-plane point should
+misbehave once the cursor leaves the frustum, because `w` changes sign. So I
+rebuilt the ray from the camera as a tangent, which is bounded at a right angle
+and cannot flip. The new numbers matched the old ones to six figures. The
+unprojection had been right all along.
+
+Both rewrites were reasoning from a mechanism to a symptom without checking the
+mechanism was running. The measurement -- printing `denom` alongside `t` --
+would have named the cause before either rewrite, and it was three lines.
+
+The tangent ray is kept: it is correct in a way the unprojection was only
+accidentally correct, and it drops the matrix inverse.
+
+### What the cause actually is
+
+An axis that is nearly along the view has no good plane to drag against. Every
+plane containing it is edge-on to the camera, so the cursor ray is nearly
+parallel to the plane and a small movement means an enormous `t` -- and then
+crosses it. This is not an off-window condition. In the reported view the
+cursor reached it *inside* the viewport, which is why clamping the cursor to
+the window would have fixed nothing.
+
+So: the plane's normal is turned at the press to face the ray that grabbed the
+arm, and the drag is refused once the ray swings within about seventy degrees
+of the plane. The manipulator holds its last value rather than guessing. Held
+and not clamped, deliberately -- a manipulator that stops when the cursor asks
+for something it cannot answer is one the artist recovers from by moving back;
+one that guesses is not.
+
+Verified across every drag case: out-and-back returns to the value it started
+on, the half-to-full ratio is unchanged at 2.34, the ortho views survive a drag
+2260 pixels outside the window and back, and the reported gesture now stops
+instead of reversing. `manipulator-edge` is the shot.
+
+### Still open
+
+- A near-view-parallel axis is a bad thing to drag along however it is solved,
+  and the arm is still drawn at full length in that case, because "is this arm
+  worth drawing" is a projected-length test and the projection of a unit is not
+  small merely because the axis points away. Rotate and scale will meet this
+  too.
+- The parameters panel shows a slider's range, not the value: dragging past
+  fifty units reads as fifty while the scene holds more. The panel is lying,
+  quietly, and it should either widen or say so.
+
 ## 2026-08-11 — The manipulator was measuring against a scene it had moved
 
 Reported: drag X or Z and the emitter speeds up, leaves the viewport, and does
