@@ -50,6 +50,10 @@ Setup steps a shot may use:
 * {"open": "/tmp/a.fx"}                      read a scene back
 * {"click": [60, 80]}                        click there, with an optional
                                              "modifier" beside it
+* {"dragHold": [[776, 619], [500, 400]]}     the same, but the button is left
+                                             down, which is how a shot catches
+                                             what a gesture looks like while it
+                                             is happening
 * {"drag": [[776, 619], [500, 400]]}         press there, move, release. Takes
                                              more than two points, which is how
                                              a drag that goes somewhere and

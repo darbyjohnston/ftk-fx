@@ -635,7 +635,7 @@ namespace fx
             {
                 out = out * -1.F;
             }
-            return std::abs(dot(rayDir, out)) >= .3F;
+            return std::abs(dot(rayDir, out)) >= .08F;
         }
 
         bool Viewport::_axisParam(
@@ -670,7 +670,7 @@ namespace fx
             // cursor asks for something it cannot answer is one the artist can
             // recover from by coming back; one that guesses is not.
             const float denom = dot(rayDir, normal);
-            if (denom < .3F)
+            if (denom < .08F)
                 return false;
             const float s = dot(point - rayOrigin, normal) / denom;
             const V3F hit = rayOrigin + rayDir * s;
@@ -818,6 +818,34 @@ namespace fx
 
             LineOptions lineOptions;
             lineOptions.width = _size.line;
+
+            // While an arm is held, its line carries on across the viewport.
+            // The emitter can only travel along it, so anything the pointer
+            // does at a right angle to it is dropped -- and without the line
+            // there is nothing on screen saying so once the pointer is past
+            // the end of a ninety pixel arm. It reads as the manipulator
+            // falling behind rather than as the pointer having left the rail.
+            if (Arm::None != _gizmoDrag)
+            {
+                const size_t i = static_cast<size_t>(_gizmoDrag) - 1;
+                if (arms[i].valid)
+                {
+                    const float reach =
+                        static_cast<float>(g.w() + g.h());
+                    Color4F rail = colors[i];
+                    rail.a = .25F;
+                    event.render->drawLine(
+                        V2F(
+                            arms[i].origin.x - arms[i].dir.x * reach,
+                            arms[i].origin.y - arms[i].dir.y * reach),
+                        V2F(
+                            arms[i].origin.x + arms[i].dir.x * reach,
+                            arms[i].origin.y + arms[i].dir.y * reach),
+                        rail,
+                        lineOptions);
+                }
+            }
+
             for (size_t i = 0; i < arms.size(); ++i)
             {
                 if (!arms[i].valid)

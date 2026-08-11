@@ -108,7 +108,10 @@ namespace fx
             _mouseButton(MouseButton::Left, false, modifiers);
         }
 
-        void MainWindow::drag(const std::vector<V2I>& path, int modifiers)
+        void MainWindow::drag(
+            const std::vector<V2I>& path,
+            int modifiers,
+            bool release)
         {
             if (path.size() < 2)
                 return;
@@ -136,7 +139,10 @@ namespace fx
                         from.y + (to.y - from.y) * i / steps));
                 }
             }
-            _mouseButton(MouseButton::Left, false, modifiers);
+            if (release)
+            {
+                _mouseButton(MouseButton::Left, false, modifiers);
+            }
         }
 
         namespace

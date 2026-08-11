@@ -17,6 +17,8 @@
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/ToolButton.h>
 
+#include <algorithm>
+
 using namespace ftk;
 
 namespace fx
@@ -157,7 +159,7 @@ namespace fx
             _updating = true;
             if (auto model = _model.lock())
             {
-                    if (_nameEdit)
+                if (_nameEdit)
                 {
                     _nameEdit->setText(model->getSystem().getName());
                 }
@@ -179,7 +181,17 @@ namespace fx
             for (auto& row : _rows)
             {
                 const core::Parameter* parameter = row.info.parameter;
-                row.slider->setValue(parameter->getValue(_currentFrame));
+                const float value = parameter->getValue(_currentFrame);
+                // The range a slider spans is a guess about what is useful,
+                // not a limit on what is allowed -- a manipulator can drag an
+                // emitter well past fifty units, and a curve can be keyed
+                // anywhere. Opened up to hold whatever the value actually is,
+                // and closed again when it comes back, so the number shown is
+                // the number in the scene rather than the end of the track.
+                row.slider->setRange(
+                    std::min(value, row.info.min),
+                    std::max(value, row.info.max));
+                row.slider->setValue(value);
                 bool keyed = false;
                 if (core::Parameter::Type::Curve == parameter->getType())
                 {

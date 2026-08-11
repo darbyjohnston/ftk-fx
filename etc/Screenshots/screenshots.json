@@ -1295,6 +1295,66 @@
           "caption": "Dragged off the window and then away along it: the arm holds rather than reversing"
         }
       ]
+    },
+    {
+      "id": "manipulator-rail",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "dragHold": [
+            [
+              630,
+              838
+            ],
+            [
+              1100,
+              700
+            ]
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Held mid-drag: the arm's line carries on, so it is clear the pointer has left the rail rather than the emitter falling behind"
+        }
+      ]
+    },
+    {
+      "id": "manipulator-past-edge",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "drag": [
+            [
+              630,
+              838
+            ],
+            [
+              -300,
+              200
+            ]
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "Parameters.Translate Z",
+          "caption": "Dragged well outside the window; the slider opens up rather than reading its own end stop"
+        }
+      ]
     }
   ]
 }

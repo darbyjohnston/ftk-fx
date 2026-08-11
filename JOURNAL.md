@@ -7,6 +7,75 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — A guard set too tight, and a constraint nobody could see
+
+Two reports on the manipulator, and only one of them was a defect.
+
+### The guard was mine
+
+Yesterday's fix refused the drag once the cursor's ray swung within about
+seventy degrees of the drag plane. Too eager: on a default scene the Z arm
+stopped responding a hundred-odd pixels short of the viewport edge, which is
+not an edge case, it is the middle of using the thing.
+
+Seventy degrees was picked to also suppress a large jump near the limit. That
+was the wrong thing to buy with it -- the jump is geometry, the wall is not.
+Loosened to about eighty-five degrees, which still cannot reach the sign flip
+that caused the reversal. Measured, on a new scene, from the true values rather
+than the panel:
+
+| drag ends | Z |
+|---|---|
+| short of the edge | -22.57 |
+| at the edge | -55.53 |
+| well outside the window | -131.60 |
+
+Still responding all the way out, and still no reversal.
+
+### The lag was not a defect, it was invisible
+
+Reported alongside: dragging Z down and to the right works, but the emitter
+"lags farther and farther behind the mouse". Measured, printing the cursor
+against where the grabbed point lands on screen:
+
+    along the arm    cursor 918,1035  ->  grabbed point 917.7,1035.6
+    off the arm      cursor 918,718   ->  grabbed point 801.8,956.0
+
+Along the arm it tracks to under a pixel. Off the arm it does not, and cannot:
+the emitter is constrained to one line in the scene, so whatever the pointer
+does at a right angle to that line has nowhere to go. Every manipulator in
+every package behaves this way.
+
+But *nothing said so*. The arm is ninety pixels long, and once the pointer is
+past the end of it there is no line on screen to be off. So the correct
+behaviour reads as a broken one -- and the reasonable conclusion, from the
+outside, is that the manipulator is falling behind.
+
+So the fix was not to the arithmetic, which was already exact. While an arm is
+held, its line now carries on across the viewport, faint, in the arm's colour.
+The rail is the explanation.
+
+That is worth remembering as a category: a report of "this is wrong" can be
+correct behaviour plus missing feedback, and the fix belongs in the feedback.
+Checking which it was cost two print statements; assuming it was the maths
+would have cost another rewrite of a solve that turned out to be right.
+
+### Two things that had to exist to see any of this
+
+**`dragHold`.** The harness released the button at the end of every drag, so no
+shot could show what a gesture looks like *during* it. Anything drawn only
+while dragging -- this rail, a future rotate ring -- was uncapturable. It now
+takes a path and leaves the button down.
+
+**A panel that stops lying.** Verifying the threshold, the panel read -50.00
+for two different drags, because a slider clamps its display to its range and
+the range is a guess about what is useful. The value was -55.53 and -131.60. I
+only noticed because I went to the saved file for the real numbers. A range is
+now opened up to hold whatever the value is and closed again when it comes
+back, so the number on screen is the number in the scene. Flagged in the entry
+below as still open; it took one afternoon to become the thing standing between
+me and a measurement.
+
 ## 2026-08-11 — Dragging past the edge, and two wrong diagnoses first
 
 Reported: drag the Z arm up and to the left to the edge of the window, keep
@@ -74,7 +143,8 @@ instead of reversing. `manipulator-edge` is the shot.
   too.
 - The parameters panel shows a slider's range, not the value: dragging past
   fifty units reads as fifty while the scene holds more. The panel is lying,
-  quietly, and it should either widen or say so.
+  quietly, and it should either widen or say so. *(Fixed the next day, after it
+  got in the way of a measurement -- see above.)*
 
 ## 2026-08-11 — The manipulator was measuring against a scene it had moved
 

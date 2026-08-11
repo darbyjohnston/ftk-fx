@@ -301,7 +301,8 @@ namespace fx
                 {
                     late = late ||
                         step.contains("click") ||
-                        step.contains("drag");
+                        step.contains("drag") ||
+                        step.contains("dragHold");
                     if (late)
                     {
                         p.lateSteps.push_back(step);
@@ -458,9 +459,12 @@ namespace fx
                     ftk::V2I(v[0].get<int>(), v[1].get<int>()),
                     modifiers);
             }
-            if (step.contains("drag"))
+            if (step.contains("drag") || step.contains("dragHold"))
             {
-                const auto& v = step.at("drag");
+                const bool release = !step.contains("dragHold");
+                const auto& v = release ?
+                    step.at("drag") :
+                    step.at("dragHold");
                 if (!v.is_array() || v.size() < 2)
                     throw std::runtime_error(
                         "drag needs a from and a to, and takes more");
@@ -472,7 +476,7 @@ namespace fx
                     path.push_back(
                         ftk::V2I(p[0].get<int>(), p[1].get<int>()));
                 }
-                app->getMainWindow()->drag(path);
+                app->getMainWindow()->drag(path, 0, release);
             }
             if (step.contains("panelStyle"))
             {
