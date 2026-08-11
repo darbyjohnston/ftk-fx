@@ -13,10 +13,10 @@ A single shot, which is the useful form while working on one:
 
 Setup steps a shot may use:
 * {"frame": 70}                              go to a frame
-* {"layout": 4}                              arrange that many panes
-* {"pane": {"index": 1, "type": "Curves"}}   set what a pane shows
-* {"view": {"index": 1, "type": "Top"}}      set a viewport pane's view
-* {"current": 1}                             make a pane the current one
+* {"layout": 4}                              arrange that many editors
+* {"editor": {"index": 1, "type": "Curves"}}   set what an editor shows
+* {"view": {"index": 1, "type": "Top"}}      set a viewport editor's view
+* {"current": 1}                             make an editor the current one
 * {"lock": true}                             lock the frame at the playhead
 * {"playing": true}                          start playback
 * {"panel": {"name": "Diagnostics", "open": true}}   open or close a panel
@@ -60,7 +60,7 @@ the window has been laid out, so it and everything after it are applied one
 per settle; the steps before it run immediately.
 
 Clicks go through the window the way a person's do, so they reach the parts a
-setup step cannot: the click-pane-menu shot opens a pane's menu and picks an
+setup step cannot: the click-editor-menu shot opens an editor's menu and picks an
 item from it, which is the path that once crashed by rebuilding the menu from
 inside its own callback. Clicks are applied after the window has been laid out,
 one per settle, so a click on what a previous click opened finds it on screen.
@@ -71,7 +71,7 @@ A shot may also set "settle" in seconds to wait longer before capturing, and
 "splitter" in its window block to move the panel column, which is how a shot of
 a wide panel gets room for it.
 
-The type names are the labels in the pane's own menus: View, Curves,
+The type names are the labels in the editor's own menus: View, Curves,
 Spreadsheet, Expression, Compositor for the content, and Persp, Front, Side, Top
 for a viewport's view. An unknown one fails the shot rather than quietly
 capturing the wrong thing.
@@ -94,7 +94,7 @@ The capture is at the display scale, so it comes out twice the window size;
 Coordinates in a shot are pixels, and pixels move. A shot that clicks or drags
 somewhere that is no longer there does not fail -- it captures a picture of
 nothing having happened, with whatever caption it was given still claiming
-otherwise. panes-four-dragged did exactly that for several commits after the
+otherwise. editors-four-dragged did exactly that for several commits after the
 panel column was widened and the splitter crossing moved out from under it.
 Read the coordinates back out of a sidecar after anything moves, and check the
 shot still does what it says.

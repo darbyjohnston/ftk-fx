@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <fx/App/PaneOptions.h>
+#include <fx/App/EditorOptions.h>
 
 #include <ftk/UI/IContainer.h>
 
@@ -28,16 +28,17 @@ namespace fx
 
         //! One slot in the main region, and whatever it is showing.
         //!
-        //! The pane owns a header with a menu bar of its own: a Pane menu that
-        //! changes what it shows, and a View menu for the camera when what it
-        //! shows is a viewport. Per-content controls belong here rather than in
-        //! the application's menu bar, because a menu bar whose contents depend
-        //! on which pane was last clicked is a menu bar nobody can learn.
+        //! The editor owns a header with a menu bar of its own: an Editor menu
+        //! that changes what it shows, and a View menu for the camera when what
+        //! it shows is a viewport. Per-content controls belong here rather than
+        //! in the application's menu bar, because a menu bar whose contents
+        //! depend on which editor was last clicked is a menu bar nobody can
+        //! learn.
         //!
-        //! Content is made the first time the pane is asked for it and then
+        //! Content is made the first time the editor is asked for it and then
         //! kept, so switching away and back finds a camera where it was left
-        //! without every pane paying for every kind of content up front.
-        class Pane : public ftk::IContainer
+        //! without every editor paying for every kind of content up front.
+        class Editor : public ftk::IContainer
         {
         protected:
             void _init(
@@ -46,12 +47,12 @@ namespace fx
                 ViewType,
                 const std::shared_ptr<IWidget>& parent);
 
-            Pane() = default;
+            Editor() = default;
 
         public:
-            virtual ~Pane();
+            virtual ~Editor();
 
-            static std::shared_ptr<Pane> create(
+            static std::shared_ptr<Editor> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
                 ViewType = ViewType::Perspective,
@@ -60,41 +61,41 @@ namespace fx
             //! \name Content
             ///@{
 
-            PaneType getPaneType() const;
-            void setPaneType(PaneType);
+            EditorType getEditorType() const;
+            void setEditorType(EditorType);
 
             ViewType getViewType() const;
 
-            //! Set what a viewport pane looks through. Remembered even while
-            //! the pane is showing something else, so switching back to a view
-            //! comes back to the one that was there.
+            //! Set what a viewport editor looks through. Remembered even while
+            //! the editor is showing something else, so switching back to a
+            //! view comes back to the one that was there.
             void setViewType(ViewType);
 
-            //! Get the viewport, or null when the pane is not showing one. The
-            //! view actions have to cope with that: a spreadsheet has no camera
-            //! to frame.
+            //! Get the viewport, or null when the editor is not showing one.
+            //! The view actions have to cope with that: a spreadsheet has no
+            //! camera to frame.
             std::shared_ptr<Viewport> getViewport() const;
 
             ///@}
 
-            //! Set the point size of this pane's viewport, whether or not it
+            //! Set the point size of this editor's viewport, whether or not it
             //! is the content on screen. A display setting should still be in
-            //! force when a pane is switched back to.
+            //! force when an editor is switched back to.
             void setParticleSize(float);
 
-            //! Set how the particles draw in this pane's viewport, whether or
+            //! Set how the particles draw in this editor's viewport, whether or
             //! not it has one yet.
             void setDrawType(DrawType);
 
-            //! Get the curve editor, when this pane is showing one.
+            //! Get the curve editor, when this editor is showing one.
             const std::shared_ptr<CurveEditor>& getCurveEditor() const;
 
-            //! Set whether this is the pane actions apply to. The current pane
-            //! draws a border so that it is obvious which one that is.
+            //! Set whether this is the editor actions apply to. The current
+            //! editor draws a border so that it is obvious which one that is.
             void setCurrent(bool);
 
-            //! Set the callback for the pane being clicked in, which is how it
-            //! becomes the current one.
+            //! Set the callback for the editor being clicked in, which is how
+            //! it becomes the current one.
             void setPressCallback(const std::function<void(void)>&);
 
             void sizeHintEvent(const ftk::SizeHintEvent&) override;
@@ -104,7 +105,7 @@ namespace fx
 
         private:
             //! Get the content for a type, making it the first time.
-            std::shared_ptr<IWidget> _getContent(PaneType);
+            std::shared_ptr<IWidget> _getContent(EditorType);
 
             void _contentUpdate();
 
@@ -117,9 +118,9 @@ namespace fx
             void _menuUpdate();
 
             std::weak_ptr<SceneModel> _model;
-            PaneType _paneType = PaneType::View;
+            EditorType _editorType = EditorType::View;
             ViewType _viewType = ViewType::Perspective;
-            std::map<PaneType, std::shared_ptr<IWidget> > _content;
+            std::map<EditorType, std::shared_ptr<IWidget> > _content;
             std::shared_ptr<Viewport> _viewport;
             std::shared_ptr<CurveEditor> _curveEditor;
 
@@ -140,13 +141,13 @@ namespace fx
             bool _menuDirty = true;
 
             //! Held rather than looked up by title, because the titles are the
-            //! current selections and change as the pane does.
-            std::shared_ptr<ftk::ActionGroup> _paneTypeGroup;
+            //! current selections and change as the editor does.
+            std::shared_ptr<ftk::ActionGroup> _editorTypeGroup;
             std::shared_ptr<ftk::ActionGroup> _viewTypeGroup;
             std::shared_ptr<ftk::MenuBar> _menuBar;
-            std::shared_ptr<ftk::Menu> _paneMenu;
+            std::shared_ptr<ftk::Menu> _editorMenu;
             std::shared_ptr<ftk::Menu> _viewMenu;
-            std::map<PaneType, std::shared_ptr<ftk::Action> > _paneTypeActions;
+            std::map<EditorType, std::shared_ptr<ftk::Action> > _editorTypeActions;
             std::map<ViewType, std::shared_ptr<ftk::Action> > _viewTypeActions;
             std::shared_ptr<ftk::VerticalLayout> _layout;
         };

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <fx/App/PaneOptions.h>
+#include <fx/App/EditorOptions.h>
 #include <fx/Core/Cache.h>
 #include <fx/Sim/Scene.h>
 

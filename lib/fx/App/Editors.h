@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <fx/App/PaneOptions.h>
+#include <fx/App/EditorOptions.h>
 
 #include <ftk/UI/IContainer.h>
 
@@ -15,18 +15,19 @@ namespace fx
 {
     namespace app
     {
-        class Pane;
+        class Editor;
         class SceneModel;
 
-        //! The main region: the panes and the arrangement they are in.
+        //! The main region: the editors and the arrangement they are in.
         //!
-        //! Every pane slot is made once and kept, whether or not the current
+        //! Every editor slot is made once and kept, whether or not the current
         //! arrangement shows it, and changing the arrangement re-parents them
         //! into a new tree of splitters. That is why switching to four-up and
-        //! back finds each pane showing what it was showing, from the camera it
-        //! was left at, and why the OpenGL resources behind a viewport are not
-        //! thrown away and rebuilt every time the artist changes their mind.
-        class Panes : public ftk::IContainer
+        //! back finds each editor showing what it was showing, from the camera
+        //! it was left at, and why the OpenGL resources behind a viewport are
+        //! not thrown away and rebuilt every time the artist changes their
+        //! mind.
+        class Editors : public ftk::IContainer
         {
         protected:
             void _init(
@@ -34,12 +35,12 @@ namespace fx
                 const std::shared_ptr<SceneModel>&,
                 const std::shared_ptr<ftk::IWidget>& parent);
 
-            Panes() = default;
+            Editors() = default;
 
         public:
-            virtual ~Panes();
+            virtual ~Editors();
 
-            static std::shared_ptr<Panes> create(
+            static std::shared_ptr<Editors> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
@@ -47,21 +48,21 @@ namespace fx
             //! \name Layout
             ///@{
 
-            PaneLayout getLayout() const;
-            std::shared_ptr<ftk::IObservable<PaneLayout> > observeLayout() const;
-            void setLayout(PaneLayout);
+            EditorLayout getLayout() const;
+            std::shared_ptr<ftk::IObservable<EditorLayout> > observeLayout() const;
+            void setLayout(EditorLayout);
 
             ///@}
 
-            //! \name Current Pane
+            //! \name Current Editor
             ///@{
 
-            //! Get the pane the menu actions and the keyboard apply to. Never
+            //! Get the editor the menu actions and the keyboard apply to. Never
             //! null, and always one the current arrangement shows.
-            const std::shared_ptr<Pane>& getCurrent() const;
+            const std::shared_ptr<Editor>& getCurrent() const;
 
-            //! Get a pane by slot, whether or not it is on screen.
-            const std::shared_ptr<Pane>& getPane(int) const;
+            //! Get an editor by slot, whether or not it is on screen.
+            const std::shared_ptr<Editor>& getEditor(int) const;
 
             int getCurrentIndex() const;
             void setCurrentIndex(int);
@@ -80,12 +81,12 @@ namespace fx
             //! arrangement calls for.
             void _layoutUpdate();
 
-            std::array<std::shared_ptr<Pane>, paneCountMax> _panes;
-            std::shared_ptr<ftk::Observable<PaneLayout> > _layout;
+            std::array<std::shared_ptr<Editor>, editorCountMax> _editors;
+            std::shared_ptr<ftk::Observable<EditorLayout> > _layout;
             int _currentIndex = 0;
 
-            //! The root of the splitter tree, which is a pane itself when the
-            //! arrangement is a single one.
+            //! The root of the splitter tree, which is an editor itself when
+            //! the arrangement is a single one.
             std::shared_ptr<ftk::IWidget> _root;
             std::shared_ptr<ftk::Observer<float> > _particleSizeObserver;
             std::shared_ptr<ftk::Observer<DrawType> > _drawTypeObserver;

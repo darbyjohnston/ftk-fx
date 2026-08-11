@@ -4,7 +4,7 @@
 #include <fx/App/ParametersPanel.h>
 
 #include <fx/App/SceneModel.h>
-#include <fx/App/Panes.h>
+#include <fx/App/Editors.h>
 
 #include <ftk/UI/Bellows.h>
 #include <ftk/UI/CheckBox.h>
@@ -216,7 +216,7 @@ namespace fx
         void ParametersPanel::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Panes>& panes,
+            const std::shared_ptr<Editors>& editors,
             const std::shared_ptr<IWidget>& parent)
         {
             IPanel::_init(
@@ -483,11 +483,11 @@ namespace fx
         std::shared_ptr<ParametersPanel> ParametersPanel::create(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Panes>& panes,
+            const std::shared_ptr<Editors>& editors,
             const std::shared_ptr<IWidget>& parent)
         {
             auto out = std::shared_ptr<ParametersPanel>(new ParametersPanel);
-            out->_init(context, model, panes, parent);
+            out->_init(context, model, editors, parent);
             return out;
         }
     }

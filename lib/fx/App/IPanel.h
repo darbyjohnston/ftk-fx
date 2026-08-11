@@ -22,8 +22,8 @@ namespace fx
         //! A panel is a titled strip of controls that stays visible alongside
         //! whatever is in the viewports -- parameters being dialled while the
         //! sim is watched, diagnostics being watched while it is dialled. That
-        //! is what makes it a column rather than one of the panes: a pane would
-        //! have to be given up to see it.
+        //! is what makes it a column rather than one of the editors: an editor
+        //! would have to be given up to see it.
         //!
         //! The panel provides the header and the frame; what goes inside is the
         //! subclass's business.

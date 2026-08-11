@@ -22,7 +22,7 @@ namespace fx
     namespace app
     {
         class IPanel;
-        class Panes;
+        class Editors;
         class SceneModel;
 
         //! How the panel column presents its panels.
@@ -44,7 +44,7 @@ namespace fx
         //! The right hand column of panels.
         //!
         //! Stacked by default, because the reason these are a column and not
-        //! one of the panes is that they are wanted at the same time as each
+        //! one of the editors is that they are wanted at the same time as each
         //! other: watching frame time while dragging a slider is the point.
         //! Tabs are the other choice for when the column is narrow and one
         //! panel at full height beats two squeezed, which is a judgement only
@@ -63,7 +63,7 @@ namespace fx
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
-                const std::shared_ptr<Panes>&,
+                const std::shared_ptr<Editors>&,
                 const std::shared_ptr<ftk::IWidget>& parent);
 
             Panels() = default;
@@ -74,7 +74,7 @@ namespace fx
             static std::shared_ptr<Panels> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<SceneModel>&,
-                const std::shared_ptr<Panes>&,
+                const std::shared_ptr<Editors>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
             //! Get every panel's name, in the order they are stacked.

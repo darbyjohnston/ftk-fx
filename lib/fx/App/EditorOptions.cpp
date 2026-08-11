@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright Contributors to the ftk-fx project.
 
-#include <fx/App/PaneOptions.h>
+#include <fx/App/EditorOptions.h>
 
 namespace fx
 {
@@ -36,31 +36,31 @@ namespace fx
             }
         }
 
-        std::vector<std::string> getPaneTypeLabels()
+        std::vector<std::string> getEditorTypeLabels()
         {
             return { "View", "Curves", "Spreadsheet", "Expression", "Compositor" };
         }
 
-        std::string getLabel(PaneType value)
+        std::string getLabel(EditorType value)
         {
-            return enumToLabel(getPaneTypeLabels(), value);
+            return enumToLabel(getEditorTypeLabels(), value);
         }
 
-        bool fromString(const std::string& name, PaneType& out)
+        bool fromString(const std::string& name, EditorType& out)
         {
-            return labelToEnum(getPaneTypeLabels(), name, out);
+            return labelToEnum(getEditorTypeLabels(), name, out);
         }
 
-        std::string getPaneTypeDescription(PaneType value)
+        std::string getEditorTypeDescription(EditorType value)
         {
             // The section each stand-in is standing in for, so that whoever
             // opens one knows where its design already is.
             switch (value)
             {
-            case PaneType::Curves:      return "Curve editor \xc2\xa7" "4a";
-            case PaneType::Spreadsheet: return "Particle spreadsheet \xc2\xa7" "12";
-            case PaneType::Expression:  return "Expression editor \xc2\xa7" "9";
-            case PaneType::Compositor:  return "Compositor \xc2\xa7" "10a";
+            case EditorType::Curves:      return "Curve editor \xc2\xa7" "4a";
+            case EditorType::Spreadsheet: return "Particle spreadsheet \xc2\xa7" "12";
+            case EditorType::Expression:  return "Expression editor \xc2\xa7" "9";
+            case EditorType::Compositor:  return "Compositor \xc2\xa7" "10a";
             default:                    return std::string();
             }
         }
@@ -98,7 +98,7 @@ namespace fx
             }
         }
 
-        std::vector<std::string> getPaneLayoutLabels()
+        std::vector<std::string> getEditorLayoutLabels()
         {
             return { "Single", "Two", "Three", "Four" };
         }
@@ -118,18 +118,18 @@ namespace fx
             return labelToEnum(getDrawTypeLabels(), name, out);
         }
 
-        std::string getLabel(PaneLayout value)
+        std::string getLabel(EditorLayout value)
         {
-            return enumToLabel(getPaneLayoutLabels(), value);
+            return enumToLabel(getEditorLayoutLabels(), value);
         }
 
-        int getPaneCount(PaneLayout value)
+        int getEditorCount(EditorLayout value)
         {
             switch (value)
             {
-            case PaneLayout::Two:   return 2;
-            case PaneLayout::Three: return 3;
-            case PaneLayout::Four:  return 4;
+            case EditorLayout::Two:   return 2;
+            case EditorLayout::Three: return 3;
+            case EditorLayout::Four:  return 4;
             default:                return 1;
             }
         }

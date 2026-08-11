@@ -29,7 +29,7 @@ namespace fx
         //! The list is the selection. Every other panel shows the current
         //! system, so choosing one here is what points the parameter panel and
         //! the curve editor at something -- which is why this is a panel in the
-        //! column rather than a pane: it is wanted at the same time as the
+        //! column rather than an editor: it is wanted at the same time as the
         //! things it drives.
         class SystemsPanel : public IPanel
         {

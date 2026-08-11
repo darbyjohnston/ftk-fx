@@ -7,6 +7,66 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — Panes became editors, and systems stayed systems
+
+Two naming questions, three days after the words started mattering.
+
+### A mnemonic is not a fix
+
+`Pane` and `Panel` were one letter apart, and the entry below from 2026-08-08
+already knew it -- it wrote them down side by side and settled the matter with
+a mnemonic: *panes are arranged, panels are stacked*. The mnemonic was correct
+and it did not work. Three days later the screenshot tags were
+`MainWindow.Pane0` and `MainWindow.Panel.Systems`, one character apart in a
+file a shot is read out of, and it still took someone else looking at it to
+say so.
+
+Which is the lesson worth keeping: when the answer to two confusable names is a
+rule for telling them apart, the rule is the smell. Rename one.
+
+So the main region holds **editors** and the right hand column holds
+**panels**. Both words were individually right -- split panes and docked panels
+are what everyone calls them -- and that is exactly why neither looked wrong
+when it was written. The problem was never either name, it was the pair.
+
+"Editor" also happens to describe the thing better than "pane" did. A pane is
+a hole in a window; an editor is what the artist is doing in it. It matches
+Blender's areas-hold-editors model, which is what this already was: a header
+menu that picks what the region shows. And `Editor` holding a `CurveEditor` is
+not a collision, it is a specialisation -- a curve editor is a kind of editor,
+the way a Graph Editor is.
+
+`Views` became `Panes` became `Editors`. Two renames of the same thing is not
+a good record, but the first one was widening the concept and this one was
+separating a collision, and both were cheaper the day they happened than the
+day after.
+
+The old entries below still say "pane". They are a record of what was decided
+when, and rewriting them would make the entry that chose the word "Panes"
+describe a choice nobody made.
+
+### Systems stayed systems
+
+The other candidate was renaming `System`, on the grounds that feather-tk has
+systems too. It does, and they are `ftk::ISystem` in another namespace and
+never reach the artist; the only real friction is `context->getSystem<T>()`
+sitting a few lines from `model->getSystem()`.
+
+Kept, because every alternative collides with something this design has
+already spent:
+
+- **sim** is the namespace, and "the sim" is the whole scene's simulation --
+  the cache and the transport are about that, not about one system.
+- **fx** is the project and the outer namespace.
+- **layer** belongs to the compositor. §16 has an open question literally
+  called "layer caching granularity" which is *about* systems; the two have to
+  stay different words for that question to be askable.
+- **emitter** is a part of a system, and §6 wants several per system.
+
+And "particle system" is what Maya, Houdini, Blender and every game engine call
+it. A name an artist already has is worth more than a name that is merely
+unambiguous inside this repository.
+
 ## 2026-08-11 — More than one system, and what a pointer into one costs
 
 Manipulators are what Phase 2 wants next, and §15 gates them on "more than one

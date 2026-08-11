@@ -12,8 +12,8 @@
 #include <fx/App/SceneModel.h>
 
 #include <fx/Core/Serialize.h>
-#include <fx/App/Pane.h>
-#include <fx/App/Panes.h>
+#include <fx/App/Editor.h>
+#include <fx/App/Editors.h>
 #include <fx/App/CurveEditor.h>
 #include <fx/App/Viewport.h>
 
@@ -343,7 +343,7 @@ namespace fx
             if (!app)
                 return;
             auto model = app->getSceneModel();
-            auto panes = app->getMainWindow()->getPanes();
+            auto editors = app->getMainWindow()->getEditors();
 
             // The system steps run before everything else in a step, so that
             // "add a system and set its rate" is one step and the rate lands
@@ -388,40 +388,40 @@ namespace fx
             if (step.contains("layout"))
             {
                 const int count = step.at("layout").get<int>();
-                if (count < 1 || count > paneCountMax)
+                if (count < 1 || count > editorCountMax)
                     throw std::runtime_error(ftk::Format(
-                        "layout must be 1 to {0}").arg(paneCountMax));
-                panes->setLayout(static_cast<PaneLayout>(count - 1));
+                        "layout must be 1 to {0}").arg(editorCountMax));
+                editors->setLayout(static_cast<EditorLayout>(count - 1));
             }
             if (step.contains("view"))
             {
                 const auto& view = step.at("view");
                 const int index = view.at("index").get<int>();
-                if (index < 0 || index >= paneCountMax)
+                if (index < 0 || index >= editorCountMax)
                     throw std::runtime_error("view index out of range");
                 ViewType type = ViewType::First;
                 const std::string name = view.at("type").get<std::string>();
                 if (!fromString(name, type))
                     throw std::runtime_error(ftk::Format(
                         "unknown view type \"{0}\"").arg(name));
-                panes->getPane(index)->setViewType(type);
+                editors->getEditor(index)->setViewType(type);
             }
-            if (step.contains("pane"))
+            if (step.contains("editor"))
             {
-                const auto& pane = step.at("pane");
-                const int index = pane.at("index").get<int>();
-                if (index < 0 || index >= paneCountMax)
-                    throw std::runtime_error("pane index out of range");
-                PaneType type = PaneType::First;
-                const std::string name = pane.at("type").get<std::string>();
+                const auto& editor = step.at("editor");
+                const int index = editor.at("index").get<int>();
+                if (index < 0 || index >= editorCountMax)
+                    throw std::runtime_error("editor index out of range");
+                EditorType type = EditorType::First;
+                const std::string name = editor.at("type").get<std::string>();
                 if (!fromString(name, type))
                     throw std::runtime_error(ftk::Format(
-                        "unknown pane type \"{0}\"").arg(name));
-                panes->getPane(index)->setPaneType(type);
+                        "unknown editor type \"{0}\"").arg(name));
+                editors->getEditor(index)->setEditorType(type);
             }
             if (step.contains("current"))
             {
-                panes->setCurrentIndex(step.at("current").get<int>());
+                editors->setCurrentIndex(step.at("current").get<int>());
             }
             if (step.contains("lock"))
             {
@@ -514,10 +514,10 @@ namespace fx
             }
             if (step.contains("frameView") && step.at("frameView").get<bool>())
             {
-                auto panes = app->getMainWindow()->getPanes();
-                for (int i = 0; i < getPaneCount(panes->getLayout()); ++i)
+                auto editors = app->getMainWindow()->getEditors();
+                for (int i = 0; i < getEditorCount(editors->getLayout()); ++i)
                 {
-                    if (auto viewport = panes->getPane(i)->getViewport())
+                    if (auto viewport = editors->getEditor(i)->getViewport())
                     {
                         viewport->frameView();
                     }
@@ -554,10 +554,10 @@ namespace fx
                 if (i == labels.end())
                     throw std::runtime_error(ftk::Format(
                         "unknown curve value mode \"{0}\"").arg(name));
-                auto panes = app->getMainWindow()->getPanes();
-                for (int j = 0; j < paneCountMax; ++j)
+                auto editors = app->getMainWindow()->getEditors();
+                for (int j = 0; j < editorCountMax; ++j)
                 {
-                    if (auto editor = panes->getPane(j)->getCurveEditor())
+                    if (auto editor = editors->getEditor(j)->getCurveEditor())
                     {
                         editor->setValueMode(static_cast<CurveValueMode>(
                             std::distance(labels.begin(), i)));

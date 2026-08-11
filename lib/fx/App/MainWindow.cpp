@@ -7,9 +7,9 @@
 #include <fx/App/Panels.h>
 #include <fx/App/SceneModel.h>
 #include <fx/App/TimelineBar.h>
-#include <fx/App/Pane.h>
+#include <fx/App/Editor.h>
 #include <fx/App/Viewport.h>
-#include <fx/App/Panes.h>
+#include <fx/App/Editors.h>
 
 #include <ftk/UI/ActionGroup.h>
 #include <ftk/UI/DialogSystem.h>
@@ -39,13 +39,13 @@ namespace fx
             ftk::MainWindow::_init(context, app, size);
             _model = model;
 
-            _panes = Panes::create(context, model);
-            _panels = Panels::create(context, model, _panes);
+            _editors = Editors::create(context, model);
+            _panels = Panels::create(context, model, _editors);
             setScreenshotTag(_panels, "MainWindow.Panels");
 
             _splitter = Splitter::create(context, Orientation::Horizontal);
             _splitter->setSplit(.66F);
-            _panes->setParent(_splitter);
+            _editors->setParent(_splitter);
             _panels->setParent(_splitter);
 
             _layout = VerticalLayout::create(context);
@@ -85,9 +85,9 @@ namespace fx
             return out;
         }
 
-        const std::shared_ptr<Panes>& MainWindow::getPanes() const
+        const std::shared_ptr<Editors>& MainWindow::getEditors() const
         {
-            return _panes;
+            return _editors;
         }
 
         const std::shared_ptr<Panels>& MainWindow::getPanels() const
@@ -353,30 +353,31 @@ namespace fx
 
         void MainWindow::_createCameraMenu(const std::shared_ptr<Context>& context)
         {
-            // Its own menu rather than part of Layout. Layout is how the panes
-            // are arranged; these move the camera in one of them, which is a
-            // different question that happened to share a menu because that
-            // menu used to be called View.
+            // Its own menu rather than part of Layout. Layout is how the
+            // editors are arranged; these move the camera in one of them, which
+            // is a different question that happened to share a menu because
+            // that menu used to be called View.
             //
-            // Not in the panes' own menus, where a 3D application would
-            // normally put them and where "which pane?" would answer itself:
+            // Not in the editors' own menus, where a 3D application would
+            // normally put them and where "which editor?" would answer itself:
             // the window dispatches shortcuts through its own menu bar only,
-            // so an action in a pane's menu would have no key attached to it.
+            // so an action in an editor's menu would have no key attached to
+            // it.
             auto menu = Menu::create(context);
             getMenuBar()->insertMenu(3, "Camera", menu);
-            std::weak_ptr<Panes> panesWeak(_panes);
+            std::weak_ptr<Editors> editorsWeak(_editors);
 
             _frameAction = Action::create(
                 "Frame",
                 "ViewFrame",
                 Key::Backspace,
-                [panesWeak]
+                [editorsWeak]
                 {
-                    if (auto panes = panesWeak.lock())
+                    if (auto editors = editorsWeak.lock())
                     {
-                        // Only when the current pane is showing a viewport.
+                        // Only when the current editor is showing a viewport.
                         // There is no camera to frame in a spreadsheet.
-                        if (auto viewport = panes->getCurrent()->getViewport())
+                        if (auto viewport = editors->getCurrent()->getViewport())
                         {
                             viewport->frameView();
                         }
@@ -388,14 +389,14 @@ namespace fx
             menu->addAction(Action::create(
                 "Frame All",
                 KeyShortcut(Key::Backspace, commandKeyModifier),
-                [panesWeak]
+                [editorsWeak]
                 {
-                    if (auto panes = panesWeak.lock())
+                    if (auto editors = editorsWeak.lock())
                     {
-                        const int count = getPaneCount(panes->getLayout());
+                        const int count = getEditorCount(editors->getLayout());
                         for (int i = 0; i < count; ++i)
                         {
-                            if (auto viewport = panes->getPane(i)->getViewport())
+                            if (auto viewport = editors->getEditor(i)->getViewport())
                             {
                                 viewport->frameView();
                             }
@@ -408,13 +409,13 @@ namespace fx
                 "Zoom In",
                 "ViewZoomIn",
                 KeyShortcut(Key::Equals, commandKeyModifier),
-                [panesWeak]
+                [editorsWeak]
                 {
-                    if (auto panes = panesWeak.lock())
+                    if (auto editors = editorsWeak.lock())
                     {
-                        // Only when the current pane is showing a viewport.
+                        // Only when the current editor is showing a viewport.
                         // There is nothing to zoom in a spreadsheet.
-                        if (auto viewport = panes->getCurrent()->getViewport())
+                        if (auto viewport = editors->getCurrent()->getViewport())
                         {
                             viewport->zoomIn();
                         }
@@ -427,13 +428,13 @@ namespace fx
                 "Zoom Out",
                 "ViewZoomOut",
                 KeyShortcut(Key::Minus, commandKeyModifier),
-                [panesWeak]
+                [editorsWeak]
                 {
-                    if (auto panes = panesWeak.lock())
+                    if (auto editors = editorsWeak.lock())
                     {
-                        // Only when the current pane is showing a viewport.
+                        // Only when the current editor is showing a viewport.
                         // There is nothing to zoom in a spreadsheet.
-                        if (auto viewport = panes->getCurrent()->getViewport())
+                        if (auto viewport = editors->getCurrent()->getViewport())
                         {
                             viewport->zoomOut();
                         }
@@ -464,9 +465,9 @@ namespace fx
             toolBar->addAction(_undoAction);
             toolBar->addAction(_redoAction);
             divide();
-            for (size_t i = 0; i < static_cast<size_t>(PaneLayout::Count); ++i)
+            for (size_t i = 0; i < static_cast<size_t>(EditorLayout::Count); ++i)
             {
-                toolBar->addAction(_layoutActions[static_cast<PaneLayout>(i)]);
+                toolBar->addAction(_layoutActions[static_cast<EditorLayout>(i)]);
             }
             divide();
             toolBar->addAction(_frameAction);
@@ -492,7 +493,7 @@ namespace fx
             auto menu = Menu::create(context);
             getMenuBar()->insertMenu(2, "Layout", menu);
 
-            std::weak_ptr<Panes> panesWeak(_panes);
+            std::weak_ptr<Editors> editorsWeak(_editors);
             const std::vector<KeyShortcut> shortcuts =
             {
                 KeyShortcut(Key::_1, commandKeyModifier),
@@ -501,10 +502,10 @@ namespace fx
                 KeyShortcut(Key::_4, commandKeyModifier)
             };
             _layoutGroup = ActionGroup::create(ActionGroupType::Radio);
-            const auto labels = getPaneLayoutLabels();
+            const auto labels = getEditorLayoutLabels();
             for (size_t i = 0; i < labels.size(); ++i)
             {
-                const PaneLayout layout = static_cast<PaneLayout>(i);
+                const EditorLayout layout = static_cast<EditorLayout>(i);
                 const std::vector<std::string> icons =
                 {
                     "LayoutSingle", "LayoutTwo", "LayoutThree", "LayoutFour"
@@ -515,11 +516,11 @@ namespace fx
                     labels[i],
                     icons[i],
                     shortcuts[i],
-                    [panesWeak, layout]
+                    [editorsWeak, layout]
                     {
-                        if (auto panes = panesWeak.lock())
+                        if (auto editors = editorsWeak.lock())
                         {
-                            panes->setLayout(layout);
+                            editors->setLayout(layout);
                         }
                     });
                 action->setTooltip(labels[i] + " viewport layout");
@@ -528,9 +529,9 @@ namespace fx
                 menu->addAction(action);
             }
 
-            _layoutObserver = Observer<PaneLayout>::create(
-                _panes->observeLayout(),
-                [this](PaneLayout value)
+            _layoutObserver = Observer<EditorLayout>::create(
+                _editors->observeLayout(),
+                [this](EditorLayout value)
                 {
                     _layoutGroup->setChecked(static_cast<int>(value));
                 });

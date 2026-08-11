@@ -13,7 +13,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "Viewport"
         },
         {
@@ -31,7 +31,7 @@
       ]
     },
     {
-      "id": "panes-single",
+      "id": "editors-single",
       "window": {
         "w": 1000,
         "h": 640
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "id": "panes-two",
+      "id": "editors-two",
       "window": {
         "w": 1000,
         "h": 640
@@ -61,7 +61,7 @@
       ]
     },
     {
-      "id": "panes-three",
+      "id": "editors-three",
       "window": {
         "w": 1000,
         "h": 640
@@ -76,7 +76,7 @@
       ]
     },
     {
-      "id": "panes-four",
+      "id": "editors-four",
       "window": {
         "w": 1000,
         "h": 640
@@ -91,25 +91,25 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "Perspective"
         },
         {
-          "id": "MainWindow.Pane1",
+          "id": "MainWindow.Editor1",
           "caption": "Top"
         },
         {
-          "id": "MainWindow.Pane2",
+          "id": "MainWindow.Editor2",
           "caption": "Front"
         },
         {
-          "id": "MainWindow.Pane3",
+          "id": "MainWindow.Editor3",
           "caption": "Side"
         }
       ]
     },
     {
-      "id": "panes-ortho",
+      "id": "editors-ortho",
       "window": {
         "w": 1000,
         "h": 640
@@ -198,7 +198,7 @@
       ]
     },
     {
-      "id": "panes-mixed",
+      "id": "editors-mixed",
       "window": {
         "w": 1200,
         "h": 800
@@ -211,19 +211,19 @@
           "layout": 4
         },
         {
-          "pane": {
+          "editor": {
             "index": 1,
             "type": "Curves"
           }
         },
         {
-          "pane": {
+          "editor": {
             "index": 2,
             "type": "Spreadsheet"
           }
         },
         {
-          "pane": {
+          "editor": {
             "index": 3,
             "type": "Expression"
           }
@@ -231,11 +231,11 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "A viewport"
         },
         {
-          "id": "MainWindow.Pane1",
+          "id": "MainWindow.Editor1",
           "caption": "Stand-in"
         }
       ]
@@ -288,13 +288,13 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "The column is gone"
         }
       ]
     },
     {
-      "id": "click-pane-menu",
+      "id": "click-editor-menu",
       "window": {
         "w": 1000,
         "h": 640
@@ -318,7 +318,7 @@
       ]
     },
     {
-      "id": "panes-four-dragged",
+      "id": "editors-four-dragged",
       "window": {
         "w": 1000,
         "h": 640
@@ -345,7 +345,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "Both divisions moved at once"
         }
       ]
@@ -372,7 +372,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "Points at 14, drawn as discs"
         }
       ]
@@ -396,7 +396,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "New, Open, Save, Save As"
         }
       ]
@@ -484,7 +484,7 @@
           "layout": 2
         },
         {
-          "pane": {
+          "editor": {
             "index": 1,
             "type": "Curves"
           }
@@ -495,7 +495,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane1",
+          "id": "MainWindow.Editor1",
           "caption": "Two channels keyed and plotted"
         },
         {
@@ -546,7 +546,7 @@
           }
         },
         {
-          "pane": {
+          "editor": {
             "index": 0,
             "type": "Curves"
           }
@@ -641,7 +641,7 @@
           }
         },
         {
-          "pane": {
+          "editor": {
             "index": 0,
             "type": "Curves"
           }
@@ -768,7 +768,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane1",
+          "id": "MainWindow.Editor1",
           "caption": "Each view fitted to the particles, not reset to a default"
         }
       ]
@@ -792,8 +792,8 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
-          "caption": "Camera moves the view; Layout arranges the panes"
+          "id": "MainWindow.Editor0",
+          "caption": "Camera moves the view; Layout arranges the editors"
         }
       ]
     },
@@ -846,7 +846,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "Picking the current arrangement again leaves it current"
         }
       ]
@@ -881,7 +881,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane1",
+          "id": "MainWindow.Editor1",
           "caption": "Born on the surface of a flat box, weighted by face area"
         }
       ]
@@ -914,7 +914,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "The same disc, shaded as the silhouette of a sphere"
         }
       ]
@@ -967,7 +967,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "Turn the emitter and the spray turns with it"
         }
       ]
@@ -1028,7 +1028,7 @@
           }
         },
         {
-          "pane": {
+          "editor": {
             "index": 0,
             "type": "Curves"
           }
@@ -1042,7 +1042,7 @@
       ],
       "annotate": [
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "Each channel to its own range; absolute puts gravity flat under rate"
         }
       ]
@@ -1094,7 +1094,7 @@
           "caption": "Two systems; the checked one is what the panels below it edit"
         },
         {
-          "id": "MainWindow.Pane0",
+          "id": "MainWindow.Editor0",
           "caption": "Both solved and drawn"
         }
       ]

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright Contributors to the ftk-fx project.
 
-#include <fx/App/Pane.h>
+#include <fx/App/Editor.h>
 
 #include <fx/App/CurveEditor.h>
-#include <fx/App/PanePlaceholder.h>
+#include <fx/App/EditorPlaceholder.h>
 #include <fx/App/Viewport.h>
 
 #include <ftk/UI/ActionGroup.h>
@@ -19,18 +19,18 @@ namespace fx
 {
     namespace app
     {
-        void Pane::_init(
+        void Editor::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
             ViewType viewType,
             const std::shared_ptr<IWidget>& parent)
         {
-            IContainer::_init(context, "fx::app::Pane", parent);
+            IContainer::_init(context, "fx::app::Editor", parent);
             setHStretch(Stretch::Expanding);
             setVStretch(Stretch::Expanding);
-            // A pane's contents stay inside it. A scroll bar is drawn the full
-            // height of the list it scrolls, and without this it carries on
-            // past the bottom of the pane and over whatever is below.
+            // An editor's contents stay inside it. A scroll bar is drawn the
+            // full height of the list it scrolls, and without this it carries
+            // on past the bottom of the editor and over whatever is below.
             setClipChildren(true);
 
             _model = model;
@@ -45,18 +45,18 @@ namespace fx
 
             // The actions outlive the menus they are put into, so the checked
             // state survives the rebuild that a content change causes.
-            // Both sets are one of many: a pane shows one thing and a
+            // Both sets are one of many: an editor shows one thing and a
             // viewport looks from one place, and neither has a "none of them".
             // The groups keep them exclusive and draw the ticks.
-            _paneTypeGroup = ActionGroup::create(ActionGroupType::Radio);
-            const auto paneLabels = getPaneTypeLabels();
-            for (size_t i = 0; i < paneLabels.size(); ++i)
+            _editorTypeGroup = ActionGroup::create(ActionGroupType::Radio);
+            const auto editorLabels = getEditorTypeLabels();
+            for (size_t i = 0; i < editorLabels.size(); ++i)
             {
-                const PaneType type = static_cast<PaneType>(i);
-                _paneTypeActions[type] = Action::create(
-                    paneLabels[i],
-                    [this, type] { setPaneType(type); });
-                _paneTypeGroup->addAction(_paneTypeActions[type]);
+                const EditorType type = static_cast<EditorType>(i);
+                _editorTypeActions[type] = Action::create(
+                    editorLabels[i],
+                    [this, type] { setEditorType(type); });
+                _editorTypeGroup->addAction(_editorTypeActions[type]);
             }
             _viewTypeGroup = ActionGroup::create(ActionGroupType::Radio);
             const auto viewLabels = getViewTypeLabels();
@@ -71,12 +71,12 @@ namespace fx
 
             // Built once here; only the view menu comes and goes. Both titles
             // are the current selection rather than a fixed word, so the header
-            // says what the pane is showing without being opened -- which is
+            // says what the editor is showing without being opened -- which is
             // what the combo boxes these replaced did for free.
-            _paneMenu = _menuBar->addMenu(getLabel(_paneType));
-            for (const auto& i : _paneTypeActions)
+            _editorMenu = _menuBar->addMenu(getLabel(_editorType));
+            for (const auto& i : _editorTypeActions)
             {
-                _paneMenu->addAction(i.second);
+                _editorMenu->addAction(i.second);
             }
 
             _contentUpdate();
@@ -87,39 +87,39 @@ namespace fx
             _menuUpdate();
         }
 
-        Pane::~Pane()
+        Editor::~Editor()
         {}
 
-        std::shared_ptr<Pane> Pane::create(
+        std::shared_ptr<Editor> Editor::create(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
             ViewType viewType,
             const std::shared_ptr<IWidget>& parent)
         {
-            auto out = std::shared_ptr<Pane>(new Pane);
+            auto out = std::shared_ptr<Editor>(new Editor);
             out->_init(context, model, viewType, parent);
             return out;
         }
 
-        PaneType Pane::getPaneType() const
+        EditorType Editor::getEditorType() const
         {
-            return _paneType;
+            return _editorType;
         }
 
-        void Pane::setPaneType(PaneType value)
+        void Editor::setEditorType(EditorType value)
         {
-            if (value == _paneType)
+            if (value == _editorType)
                 return;
-            _paneType = value;
+            _editorType = value;
             _contentUpdate();
         }
 
-        ViewType Pane::getViewType() const
+        ViewType Editor::getViewType() const
         {
             return _viewType;
         }
 
-        void Pane::setViewType(ViewType value)
+        void Editor::setViewType(ViewType value)
         {
             if (value == _viewType)
                 return;
@@ -131,29 +131,29 @@ namespace fx
             }
         }
 
-        std::shared_ptr<Viewport> Pane::getViewport() const
+        std::shared_ptr<Viewport> Editor::getViewport() const
         {
             // Null unless a viewport is what is on screen. A viewport that has
             // been made but switched away from is not what the view actions
             // mean by "the current one".
-            return PaneType::View == _paneType ? _viewport : nullptr;
+            return EditorType::View == _editorType ? _viewport : nullptr;
         }
 
-        std::shared_ptr<IWidget> Pane::_getContent(PaneType paneType)
+        std::shared_ptr<IWidget> Editor::_getContent(EditorType editorType)
         {
-            auto i = _content.find(paneType);
+            auto i = _content.find(editorType);
             if (i != _content.end())
                 return i->second;
 
             auto context = getContext();
             std::shared_ptr<IWidget> content;
-            if (PaneType::View == paneType)
+            if (EditorType::View == editorType)
             {
                 auto model = _model.lock();
                 _viewport = Viewport::create(context, model, _viewType);
-                // The content accepts the click, so the pane never sees it.
-                // The viewport passes it back up rather than the pane trying to
-                // intercept what its own content is handling.
+                // The content accepts the click, so the editor never sees it.
+                // The viewport passes it back up rather than the editor trying
+                // to intercept what its own content is handling.
                 _viewport->setPressCallback(
                     [this]
                     {
@@ -166,31 +166,31 @@ namespace fx
                 _viewport->setDrawType(_drawType);
                 content = _viewport;
             }
-            else if (PaneType::Curves == paneType)
+            else if (EditorType::Curves == editorType)
             {
                 _curveEditor = CurveEditor::create(context, _model.lock());
                 content = _curveEditor;
             }
             else
             {
-                content = PanePlaceholder::create(context, paneType);
+                content = EditorPlaceholder::create(context, editorType);
             }
-            return _content[paneType] = content;
+            return _content[editorType] = content;
         }
 
-        void Pane::_contentUpdate()
+        void Editor::_contentUpdate()
         {
-            auto content = _getContent(_paneType);
+            auto content = _getContent(_editorType);
             for (const auto& i : _content)
             {
-                // Detached rather than hidden, so a pane holds one content in
-                // its layout at a time and the rest cost nothing to lay out.
+                // Detached rather than hidden, so an editor holds one content
+                // in its layout at a time and the rest cost nothing to lay out.
                 i.second->setParent(i.second == content ? _layout : nullptr);
             }
             _menuDirty = true;
         }
 
-        void Pane::tickEvent(
+        void Editor::tickEvent(
             bool parentsVisible,
             bool parentsEnabled,
             const TickEvent& event)
@@ -203,18 +203,18 @@ namespace fx
             }
         }
 
-        void Pane::_menuUpdate()
+        void Editor::_menuUpdate()
         {
-            _paneTypeGroup->setChecked(static_cast<int>(_paneType));
+            _editorTypeGroup->setChecked(static_cast<int>(_editorType));
             _viewTypeGroup->setChecked(static_cast<int>(_viewType));
 
             // Only the View menu comes and goes, so only it is added and
-            // removed. The Pane menu is built once and left alone, which is
+            // removed. The Editor menu is built once and left alone, which is
             // also the menu an action is usually being picked from when this
             // runs.
-            _menuBar->setMenuText(_paneMenu, getLabel(_paneType));
+            _menuBar->setMenuText(_editorMenu, getLabel(_editorType));
 
-            const bool view = PaneType::View == _paneType;
+            const bool view = EditorType::View == _editorType;
             if (view && !_viewMenu)
             {
                 _viewMenu = _menuBar->addMenu(getLabel(_viewType));
@@ -234,12 +234,12 @@ namespace fx
             }
         }
 
-        const std::shared_ptr<CurveEditor>& Pane::getCurveEditor() const
+        const std::shared_ptr<CurveEditor>& Editor::getCurveEditor() const
         {
             return _curveEditor;
         }
 
-        void Pane::setDrawType(DrawType value)
+        void Editor::setDrawType(DrawType value)
         {
             _drawType = value;
             if (_viewport)
@@ -248,7 +248,7 @@ namespace fx
             }
         }
 
-        void Pane::setParticleSize(float value)
+        void Editor::setParticleSize(float value)
         {
             _particleSize = value;
             if (_viewport)
@@ -257,7 +257,7 @@ namespace fx
             }
         }
 
-        void Pane::setCurrent(bool value)
+        void Editor::setCurrent(bool value)
         {
             if (value == _current)
                 return;
@@ -265,13 +265,13 @@ namespace fx
             setDrawUpdate();
         }
 
-        void Pane::setPressCallback(const std::function<void(void)>& value)
+        void Editor::setPressCallback(const std::function<void(void)>& value)
         {
             _pressCallback = value;
         }
 
 
-        void Pane::sizeHintEvent(const SizeHintEvent& event)
+        void Editor::sizeHintEvent(const SizeHintEvent& event)
         {
             IWidget::sizeHintEvent(event);
             _border = event.style->getSizeRole(
@@ -280,15 +280,15 @@ namespace fx
         }
 
 
-        void Pane::drawOverlayEvent(const Box2I& drawRect, const DrawEvent& event)
+        void Editor::drawOverlayEvent(const Box2I& drawRect, const DrawEvent& event)
         {
-            // Mark the pane the menu actions and the keyboard apply to. With
+            // Mark the editor the menu actions and the keyboard apply to. With
             // four of them on screen this is the difference between an
             // arrangement and a guess.
             //
             // Drawn in the overlay pass rather than the ordinary one, which
-            // runs before the children: the content fills the pane, so a border
-            // drawn there survived only where the header did not reach.
+            // runs before the children: the content fills the editor, so a
+            // border drawn there survived only where the header did not reach.
             if (_current)
             {
                 event.render->drawMesh(
@@ -297,10 +297,10 @@ namespace fx
             }
         }
 
-        void Pane::mousePressEvent(MouseClickEvent& event)
+        void Editor::mousePressEvent(MouseClickEvent& event)
         {
             // Not accepted: the content below wants the click too, and this
-            // only needs to know that the pane was the one clicked in.
+            // only needs to know that the editor was the one clicked in.
             if (_pressCallback)
             {
                 _pressCallback();

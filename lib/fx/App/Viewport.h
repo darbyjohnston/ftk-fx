@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <fx/App/PaneOptions.h>
+#include <fx/App/EditorOptions.h>
 
 #include <fx/Core/Frame.h>
 
@@ -26,8 +26,9 @@ namespace fx
         //! fall to.
         //!
         //! The viewport owns its camera and nothing else: the menu that chooses
-        //! what it looks through belongs to the Pane holding it, along with the
-        //! menu that decides whether it is what the pane is showing at all.
+        //! what it looks through belongs to the Editor holding it, along with
+        //! the menu that decides whether it is what the editor is showing at
+        //! all.
         class Viewport : public ftk::IWidget
         {
         protected:
@@ -72,7 +73,7 @@ namespace fx
             void setDrawType(DrawType);
 
             //! Set the callback for the viewport being clicked in, which is how
-            //! its pane becomes the current one.
+            //! its editor becomes the current one.
             void setPressCallback(const std::function<void(void)>&);
 
             ///@}

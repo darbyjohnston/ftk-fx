@@ -5,15 +5,15 @@ set(HEADERS
     DiagPanel.h
     IPanel.h
     MainWindow.h
-    Pane.h
+    Editor.h
     CurveEditor.h
     CurveEditorPrivate.h
     Icons.h
     ParameterList.h
-    PaneOptions.h
-    PanePlaceholder.h
+    EditorOptions.h
+    EditorPlaceholder.h
     Panels.h
-    Panes.h
+    Editors.h
     ParametersPanel.h
     SystemsPanel.h
     SceneModel.h
@@ -27,15 +27,15 @@ set(SOURCE
     DiagPanel.cpp
     IPanel.cpp
     MainWindow.cpp
-    Pane.cpp
+    Editor.cpp
     CurveEditor.cpp
     CurveGraph.cpp
     Icons.cpp
     ParameterList.cpp
-    PaneOptions.cpp
-    PanePlaceholder.cpp
+    EditorOptions.cpp
+    EditorPlaceholder.cpp
     Panels.cpp
-    Panes.cpp
+    Editors.cpp
     ParametersPanel.cpp
     SystemsPanel.cpp
     SceneModel.cpp

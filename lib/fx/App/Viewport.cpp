@@ -276,8 +276,8 @@ namespace fx
                     extent.y = std::max(extent.y, std::abs(p.y));
                 }
                 // The projection takes the height and derives the width from
-                // the aspect, so a pane taller than it is wide has to grow the
-                // height to fit the same width across.
+                // the aspect, so an editor taller than it is wide has to grow
+                // the height to fit the same width across.
                 _orthoHeight = 2.F * margin *
                     std::max(std::max(extent.y, extent.x / aspect), .5F);
             }
@@ -417,7 +417,7 @@ namespace fx
 
         M44F Viewport::_getView() const
         {
-            // Orthographic panes sit at the centre and let the clip planes do
+            // Orthographic editors sit at the centre and let the clip planes do
             // the work, so there is no distance to pull back by.
             const float distance = isOrtho(_viewType) ? 0.F : _distance;
             return
@@ -523,7 +523,7 @@ namespace fx
             // Inset by a whole axis and a dot, not by the stub. Which way an
             // axis points depends on the camera, so any of the six arms can be
             // the one heading for the corner: in a top view it is the positive
-            // Z, and at a stub's inset it ran out of the pane and over the
+            // Z, and at a stub's inset it ran out of the editor and over the
             // splitter below.
             const float reach = length + _size.dot;
             const V2F origin(
@@ -740,7 +740,7 @@ namespace fx
                 !isOrtho(_viewType))
             {
                 // Orbiting an axis view would turn it into something that is
-                // no longer the front, so the axis panes do not orbit at all.
+                // no longer the front, so the axis editors do not orbit at all.
                 _setOrbit(_orbit + V2F(d.x * .25F, d.y * .25F));
             }
         }

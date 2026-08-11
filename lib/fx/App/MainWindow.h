@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <fx/App/PaneOptions.h>
+#include <fx/App/EditorOptions.h>
 #include <fx/App/Panels.h>
 
 #include <ftk/UI/MainWindow.h>
@@ -27,7 +27,7 @@ namespace fx
         class Panels;
         class SceneModel;
         class TimelineBar;
-        class Panes;
+        class Editors;
 
         //! The main window: the viewports, the parameters beside them, and the
         //! timeline under both.
@@ -54,7 +54,7 @@ namespace fx
                 const std::shared_ptr<SceneModel>&,
                 const ftk::Size2I& = ftk::Size2I(1280, 800));
 
-            const std::shared_ptr<Panes>& getPanes() const;
+            const std::shared_ptr<Editors>& getEditors() const;
             const std::shared_ptr<Panels>& getPanels() const;
 
             //! Set where the panels column starts, as a fraction of the width.
@@ -97,7 +97,7 @@ namespace fx
             void _createPanelsMenu(const std::shared_ptr<ftk::Context>&);
 
             std::weak_ptr<SceneModel> _model;
-            std::shared_ptr<Panes> _panes;
+            std::shared_ptr<Editors> _editors;
             std::shared_ptr<Panels> _panels;
             std::shared_ptr<TimelineBar> _timelineBar;
             std::shared_ptr<ftk::Splitter> _splitter;
@@ -118,9 +118,9 @@ namespace fx
             std::shared_ptr<ftk::Observer<bool> > _hasUndoObserver;
             std::shared_ptr<ftk::Observer<bool> > _hasRedoObserver;
 
-            std::map<PaneLayout, std::shared_ptr<ftk::Action> > _layoutActions;
+            std::map<EditorLayout, std::shared_ptr<ftk::Action> > _layoutActions;
             std::shared_ptr<ftk::ActionGroup> _layoutGroup;
-            std::shared_ptr<ftk::Observer<PaneLayout> > _layoutObserver;
+            std::shared_ptr<ftk::Observer<EditorLayout> > _layoutObserver;
 
             std::map<std::string, std::shared_ptr<ftk::Action> > _panelActions;
             std::shared_ptr<ftk::Action> _panelTabsAction;

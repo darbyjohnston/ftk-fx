@@ -12,9 +12,9 @@ namespace fx
 {
     namespace app
     {
-        //! What a pane is showing.
+        //! What an editor is showing.
         //!
-        //! The main region holds panes rather than only viewports because the
+        //! The main region holds editors rather than only viewports because the
         //! editors coming in §4a, §9, §10a and §12 are viewport-shaped: a curve
         //! editor is a graph to box-select in, a spreadsheet is a table. None
         //! of them would fit in the panel column, and giving them a mechanism
@@ -24,7 +24,7 @@ namespace fx
         //! arranged and switched between, so that the mechanism is exercised
         //! before any of the editors are written, and so there is something
         //! concrete to replace one at a time.
-        enum class PaneType
+        enum class EditorType
         {
             View,
             Curves,
@@ -36,14 +36,14 @@ namespace fx
             First = View
         };
 
-        std::vector<std::string> getPaneTypeLabels();
-        std::string getLabel(PaneType);
-        bool fromString(const std::string&, PaneType&);
+        std::vector<std::string> getEditorTypeLabels();
+        std::string getLabel(EditorType);
+        bool fromString(const std::string&, EditorType&);
 
         //! Get the line a stand-in shows about what will eventually be there.
-        std::string getPaneTypeDescription(PaneType);
+        std::string getEditorTypeDescription(EditorType);
 
-        //! What a viewport pane is looking through.
+        //! What a viewport editor is looking through.
         //!
         //! The axis views are orthographic, which is what makes them worth
         //! having: judging whether debris is really travelling along the ground
@@ -78,14 +78,14 @@ namespace fx
         //! new view starts at, which the user is then free to change.
         ftk::V2F getViewOrbit(ViewType);
 
-        //! How the panes are arranged.
+        //! How the editors are arranged.
         //!
         //! Fixed arrangements rather than dockable panels: one arrangement per
-        //! pane count is most of the value, and every arrangement that does not
-        //! exist is a set of decisions nobody has to make.
-        enum class PaneLayout
+        //! editor count is most of the value, and every arrangement that does
+        //! not exist is a set of decisions nobody has to make.
+        enum class EditorLayout
         {
-            //! One pane.
+            //! One editor.
             Single,
 
             //! Two side by side.
@@ -101,8 +101,8 @@ namespace fx
             First = Single
         };
 
-        std::vector<std::string> getPaneLayoutLabels();
-        std::string getLabel(PaneLayout);
+        std::vector<std::string> getEditorLayoutLabels();
+        std::string getLabel(EditorLayout);
 
         //! How the particles are drawn.
         //!
@@ -126,15 +126,15 @@ namespace fx
         std::string getLabel(DrawType);
         bool fromString(const std::string&, DrawType&);
 
-        //! Get the number of panes an arrangement shows.
-        int getPaneCount(PaneLayout);
+        //! Get the number of editors an arrangement shows.
+        int getEditorCount(EditorLayout);
 
-        //! The most panes any arrangement shows. The pane slots are all made up
-        //! front and kept, so this is a real limit rather than a hint.
-        const int paneCountMax = 4;
+        //! The most editors any arrangement shows. The editor slots are all
+        //! made up front and kept, so this is a real limit rather than a hint.
+        const int editorCountMax = 4;
 
-        //! Get the view a pane starts on. The defaults spell out the familiar
-        //! four-up: perspective, top, front, side.
+        //! Get the view an editor starts on. The defaults spell out the
+        //! familiar four-up: perspective, top, front, side.
         ViewType getDefaultViewType(int index);
     }
 }

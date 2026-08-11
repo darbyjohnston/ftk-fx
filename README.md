@@ -20,7 +20,7 @@ load.
 |---|---|
 | `lib/fx/Core` | Pool, frame, cache, curve, parameter, keyed randomness |
 | `lib/fx/Sim` | Emitters, forces, rules, the solver |
-| `lib/fx/App` | Scene model, panes, timeline, panel column |
+| `lib/fx/App` | Scene model, editors, timeline, panel column |
 | `lib/fx/CoreTest` | Tests for the above |
 | `bin/ftk-fx` | The application |
 | `tests/fx-test` | The test runner |
@@ -82,9 +82,9 @@ and object counts alongside this application's particle count, solve time and
 cache size. The same menu switches the column between stacked panels and tabs,
 and closing the last panel takes the column away entirely.
 
-The View menu arranges one, two, three or four panes. Each pane's own menu picks
+The View menu arranges one, two, three or four editors. Each editor's own menu picks
 what it shows -- a viewport, or a stand-in for the curve editor, the particle
-spreadsheet, the expression editor or the compositor -- and a viewport pane gets
+spreadsheet, the expression editor or the compositor -- and a viewport editor gets
 a second menu for what it looks through: perspective, front, side or top, the
 axis views orthographic. Dragging orbits a perspective view; the middle button, or
 alt and the left button, pans any of them; the wheel zooms. Backspace reframes

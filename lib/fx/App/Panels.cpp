@@ -38,7 +38,7 @@ namespace fx
         void Panels::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Panes>& panes,
+            const std::shared_ptr<Editors>& editors,
             const std::shared_ptr<IWidget>& parent)
         {
             IContainer::_init(context, "fx::app::Panels", parent);
@@ -72,7 +72,7 @@ namespace fx
                 });
 
             _add(SystemsPanel::create(context, model));
-            _add(ParametersPanel::create(context, model, panes));
+            _add(ParametersPanel::create(context, model, editors));
             _add(DiagPanel::create(context));
 
             // Systems above Parameters, because it says what the parameters
@@ -89,11 +89,11 @@ namespace fx
         std::shared_ptr<Panels> Panels::create(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
-            const std::shared_ptr<Panes>& panes,
+            const std::shared_ptr<Editors>& editors,
             const std::shared_ptr<IWidget>& parent)
         {
             auto out = std::shared_ptr<Panels>(new Panels);
-            out->_init(context, model, panes, parent);
+            out->_init(context, model, editors, parent);
             return out;
         }
 
@@ -226,7 +226,7 @@ namespace fx
                 std::static_pointer_cast<IWidget>(_columnScroll));
 
             // With nothing open the column has nothing to say, so it gets out
-            // of the way and the splitter hands the whole width to the panes.
+            // of the way and the splitter hands the whole width to the editors.
             // The Panels menu is how it comes back.
             setVisible(!_open->get().empty());
         }

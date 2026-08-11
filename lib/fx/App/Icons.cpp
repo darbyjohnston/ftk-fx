@@ -25,7 +25,7 @@ namespace fx
                 " d=\"M 5.5,0.7 10.3,5.5 5.5,10.3 0.7,5.5 Z\" />\n"
                 "</svg>\n";
 
-            //! The pane arrangements, drawn as the arrangements themselves so
+            //! The editor arrangements, drawn as the arrangements themselves so
             //! the button shows what it does. Twenty across, like the icons
             //! feather-tk ships; the reset diamond is smaller because it sits
             //! in a row of sliders rather than on a tool bar.
