@@ -7,6 +7,72 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — The manipulator was measuring against a scene it had moved
+
+Reported: drag X or Z and the emitter speeds up, leaves the viewport, and does
+not come back when the pointer turns round. The entry below claims the drag is
+"measured from the press". It was -- the *pointer* was. The arm it was measured
+against was recomputed every move, from wherever the emitter had got to.
+
+That is a loop. Solve, move the emitter, and the arm the next solve uses is the
+one the last solve moved. In perspective it compounds: pushing the emitter away
+from the camera shrinks its pixels-per-unit, so the next equal nudge of the
+mouse buys more world distance than the last. Hence *speeds up*.
+
+Measured, because "it feels wrong" is not a number. Same direction, one drag
+twice the length of the other:
+
+| drag | old | new |
+|---|---|---|
+| half | -12.42 | -9.16 |
+| full | -45.33 | -21.40 |
+
+Old: twice the input, **3.65×** the output. New: **2.34×**, and that is not a
+bug -- a receding axis really does cover more ground per pixel the further down
+it you go. One is geometry; the other was the loop.
+
+### What replaced it
+
+Not "freeze the arm at the press", which would have stopped the runaway and
+still not followed the cursor. The axis is a line in the scene, the cursor is a
+line in the scene, and where they come nearest is a closed-form answer:
+
+    t = (b·e - d) / (1 - b²)   where b = axis·ray, d = axis·w0, e = ray·w0
+
+Take `t` at the press and `t` at each move, and the difference is the distance
+to travel. The point that was grabbed stays under the pointer, which is what
+was asked for, and it holds in perspective and orthographic alike because a
+ray is a ray either way -- ortho just makes them all parallel. The determinant
+goes to zero as the axis lines up with the view, which is the case where every
+point on the axis is under the cursor at once and the honest answer is to
+refuse.
+
+`invert()` was already in feather-tk. I went looking for `inverse`, did not
+find it, and nearly wrote a second one.
+
+### The test that was not a test
+
+The first thing I reached for was drag out, drag back, check it returned. Both
+versions passed it. Of course they did: the old code took the pixel delta from
+the press, so at the end of the return leg the delta is zero and the answer is
+zero however wrong the scale in between was. A test that only samples the
+endpoints cannot see a path.
+
+What found it was picking a gesture whose *shape* the bug depended on -- along
+the view rather than across it -- and then measuring the ratio rather than the
+value. Two data points beat one, because the bug was in the slope.
+
+Getting there needed the harness to drag through more than two points, which
+it now does; `manipulator-back` is the shot that would have caught this.
+
+### And File/New
+
+Also reported, also small: New kept the playhead where it was. Now both New and
+Open go to the start of the new range. They both throw the old scene away
+entirely, and frame 60 of a scene that no longer exists says nothing about the
+one that just arrived -- a fresh scene opening on an empty frame 60 reads as a
+fresh scene that is broken.
+
 ## 2026-08-11 — A manipulator that lives in two dimensions
 
 Translate arms on the current system's emitter, grabbed and dragged in the

@@ -545,6 +545,61 @@ namespace fx
             return true;
         }
 
+        bool Viewport::_ray(const V2I& pos, V3F& origin, V3F& dir) const
+        {
+            const Box2I& g = getGeometry();
+            if (!g.isValid())
+                return false;
+            M44F inv;
+            if (!invert(_getProjection() * _getView(), inv))
+                return false;
+            const float x =
+                (pos.x - g.min.x) / static_cast<float>(g.w()) * 2.F - 1.F;
+            // Screen y runs the other way to the camera's.
+            const float y =
+                1.F - (pos.y - g.min.y) / static_cast<float>(g.h()) * 2.F;
+            const V4F a = inv * V4F(x, y, -1.F, 1.F);
+            const V4F b = inv * V4F(x, y, 1.F, 1.F);
+            if (std::abs(a.w) < .00001F || std::abs(b.w) < .00001F)
+                return false;
+            origin = V3F(a.x / a.w, a.y / a.w, a.z / a.w);
+            const V3F far(b.x / b.w, b.y / b.w, b.z / b.w);
+            const V3F d = far - origin;
+            if (length(d) < .00001F)
+                return false;
+            dir = normalize(d);
+            return true;
+        }
+
+        bool Viewport::_axisParam(
+            const V2I& pos,
+            const V3F& point,
+            const V3F& axis,
+            float& out) const
+        {
+            V3F rayOrigin, rayDir;
+            if (!_ray(pos, rayOrigin, rayDir))
+                return false;
+
+            // Where the axis line and the line the cursor points along come
+            // nearest each other. The pointer never lands exactly on the axis,
+            // so "under the cursor" has to mean the point on the axis closest
+            // to where the cursor is aiming.
+            const V3F w0 = point - rayOrigin;
+            const float b = dot(axis, rayDir);
+            const float d = dot(axis, w0);
+            const float e = dot(rayDir, w0);
+            // Both directions are unit, so a and c are one and this is the
+            // whole determinant. It goes to zero as the axis lines up with the
+            // view, where every point on the axis is equally under the cursor
+            // and the answer is meaningless rather than merely imprecise.
+            const float denom = 1.F - b * b;
+            if (std::abs(denom) < .0001F)
+                return false;
+            out = (b * e - d) / denom;
+            return true;
+        }
+
         bool Viewport::_gizmoOrigin(V3F& out) const
         {
             auto model = _model.lock();
@@ -559,6 +614,18 @@ namespace fx
                 transform.translate.y.getValue(frame),
                 transform.translate.z.getValue(frame));
             return true;
+        }
+
+        V3F Viewport::_gizmoAxis(Arm arm)
+        {
+            switch (arm)
+            {
+            case Arm::X: return V3F(1.F, 0.F, 0.F);
+            case Arm::Y: return V3F(0.F, 1.F, 0.F);
+            case Arm::Z: return V3F(0.F, 0.F, 1.F);
+            default: break;
+            }
+            return V3F(0.F, 0.F, 0.F);
         }
 
         std::array<Viewport::ArmScreen, 3> Viewport::_gizmoArms() const
@@ -985,10 +1052,17 @@ namespace fx
             V3F origin;
             if (!_gizmoOrigin(origin))
                 return;
+            // Where along the axis the cursor was when it grabbed. Everything
+            // after this is measured against it, so the point that was grabbed
+            // is the point that stays under the pointer -- rather than the
+            // emitter's own origin jumping to the cursor on the first move.
+            float t = 0.F;
+            if (!_axisParam(event.pos, origin, _gizmoAxis(arm), t))
+                return;
             _gizmoDrag = arm;
             _gizmoHover = arm;
             _gizmoStart = origin;
-            _gizmoPress = event.pos;
+            _gizmoT = t;
             if (auto model = _model.lock())
             {
                 model->beginEdit();
@@ -1026,20 +1100,17 @@ namespace fx
             auto model = _model.lock();
             if (!model || Arm::None == _gizmoDrag)
                 return;
-            const size_t index = static_cast<size_t>(_gizmoDrag) - 1;
-            const auto arms = _gizmoArms();
-            if (!arms[index].valid)
-                return;
 
-            // Measured from where the press was rather than from the last
-            // move. Accumulating would drift, and it would also mean the arm
-            // re-measuring itself against a scene it has already moved.
-            const V2F d(
-                static_cast<float>(pos.x - _gizmoPress.x),
-                static_cast<float>(pos.y - _gizmoPress.y));
-            const auto& arm = arms[index];
-            const float pixels = d.x * arm.dir.x + d.y * arm.dir.y;
-            const float distance = pixels / arm.pixelsPerUnit;
+            // Against the axis the drag started on, which stays where it was
+            // for the whole gesture. Solving against the arm where it is now
+            // would be a loop: the answer moves the emitter, the emitter moves
+            // the arm, and the next answer is measured against the arm the
+            // last one moved.
+            const V3F axis = _gizmoAxis(_gizmoDrag);
+            float t = 0.F;
+            if (!_axisParam(pos, _gizmoStart, axis, t))
+                return;
+            const float distance = t - _gizmoT;
 
             V3F value = _gizmoStart;
             switch (_gizmoDrag)

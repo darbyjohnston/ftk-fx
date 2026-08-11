@@ -148,6 +148,23 @@ namespace fx
             //! and mirrored rather than off it.
             bool _project(const ftk::V3F& world, ftk::V2F& out) const;
 
+            //! The line the cursor points along, in the scene. Orthographic
+            //! views give a ray too -- every pixel has its own, they are just
+            //! all parallel.
+            bool _ray(const ftk::V2I& pos, ftk::V3F& origin, ftk::V3F& dir) const;
+
+            //! How far along an axis through a point the cursor is aiming, in
+            //! world units. False when the axis lines up with the view, where
+            //! the whole axis is under the cursor at once.
+            bool _axisParam(
+                const ftk::V2I& pos,
+                const ftk::V3F& point,
+                const ftk::V3F& axis,
+                float& out) const;
+
+            //! The world axis an arm runs along.
+            static ftk::V3F _gizmoAxis(Arm);
+
             //! Where the manipulator is: the current system's emitter, at the
             //! current frame. False when there is no model to ask.
             bool _gizmoOrigin(ftk::V3F& out) const;
@@ -178,12 +195,12 @@ namespace fx
             Arm _gizmoHover = Arm::None;
             Arm _gizmoDrag = Arm::None;
 
-            //! Where the drag started, in the scene and on screen. The value
-            //! is set from the whole gesture rather than accumulated from each
-            //! move, so a drag that leaves and re-enters the widget does not
-            //! quietly lose the distance it covered while away.
+            //! Where the drag started: the emitter's origin, and how far
+            //! along the arm the cursor grabbed it. Everything after is
+            //! measured against these rather than against the last move, so a
+            //! drag cannot drift and cannot chase itself.
             ftk::V3F _gizmoStart;
-            ftk::V2I _gizmoPress;
+            float _gizmoT = 0.F;
 
             float _particleSize = 3.F;
             DrawType _drawType = DrawType::Point;

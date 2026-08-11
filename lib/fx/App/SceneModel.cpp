@@ -165,8 +165,12 @@ namespace fx
             _range->setIfChanged(value.range);
             _cache.setRange(value.range);
             _cache.clear();
-            _currentFrame->setIfChanged(
-                clamp(_currentFrame->get(), value.range.min(), value.range.max()));
+            // Back to the start rather than clamped into the new range. This
+            // is New and Open, which throw the old scene away entirely, and
+            // frame 37 of the scene that is gone says nothing about the one
+            // that arrived -- a fresh scene showing an empty frame 37 looks
+            // like a fresh scene that is broken.
+            _currentFrame->setIfChanged(value.range.min());
             _simulate(_currentFrame->get());
             _modifiedUpdate();
             _sceneChanged->setAlways(_sceneChanged->get() + 1);

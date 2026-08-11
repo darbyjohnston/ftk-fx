@@ -1205,6 +1205,51 @@
           "caption": "Dragged along the arm; the whole gesture is one undo step"
         }
       ]
+    },
+    {
+      "id": "manipulator-back",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "systemName": "smoke",
+          "rate": 300,
+          "transform": {
+            "translate": [
+              3,
+              2,
+              -1
+            ]
+          }
+        },
+        {
+          "frame": 40
+        },
+        {
+          "drag": [
+            [
+              730,
+              745
+            ],
+            [
+              400,
+              550
+            ],
+            [
+              730,
+              745
+            ]
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "Parameters.Translate Z",
+          "caption": "Dragged away down the Z arm and back; the value follows the pointer home"
+        }
+      ]
     }
   ]
 }

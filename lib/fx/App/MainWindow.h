@@ -70,8 +70,7 @@ namespace fx
 
             //! Drag from one position to another, the way a person would.
             void drag(
-                const ftk::V2I& from,
-                const ftk::V2I& to,
+                const std::vector<ftk::V2I>& path,
                 int modifiers = 0);
 
             void keyPressEvent(ftk::KeyEvent&) override;

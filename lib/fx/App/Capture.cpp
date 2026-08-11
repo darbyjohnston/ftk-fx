@@ -461,12 +461,18 @@ namespace fx
             if (step.contains("drag"))
             {
                 const auto& v = step.at("drag");
-                if (!v.is_array() || v.size() != 2 ||
-                    !v[0].is_array() || !v[1].is_array())
-                    throw std::runtime_error("drag needs a from and a to");
-                app->getMainWindow()->drag(
-                    ftk::V2I(v[0][0].get<int>(), v[0][1].get<int>()),
-                    ftk::V2I(v[1][0].get<int>(), v[1][1].get<int>()));
+                if (!v.is_array() || v.size() < 2)
+                    throw std::runtime_error(
+                        "drag needs a from and a to, and takes more");
+                std::vector<ftk::V2I> path;
+                for (const auto& p : v)
+                {
+                    if (!p.is_array() || p.size() != 2)
+                        throw std::runtime_error("a drag point is [x, y]");
+                    path.push_back(
+                        ftk::V2I(p[0].get<int>(), p[1].get<int>()));
+                }
+                app->getMainWindow()->drag(path);
             }
             if (step.contains("panelStyle"))
             {
@@ -540,6 +546,10 @@ namespace fx
             if (step.contains("save"))
             {
                 model->save(step.at("save").get<std::string>());
+            }
+            if (step.contains("newScene") && step.at("newScene").get<bool>())
+            {
+                model->newScene();
             }
             if (step.contains("open"))
             {
