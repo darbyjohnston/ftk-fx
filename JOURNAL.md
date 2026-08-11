@@ -7,6 +7,49 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — Half a handle outside the splitter, and a test suite nobody was running
+
+Drag a pane divider all the way to the top and its border line is drawn
+across the bottom of the tool bar. Pre-existing, in feather-tk rather than
+here, and the arithmetic says why: the handle straddles the split, so at a
+split of zero half of it sits above the splitter's own geometry. Nothing
+clips it, so it lands on the neighbour. The collapsing child was handed a
+negative height on the way.
+
+Clamped in pixels, in `Splitter::_split()`, rather than clamping the split
+fraction. Two reasons. A fraction's legal range would be `half / size`,
+which changes with the window, so `setSplit(0)` would mean different things
+at different sizes and a saved layout would not restore. And clamping the
+pixel offset still collapses a child to nothing -- at the limit the handle
+is flush against the edge with zero left beyond it -- so nothing is taken
+away. `Splitter2D` had the same expression twice, once per axis.
+
+### The part worth writing down
+
+The first three times I ran the new test it passed against deliberately
+broken code.
+
+The first two were the same mistake as the `TLRENDER_PROGRAMS` one: this
+build tree had `ftk_TESTS=OFF` in its cache from before `local.cmake` set
+it on, and a `-C` default does not overwrite a cache value that is already
+there. So there was no `ftk-test` target, `cmake --build --target ftk-test`
+failed, and the stale binary from some earlier configure ran happily. The
+tell was there and I filtered it out: I piped make through `grep -i error`,
+and what make actually said was "No rule to make target".
+
+The third was mine. In a test app the window never lays anything out, so
+every widget's geometry is `0 0 -1 -1` and the assertions were reading
+nothing. `FlowLayoutTest` had already solved this -- call `setGeometry()`
+on the widget under test and read the children back -- which is the pattern
+now used here.
+
+So: a test is not evidence until it has failed once on purpose. All three
+of these looked exactly like a passing test.
+
+`ftk_TESTS` is on in this tree now. The suite is 94 tests and passes; the
+GL and PNG tests log errors under a headless run, which they did before any
+of this.
+
 ## 2026-08-09 — A scroll bar past the bottom of its pane
 
 Reported from a four-pane layout: the curve editor's channel list ended part
