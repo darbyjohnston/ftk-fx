@@ -82,6 +82,21 @@ namespace fx
             _parameterObserver = Observer<int>::create(
                 model->observeParameterChanged(),
                 [this](int) { _channelsUpdate(); });
+            // The channels belong to the current system, so choosing another
+            // one is as much a rebuild as opening a scene: the rows point into
+            // the system they were built from.
+            _currentSystemObserver = Observer<size_t>::create(
+                model->observeCurrentSystem(),
+                [this](size_t)
+                {
+                    // _graphPaths as well as _animated. Two systems have the
+                    // same parameters under the same names, so the paths match
+                    // while the pointers behind them do not, and the plot would
+                    // go on editing the system that is no longer selected.
+                    _animated.clear();
+                    _graphPaths.clear();
+                    _channelsUpdate();
+                });
             _sceneObserver = Observer<int>::create(
                 model->observeSceneChanged(),
                 [this](int)
@@ -97,6 +112,7 @@ namespace fx
                     // so anything cleared here is cleared before the artist
                     // has done anything at all.
                     _animated.clear();
+                    _graphPaths.clear();
                     _channelsUpdate();
                 });
         }

@@ -19,7 +19,7 @@ namespace fx
             const double frameRate = 24.0;
 
             //! Run a system over a frame range, starting from the given frame.
-            Frame runFrom(const System& system, Frame frame, int first, int last)
+            SystemFrame runFrom(const System& system, SystemFrame frame, int first, int last)
             {
                 for (int i = first; i <= last; ++i)
                 {
@@ -29,9 +29,9 @@ namespace fx
             }
 
             //! Run a system from nothing up to the given frame.
-            Frame runTo(const System& system, int last)
+            SystemFrame runTo(const System& system, int last)
             {
-                return runFrom(system, Frame(), 1, last);
+                return runFrom(system, SystemFrame(), 1, last);
             }
 
             //! A system with the variance turned off, for the tests that want
@@ -72,7 +72,7 @@ namespace fx
             _resume();
         }
 
-        bool SystemTest::_equal(const Frame& a, const Frame& b)
+        bool SystemTest::_equal(const SystemFrame& a, const SystemFrame& b)
         {
             if (a.emitted != b.emitted)
                 return false;
@@ -98,7 +98,7 @@ namespace fx
         {
             // One particle per frame at 24 per second and 24 frames per second.
             System system = plainSystem();
-            const Frame frame = runTo(system, 10);
+            const SystemFrame frame = runTo(system, 10);
             if (10 != frame.pool.size())
             {
                 _fail(ftk::Format("Emission: expected 10 particles, got {0}").
@@ -128,7 +128,7 @@ namespace fx
         {
             System system = plainSystem();
             system.getEmitter().rate.setConstant(24.F);
-            const Frame frame = runTo(system, 24);
+            const SystemFrame frame = runTo(system, 24);
 
             // A second of falling from rest under 9.8 puts the oldest particle
             // about five units down and moving at about that speed. Euler is
@@ -144,7 +144,7 @@ namespace fx
             // Drag pulls the speed back.
             System dragged = plainSystem();
             dragged.getForces().drag.setConstant(2.F);
-            const Frame draggedFrame = runTo(dragged, 24);
+            const SystemFrame draggedFrame = runTo(dragged, 24);
             FTK_CHECK(draggedFrame.pool.velocity[0].y > velocity.y);
 
             // Gravity is a parameter like anything else, so it animates.
@@ -180,7 +180,7 @@ namespace fx
             }
 
             // Nothing outlives its lifespan.
-            const Frame frame = runTo(system, 48);
+            const SystemFrame frame = runTo(system, 48);
             for (size_t i = 0; i < frame.pool.size(); ++i)
             {
                 FTK_CHECK(frame.pool.age[i] < frame.pool.lifespan[i]);
@@ -192,8 +192,8 @@ namespace fx
         {
             System system;
             system.getEmitter().seed = 7;
-            const Frame a = runTo(system, 30);
-            const Frame b = runTo(system, 30);
+            const SystemFrame a = runTo(system, 30);
+            const SystemFrame b = runTo(system, 30);
             if (!_equal(a, b))
             {
                 _fail("Determinism: the same system ran twice gave two answers");
@@ -216,9 +216,9 @@ namespace fx
             system.getEmitter().seed = 3;
             system.setSubsteps(2);
 
-            const Frame whole = runTo(system, 40);
+            const SystemFrame whole = runTo(system, 40);
 
-            const Frame partial = runFrom(system, runTo(system, 17), 18, 40);
+            const SystemFrame partial = runFrom(system, runTo(system, 17), 18, 40);
 
             if (!_equal(whole, partial))
             {

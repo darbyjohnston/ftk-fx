@@ -15,6 +15,7 @@ set(HEADERS
     Panels.h
     Panes.h
     ParametersPanel.h
+    SystemsPanel.h
     SceneModel.h
     TimelineBar.h
     Viewport.h)
@@ -36,6 +37,7 @@ set(SOURCE
     Panels.cpp
     Panes.cpp
     ParametersPanel.cpp
+    SystemsPanel.cpp
     SceneModel.cpp
     TimelineBar.cpp
     Viewport.cpp)

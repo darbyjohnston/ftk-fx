@@ -95,6 +95,7 @@ namespace fx
 
             std::shared_ptr<ftk::Observer<int> > _parameterObserver;
             std::shared_ptr<ftk::Observer<int> > _sceneObserver;
+            std::shared_ptr<ftk::Observer<size_t> > _currentSystemObserver;
         };
     }
 }

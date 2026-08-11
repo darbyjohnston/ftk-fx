@@ -19,8 +19,9 @@ namespace fx
             std::shared_ptr<const Frame> makeFrame(size_t count)
             {
                 auto out = std::make_shared<Frame>();
-                out->pool.birth(count);
-                out->emitted = static_cast<double>(count);
+                out->systems.resize(1);
+                out->systems[0].pool.birth(count);
+                out->systems[0].emitted = static_cast<double>(count);
                 return out;
             }
         }
@@ -60,7 +61,7 @@ namespace fx
             cache.set(3, makeFrame(7));
             FTK_CHECK(FrameState::Simulated == cache.getState(3));
             FTK_CHECK(cache.get(3));
-            FTK_CHECK(7 == cache.get(3)->pool.size());
+            FTK_CHECK(7 == cache.get(3)->getParticleCount());
             FTK_CHECK(cache.getByteCount() > 0);
 
             // The last valid frame is where a re-simulation starts.
@@ -122,11 +123,11 @@ namespace fx
             FTK_CHECK(FrameState::Empty == cache.getState(3));
             FTK_CHECK(FrameState::Locked == cache.getState(5));
             cache.set(5, makeFrame(99));
-            FTK_CHECK(1 == cache.get(5)->pool.size());
+            FTK_CHECK(1 == cache.get(5)->getParticleCount());
 
             cache.setLocked(5, false);
             cache.set(5, makeFrame(99));
-            FTK_CHECK(99 == cache.get(5)->pool.size());
+            FTK_CHECK(99 == cache.get(5)->getParticleCount());
 
             cache.clear();
             FTK_CHECK(FrameState::Empty == cache.getState(4));
@@ -148,8 +149,8 @@ namespace fx
             cache.setRange(ftk::RangeI(5, 20));
             FTK_CHECK(16 == cache.getStates().size());
             FTK_CHECK(FrameState::Simulated == cache.getState(5));
-            FTK_CHECK(5 == cache.get(5)->pool.size());
-            FTK_CHECK(10 == cache.get(10)->pool.size());
+            FTK_CHECK(5 == cache.get(5)->getParticleCount());
+            FTK_CHECK(10 == cache.get(10)->getParticleCount());
             FTK_CHECK(FrameState::Empty == cache.getState(11));
             FTK_CHECK(cache.getByteCount() < byteCount);
             FTK_CHECK(cache.getByteCount() > 0);

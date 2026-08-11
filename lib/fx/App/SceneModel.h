@@ -94,14 +94,39 @@ namespace fx
 
             ///@}
 
-            //! \name System
+            //! \name Systems
             ///@{
 
+            size_t getSystemCount() const;
+
+            const sim::System& getSystem(size_t) const;
+
+            //! Get the system the panels are editing.
             const sim::System& getSystem() const;
 
-            //! Get the system for editing. Call parameterChanged() afterwards;
-            //! the model cannot see the edit for itself.
+            //! Get the current system for editing. Call systemChanged()
+            //! afterwards; the model cannot see the edit for itself.
             sim::System& getSystem();
+
+            //! Which system the panels show. Everything that edits a single
+            //! system edits this one; the viewport draws all of them.
+            size_t getCurrentSystem() const;
+            std::shared_ptr<ftk::IObservable<size_t> > observeCurrentSystem() const;
+            void setCurrentSystem(size_t);
+
+            //! Add an empty system after the current one and make it current.
+            void addSystem();
+
+            //! Copy the given system and make the copy current.
+            void duplicateSystem(size_t);
+
+            //! Remove a system. The last one is never removed: a scene with no
+            //! systems has nothing to show and nothing to edit, and the artist
+            //! would have to know to add one back before anything worked.
+            void removeSystem(size_t);
+
+            void setSystemName(size_t, const std::string&);
+            void setSystemEnabled(size_t, bool);
 
             //! Record an edit that has already been made to the system, and
             //! throw away the simulation the old values produced.
@@ -156,7 +181,16 @@ namespace fx
             //! Replace everything an edit can touch and re-simulate, without
             //! recording anything. For the command stack; everything else
             //! wants systemChanged() or setParticleSize().
-            void applyState(const sim::System&, float particleSize);
+            //!
+            //! The selection is part of the state, so undoing a removal brings
+            //! back the system that was removed *and* selects it again. The
+            //! cost is that undoing a parameter edit also jumps the selection
+            //! back to the system that edit was made on, which is a fair
+            //! description of where undo has just taken the artist.
+            void applyState(
+                const std::vector<sim::System>&,
+                size_t currentSystem,
+                float particleSize);
 
             ///@}
 
@@ -255,11 +289,32 @@ namespace fx
             //! unless an edit is open around it.
             void _record(
                 const std::string& name,
-                const sim::System& beforeSystem,
+                const std::vector<sim::System>& beforeSystems,
+                size_t beforeCurrentSystem,
                 float beforeParticleSize);
 
+            //! Keep the current system inside the list, for after a removal.
+            void _currentSystemUpdate();
+
+            //! A name no system has yet, based on the given one.
+            std::string _systemName(const std::string& base) const;
+
+            //! The systems as values, for the file and for the undo stack.
+            std::vector<sim::System> _systemValues() const;
+
+            //! Take the given systems, assigning into the systems that are
+            //! already here wherever there is one to assign into.
+            //!
+            //! This is what keeps ParameterInfo::parameter valid. It points
+            //! into a System, and the panels hold those pointers between
+            //! rebuilds; replacing the System objects on every edit would
+            //! dangle every one of them on every step of a drag. Held by
+            //! shared_ptr for the same reason: the list can grow and shrink
+            //! without moving the systems that stay.
+            void _setSystems(const std::vector<sim::System>&);
+
             std::shared_ptr<ftk::Context> _context;
-            sim::System _system;
+            std::vector<std::shared_ptr<sim::System> > _systems;
             core::Cache _cache;
             double _frameRate = 24.0;
 
@@ -275,6 +330,7 @@ namespace fx
             std::shared_ptr<ftk::Observable<int> > _parameterChanged;
             std::shared_ptr<ftk::Observable<float> > _particleSize;
             std::shared_ptr<ftk::Observable<DrawType> > _drawType;
+            std::shared_ptr<ftk::Observable<size_t> > _currentSystem;
             std::shared_ptr<ftk::CommandStack> _commands;
 
             //! The command at the top of the stack, when it is still the one
@@ -283,11 +339,10 @@ namespace fx
             //! after which it is no longer the top.
             std::shared_ptr<ftk::ICommand> _lastCommand;
 
-            //! The system as it was when the outermost beginEdit() ran, and
-            //! how many are open. Counted rather than flagged so that a widget
-            //! bracketing an edit that another widget already bracketed does
-            //! not close it early.
-            sim::System _editBefore;
+            //! The state as it was when beginEdit() ran. See beginEdit() for
+            //! why this is a flag rather than a count.
+            std::vector<sim::System> _editBeforeSystems;
+            size_t _editBeforeCurrentSystem = 0;
             float _editBeforeParticleSize = 3.F;
             bool _editOpen = false;
 

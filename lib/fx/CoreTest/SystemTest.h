@@ -9,7 +9,7 @@ namespace fx
 {
     namespace core
     {
-        struct Frame;
+        struct SystemFrame;
     }
 
     namespace core_test
@@ -37,7 +37,7 @@ namespace fx
             //! Compare two frames exactly. Nothing here is allowed a tolerance:
             //! the point of the determinism tests is that the numbers are the
             //! same numbers, not nearly the same ones.
-            bool _equal(const core::Frame&, const core::Frame&);
+            bool _equal(const core::SystemFrame&, const core::SystemFrame&);
         };
     }
 }

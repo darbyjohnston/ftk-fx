@@ -26,6 +26,13 @@ Setup steps a shot may use:
 * {"curveValueMode": "Normalized"}           how the curve plot scales its
                                              vertical axis
 * {"rate": 2000}                             particles emitted per second
+* {"addSystem": true}                        add a system and make it current
+* {"duplicateSystem": 0}                     copy that system, and make the
+                                             copy current
+* {"removeSystem": 0}                        remove that system
+* {"currentSystem": 1}                       which system the panels edit
+* {"systemName": "sparks"}                   rename the current system
+* {"systemEnabled": false}                   stop solving the current system
 * {"transform": {"translate": [0, 2, 0], "rotate": [0, 0, 45], "scale": [1, 1, 1]}}
                                              where the emitter is; every part
                                              is optional
@@ -43,6 +50,10 @@ Setup steps a shot may use:
 * {"click": [60, 80]}                        click there, with an optional
                                              "modifier" beside it
 * {"drag": [[776, 619], [500, 400]]}         press there, move, release
+
+The system steps run before everything else in a step, so that
+{"addSystem": true, "rate": 900} is one step and the rate lands on the system
+that was just added.
 
 Steps run in the order they are written. A click or a drag cannot run until
 the window has been laid out, so it and everything after it are applied one

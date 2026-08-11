@@ -27,6 +27,7 @@ namespace fx
             std::shared_ptr<IWidget> divider;
             std::shared_ptr<VerticalLayout> panelLayout;
             std::shared_ptr<VerticalLayout> layout;
+            std::shared_ptr<IWidget> content;
         };
 
         void IPanel::_init(
@@ -109,7 +110,21 @@ namespace fx
 
         void IPanel::_setContent(const std::shared_ptr<IWidget>& value)
         {
-            value->setParent(_p->panelLayout);
+            FTK_P();
+            // The one that was there is taken away first. A panel that
+            // rebuilds its contents calls this again, and without the removal
+            // the old widgets stay parented below the new ones: the panel goes
+            // on showing what it showed, and every refresh writes to the copy
+            // nobody can see.
+            if (p.content)
+            {
+                p.content->setParent(nullptr);
+            }
+            p.content = value;
+            if (value)
+            {
+                value->setParent(p.panelLayout);
+            }
         }
     }
 }

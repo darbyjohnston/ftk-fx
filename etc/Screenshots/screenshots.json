@@ -1046,6 +1046,95 @@
           "caption": "Each channel to its own range; absolute puts gravity flat under rate"
         }
       ]
+    },
+    {
+      "id": "systems-two",
+      "window": {
+        "w": 1100,
+        "h": 700
+      },
+      "setup": [
+        {
+          "systemName": "smoke",
+          "rate": 400,
+          "shape": {
+            "type": "Sphere",
+            "size": [
+              2,
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "addSystem": true,
+          "systemName": "sparks",
+          "rate": 900,
+          "transform": {
+            "translate": [
+              5,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "particleSize": 5
+        },
+        {
+          "frame": 60
+        },
+        {
+          "frameView": true
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Panel.Systems",
+          "caption": "Two systems; the checked one is what the panels below it edit"
+        },
+        {
+          "id": "MainWindow.Pane0",
+          "caption": "Both solved and drawn"
+        }
+      ]
+    },
+    {
+      "id": "systems-select",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "systemName": "smoke",
+          "rate": 400
+        },
+        {
+          "addSystem": true,
+          "systemName": "sparks",
+          "rate": 900,
+          "transform": {
+            "translate": [
+              5,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "currentSystem": 0
+        },
+        {
+          "frame": 60
+        }
+      ],
+      "annotate": [
+        {
+          "id": "Parameters.Rate",
+          "caption": "Back to smoke's rate, not sparks'"
+        }
+      ]
     }
   ]
 }

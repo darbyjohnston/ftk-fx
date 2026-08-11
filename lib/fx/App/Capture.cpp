@@ -345,6 +345,42 @@ namespace fx
             auto model = app->getSceneModel();
             auto panes = app->getMainWindow()->getPanes();
 
+            // The system steps run before everything else in a step, so that
+            // "add a system and set its rate" is one step and the rate lands
+            // on the system that was just added. Adding, copying and removing
+            // each choose a current system of their own; an explicit
+            // currentSystem after them is what overrules that.
+            if (step.contains("addSystem") && step.at("addSystem").get<bool>())
+            {
+                model->addSystem();
+            }
+            if (step.contains("duplicateSystem"))
+            {
+                model->duplicateSystem(
+                    step.at("duplicateSystem").get<size_t>());
+            }
+            if (step.contains("removeSystem"))
+            {
+                model->removeSystem(step.at("removeSystem").get<size_t>());
+            }
+            if (step.contains("currentSystem"))
+            {
+                model->setCurrentSystem(
+                    step.at("currentSystem").get<size_t>());
+            }
+            if (step.contains("systemName"))
+            {
+                model->setSystemName(
+                    model->getCurrentSystem(),
+                    step.at("systemName").get<std::string>());
+            }
+            if (step.contains("systemEnabled"))
+            {
+                model->setSystemEnabled(
+                    model->getCurrentSystem(),
+                    step.at("systemEnabled").get<bool>());
+            }
+
             if (step.contains("frame"))
             {
                 model->setCurrentFrame(step.at("frame").get<int>());

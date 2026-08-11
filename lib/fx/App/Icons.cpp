@@ -48,6 +48,23 @@ namespace fx
             const std::string rectBotL   = "    <rect x=\"2\" y=\"11\" width=\"7\" height=\"7\"/>\n";
             const std::string rectBotR   = "    <rect x=\"11\" y=\"11\" width=\"7\" height=\"7\"/>\n";
 
+            //! A plus and a minus, for adding and removing a system.
+            //! feather-tk's Increment and Decrement are the spinner arrows a
+            //! number edit uses, which say "next" rather than "another".
+            std::string barsSvg(const std::string& bars)
+            {
+                return
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+                    "<svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\""
+                    " xmlns=\"http://www.w3.org/2000/svg\">\n"
+                    "  <g style=\"fill:#f0f0f0;fill-opacity:1;stroke:none\">\n" +
+                    bars +
+                    "  </g>\n</svg>\n";
+            }
+
+            const std::string barH = "    <rect x=\"4\" y=\"9\" width=\"12\" height=\"2\"/>\n";
+            const std::string barV = "    <rect x=\"9\" y=\"4\" width=\"2\" height=\"12\"/>\n";
+
             void add(
                 const std::shared_ptr<ftk::IconSystem>& iconSystem,
                 const std::string& name,
@@ -69,6 +86,8 @@ namespace fx
                 layoutSvg(rectTopL + rectTopR + rectBottom));
             add(iconSystem, "LayoutFour",
                 layoutSvg(rectTopL + rectTopR + rectBotL + rectBotR));
+            add(iconSystem, "SystemAdd", barsSvg(barH + barV));
+            add(iconSystem, "SystemRemove", barsSvg(barH));
         }
     }
 }

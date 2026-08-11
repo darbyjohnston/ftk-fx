@@ -12,6 +12,7 @@
 #include <ftk/UI/FloatEditSlider.h>
 #include <ftk/UI/FormLayout.h>
 #include <ftk/UI/IntEditSlider.h>
+#include <ftk/UI/LineEdit.h>
 #include <ftk/UI/RowLayout.h>
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/ToolButton.h>
@@ -172,6 +173,10 @@ namespace fx
             _updating = true;
             if (auto model = _model.lock())
             {
+                    if (_nameEdit)
+                {
+                    _nameEdit->setText(model->getSystem().getName());
+                }
                 const auto& emitter = model->getSystem().getEmitter();
                 _shapeComboBox->setCurrentIndex(static_cast<int>(emitter.shape));
                 _surfaceCheckBox->setChecked(emitter.surface);
@@ -223,6 +228,54 @@ namespace fx
             _model = model;
             _currentFrame = model->getCurrentFrame();
 
+            _widgetsUpdate();
+
+            _currentFrameObserver = Observer<int>::create(
+                model->observeCurrentFrame(),
+                [this](int value)
+                {
+                    _currentFrame = value;
+                    _valuesUpdate();
+                });
+
+            // Opening a scene replaces every value at once, and the sliders
+            // would otherwise go on showing the ones from the scene before. It
+            // also means a system may have appeared or gone, so the controls
+            // are rebuilt rather than refreshed.
+            _sceneObserver = Observer<int>::create(
+                model->observeSceneChanged(),
+                [this](int) { _widgetsUpdate(); });
+
+            // And an undo needs a refresh too. The panel used to refresh only
+            // on its own edits, so undoing one left the slider showing the
+            // value the viewport had already stopped using.
+            _parameterObserver = Observer<int>::create(
+                model->observeParameterChanged(),
+                [this](int) { _valuesUpdate(); });
+
+            _currentSystemObserver = Observer<size_t>::create(
+                model->observeCurrentSystem(),
+                [this](size_t) { _widgetsUpdate(); });
+
+            _particleSizeObserver = Observer<float>::create(
+                model->observeParticleSize(),
+                [this](float value)
+                {
+                    if (_particleSizeSlider)
+                    {
+                        _particleSizeSlider->setValue(value);
+                    }
+                });
+        }
+
+        void ParametersPanel::_widgetsUpdate()
+        {
+            auto model = _model.lock();
+            auto context = getContext();
+            if (!model || !context)
+                return;
+            _rows.clear();
+
             auto layout = VerticalLayout::create(context);
             layout->setSpacingRole(SizeRole::None);
 
@@ -231,8 +284,10 @@ namespace fx
             // The rows come from the shared list rather than from a second
             // copy of it here, so the panel and the curve editor cannot
             // disagree about what exists or what it is called. The pointers in
-            // it are safe because the model outlives the panel and its system
-            // is a member rather than something that can be replaced.
+            // it stay good because the model assigns into the systems it
+            // already holds rather than replacing them -- see
+            // SceneModel::_setSystems -- and this rebuilds when the list of
+            // systems changes underneath them.
             std::map<std::string, std::shared_ptr<FormLayout> > groups;
             std::vector<std::string> groupOrder;
             for (const auto& info : getParameters(model->getSystem()))
@@ -247,6 +302,29 @@ namespace fx
                 }
                 _addRow(context, i->second, info);
             }
+
+            // Renamed here rather than in the systems list. The list is what
+            // picks a system; this panel is what edits the one that is picked,
+            // and the name is one of the things it has.
+            auto nameEdit = LineEdit::create(context);
+            nameEdit->setText(model->getSystem().getName());
+            nameEdit->setCallbackOnFocusLost(true);
+            nameEdit->setTooltip("What this system is called");
+            nameEdit->setCallback(
+                [weak](const std::string& value)
+                {
+                    if (auto model = weak.lock())
+                    {
+                        model->setSystemName(model->getCurrentSystem(), value);
+                    }
+                });
+            _nameEdit = nameEdit;
+            auto systemLayout = FormLayout::create(context);
+            systemLayout->setMarginRole(SizeRole::MarginSmall);
+            systemLayout->addRow("Name:", nameEdit);
+            auto systemBellows = Bellows::create(context, "System", layout);
+            systemBellows->setWidget(systemLayout);
+            systemBellows->setOpen(true);
 
             // The two rows that are not parameters, and so cannot be keyed:
             // both change the recipe rather than a value in it.
@@ -365,18 +443,13 @@ namespace fx
                         model->setParticleSize(value);
                     }
                 });
-            _particleSizeObserver = Observer<float>::create(
-                model->observeParticleSize(),
-                [particleSizeSlider](float value)
-                {
-                    particleSizeSlider->setValue(value);
-                });
+            _particleSizeSlider = particleSizeSlider;
             particleSizeSlider->setPressedCallback(
                 [weak](float, bool pressed)
                 {
                     if (auto model = weak.lock())
                     {
-                        if (!pressed) model->endEdit("Set Point Size");
+                        if (!pressed) model->endEdit("Set Particle Size");
                     }
                 });
             displayLayout->addRow("Particle size:", particleSizeSlider);
@@ -401,34 +474,7 @@ namespace fx
             displayBellows->setOpen(true);
 
             _setContent(layout);
-
-            _currentFrameObserver = Observer<int>::create(
-                model->observeCurrentFrame(),
-                [this](int value)
-                {
-                    _currentFrame = value;
-                    _valuesUpdate();
-                });
-
-            // Opening a scene replaces every value at once, and the sliders
-            // would otherwise go on showing the ones from the scene before.
-            _sceneObserver = Observer<int>::create(
-                model->observeSceneChanged(),
-                [this](int) { _valuesUpdate(); });
-
-            // And so does an undo. The panel used to refresh only on its own
-            // edits, so undoing one left the slider showing the value the
-            // viewport had already stopped using.
-            _parameterObserver = Observer<int>::create(
-                model->observeParameterChanged(),
-                [this](int) { _valuesUpdate(); });
-
-            _particleSizeObserver = Observer<float>::create(
-                model->observeParticleSize(),
-                [particleSizeSlider](float value)
-                {
-                    particleSizeSlider->setValue(value);
-                });
+            _valuesUpdate();
         }
 
         ParametersPanel::~ParametersPanel()

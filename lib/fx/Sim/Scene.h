@@ -25,7 +25,11 @@ namespace fx
         {
             ftk::RangeI range = ftk::RangeI(1, 120);
             double frameRate = 24.0;
-            System system;
+
+            //! The systems, in the order they are listed and solved. A fresh
+            //! scene has one: an empty scene shows nothing and gives the artist
+            //! a panel of buttons to read instead of particles to look at.
+            std::vector<System> systems = std::vector<System>(1);
 
             bool operator == (const Scene&) const;
             bool operator != (const Scene&) const;

@@ -6,6 +6,7 @@
 #include <fx/App/DiagPanel.h>
 #include <fx/App/IPanel.h>
 #include <fx/App/ParametersPanel.h>
+#include <fx/App/SystemsPanel.h>
 
 #include <ftk/UI/RowLayout.h>
 #include <ftk/UI/ScreenshotTag.h>
@@ -70,13 +71,15 @@ namespace fx
                     }
                 });
 
+            _add(SystemsPanel::create(context, model));
             _add(ParametersPanel::create(context, model, panes));
             _add(DiagPanel::create(context));
 
-            // Diagnostics starts closed. It is for the moments when something
-            // is slow, and a graph nobody is reading is a graph taking up the
-            // column.
-            _open->setIfChanged({ "Parameters" });
+            // Systems above Parameters, because it says what the parameters
+            // below it belong to. Diagnostics starts closed: it is for the
+            // moments when something is slow, and a graph nobody is reading is
+            // a graph taking up the column.
+            _open->setIfChanged({ "Systems", "Parameters" });
             _panelsUpdate();
         }
 

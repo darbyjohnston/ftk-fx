@@ -311,12 +311,12 @@ namespace fx
             }
         }
 
-        core::Frame System::step(
-            const core::Frame& prev,
+        core::SystemFrame System::step(
+            const core::SystemFrame& prev,
             int frame,
             double frameRate) const
         {
-            core::Frame out = prev;
+            core::SystemFrame out = prev;
             if (!_enabled || frameRate <= 0.0)
                 return out;
 

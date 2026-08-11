@@ -4,6 +4,7 @@
 #include <fx/App/SceneModel.h>
 
 #include <ftk/Core/Context.h>
+#include <ftk/Core/Format.h>
 #include <ftk/Core/Math.h>
 #include <ftk/Core/Timer.h>
 
@@ -32,15 +33,19 @@ namespace fx
                 StateCommand(
                     SceneModel* model,
                     const std::string& name,
-                    const sim::System& beforeSystem,
+                    const std::vector<sim::System>& beforeSystems,
+                    size_t beforeCurrentSystem,
                     float beforeParticleSize,
-                    const sim::System& afterSystem,
+                    const std::vector<sim::System>& afterSystems,
+                    size_t afterCurrentSystem,
                     float afterParticleSize) :
                     _model(model),
                     _name(name),
-                    _beforeSystem(beforeSystem),
+                    _beforeSystems(beforeSystems),
+                    _beforeCurrentSystem(beforeCurrentSystem),
                     _beforeParticleSize(beforeParticleSize),
-                    _afterSystem(afterSystem),
+                    _afterSystems(afterSystems),
+                    _afterCurrentSystem(afterCurrentSystem),
                     _afterParticleSize(afterParticleSize)
                 {}
 
@@ -48,20 +53,24 @@ namespace fx
 
                 void exec() override
                 {
-                    _model->applyState(_afterSystem, _afterParticleSize);
+                    _model->applyState(
+                        _afterSystems, _afterCurrentSystem, _afterParticleSize);
                 }
 
                 void undo() override
                 {
-                    _model->applyState(_beforeSystem, _beforeParticleSize);
+                    _model->applyState(
+                        _beforeSystems, _beforeCurrentSystem, _beforeParticleSize);
                 }
 
             private:
                 SceneModel* _model = nullptr;
                 std::string _name;
-                sim::System _beforeSystem;
+                std::vector<sim::System> _beforeSystems;
+                size_t _beforeCurrentSystem = 0;
                 float _beforeParticleSize = 3.F;
-                sim::System _afterSystem;
+                std::vector<sim::System> _afterSystems;
+                size_t _afterCurrentSystem = 0;
                 float _afterParticleSize = 3.F;
             };
         }
@@ -82,7 +91,9 @@ namespace fx
             _parameterChanged = Observable<int>::create(0);
             _particleSize = Observable<float>::create(3.F);
             _drawType = Observable<DrawType>::create(DrawType::Point);
+            _currentSystem = Observable<size_t>::create(0);
             _commands = CommandStack::create();
+            _setSystems(sim::Scene().systems);
             _saved = getScene();
 
             _cache.setRange(_range->get());
@@ -110,13 +121,46 @@ namespace fx
             sim::Scene out;
             out.range = _range->get();
             out.frameRate = _frameRate;
-            out.system = _system;
+            out.systems = _systemValues();
             return out;
+        }
+
+        std::vector<sim::System> SceneModel::_systemValues() const
+        {
+            std::vector<sim::System> out;
+            out.reserve(_systems.size());
+            for (const auto& system : _systems)
+            {
+                out.push_back(*system);
+            }
+            return out;
+        }
+
+        void SceneModel::_setSystems(const std::vector<sim::System>& value)
+        {
+            for (size_t i = 0; i < value.size(); ++i)
+            {
+                if (i < _systems.size())
+                {
+                    *_systems[i] = value[i];
+                }
+                else
+                {
+                    _systems.push_back(
+                        std::make_shared<sim::System>(value[i]));
+                }
+            }
+            _systems.resize(std::max<size_t>(1, value.size()));
+            if (!_systems[0])
+            {
+                _systems[0] = std::make_shared<sim::System>();
+            }
         }
 
         void SceneModel::setScene(const sim::Scene& value)
         {
-            _system = value.system;
+            _setSystems(value.systems);
+            _currentSystemUpdate();
             _frameRate = value.frameRate;
             _range->setIfChanged(value.range);
             _cache.setRange(value.range);
@@ -195,52 +239,212 @@ namespace fx
             _modified->setIfChanged(getScene() != _saved);
         }
 
+        size_t SceneModel::getSystemCount() const
+        {
+            return _systems.size();
+        }
+
+        const sim::System& SceneModel::getSystem(size_t index) const
+        {
+            return *_systems[index];
+        }
+
         const sim::System& SceneModel::getSystem() const
         {
-            return _system;
+            return *_systems[_currentSystem->get()];
         }
 
         sim::System& SceneModel::getSystem()
         {
-            return _system;
+            return *_systems[_currentSystem->get()];
         }
 
-        void SceneModel::applyState(const sim::System& value, float particleSize)
+        size_t SceneModel::getCurrentSystem() const
         {
-            _system = value;
+            return _currentSystem->get();
+        }
+
+        std::shared_ptr<IObservable<size_t> > SceneModel::observeCurrentSystem() const
+        {
+            return _currentSystem;
+        }
+
+        void SceneModel::setCurrentSystem(size_t value)
+        {
+            if (value >= _systems.size())
+                return;
+            // Not recorded. Which system is being looked at is not an edit to
+            // the scene: nothing about the particles changes, and a scene that
+            // came back from disk selecting whatever was selected when it was
+            // saved would be a file that differs from itself.
+            _currentSystem->setIfChanged(value);
+        }
+
+        void SceneModel::addSystem()
+        {
+            const auto beforeSystems = _systemValues();
+            const size_t beforeCurrent = _currentSystem->get();
+            auto systems = beforeSystems;
+            sim::System system;
+            system.setName(_systemName("particles"));
+            systems.insert(systems.begin() + beforeCurrent + 1, system);
+            _setSystems(systems);
+            _currentSystem->setIfChanged(beforeCurrent + 1);
+            _record("Add System", beforeSystems, beforeCurrent, _particleSize->get());
+        }
+
+        void SceneModel::duplicateSystem(size_t index)
+        {
+            if (index >= _systems.size())
+                return;
+            const auto beforeSystems = _systemValues();
+            const size_t beforeCurrent = _currentSystem->get();
+            auto systems = beforeSystems;
+            sim::System system = systems[index];
+            system.setName(_systemName(system.getName()));
+            systems.insert(systems.begin() + index + 1, system);
+            _setSystems(systems);
+            _currentSystem->setIfChanged(index + 1);
+            _record("Duplicate System", beforeSystems, beforeCurrent, _particleSize->get());
+        }
+
+        void SceneModel::removeSystem(size_t index)
+        {
+            if (index >= _systems.size() || _systems.size() < 2)
+                return;
+            const auto beforeSystems = _systemValues();
+            const size_t beforeCurrent = _currentSystem->get();
+            auto systems = beforeSystems;
+            systems.erase(systems.begin() + index);
+            _setSystems(systems);
+            _currentSystemUpdate();
+            _record("Remove System", beforeSystems, beforeCurrent, _particleSize->get());
+        }
+
+        void SceneModel::setSystemName(size_t index, const std::string& value)
+        {
+            if (index >= _systems.size() || value == _systems[index]->getName())
+                return;
+            const auto beforeSystems = _systemValues();
+            _systems[index]->setName(value);
+            _record(
+                "Rename System",
+                beforeSystems,
+                _currentSystem->get(),
+                _particleSize->get());
+        }
+
+        void SceneModel::setSystemEnabled(size_t index, bool value)
+        {
+            if (index >= _systems.size() || value == _systems[index]->isEnabled())
+                return;
+            const auto beforeSystems = _systemValues();
+            _systems[index]->setEnabled(value);
+            _record(
+                "Enable System",
+                beforeSystems,
+                _currentSystem->get(),
+                _particleSize->get());
+        }
+
+        std::string SceneModel::_systemName(const std::string& base) const
+        {
+            // "particles", then "particles 2". Numbered from what is already
+            // there rather than from a counter on the model, so that a name
+            // freed by a removal is used again instead of counting upward
+            // forever.
+            std::string out = base;
+            for (int i = 2; ; ++i)
+            {
+                bool taken = false;
+                for (const auto& system : _systems)
+                {
+                    if (system->getName() == out)
+                    {
+                        taken = true;
+                        break;
+                    }
+                }
+                if (!taken)
+                    break;
+                out = Format("{0} {1}").arg(base).arg(i);
+            }
+            return out;
+        }
+
+        void SceneModel::_currentSystemUpdate()
+        {
+            if (_currentSystem->get() >= _systems.size())
+            {
+                _currentSystem->setIfChanged(_systems.size() - 1);
+            }
+        }
+
+        void SceneModel::applyState(
+            const std::vector<sim::System>& systems,
+            size_t currentSystem,
+            float particleSize)
+        {
+            const bool listChanged = systems.size() != _systems.size();
+            _setSystems(systems);
+            _currentSystem->setIfChanged(
+                std::min(currentSystem, _systems.size() - 1));
             _particleSize->setIfChanged(particleSize);
             _cache.invalidateFrom(_range->get().min());
             _simulate(_currentFrame->get());
             _modifiedUpdate();
             _parameterChanged->setAlways(_parameterChanged->get() + 1);
+            if (listChanged)
+            {
+                // A system appeared or went, so the panels have to be built
+                // again rather than refreshed: the rows no longer match the
+                // systems, and the parameters of a system that went are gone
+                // with it. Only when the list changed -- this runs on every
+                // step of a drag, and rebuilding every panel each time is what
+                // the parameterChanged/sceneChanged split exists to avoid.
+                _sceneChanged->setAlways(_sceneChanged->get() + 1);
+            }
         }
 
         void SceneModel::systemChanged(
             const std::string& name,
             const sim::System& before)
         {
-            // Already applied: the caller edited the system in place. What is
-            // left is to record it and to throw away what it invalidated.
-            _record(name, before, _particleSize->get());
+            // Already applied, and only to the current system: the caller
+            // edited it in place through getSystem(). The before-state is the
+            // rest of the list as it stands with that one system put back.
+            auto beforeSystems = _systemValues();
+            beforeSystems[_currentSystem->get()] = before;
+            _record(
+                name,
+                beforeSystems,
+                _currentSystem->get(),
+                _particleSize->get());
         }
 
         void SceneModel::_record(
             const std::string& name,
-            const sim::System& beforeSystem,
+            const std::vector<sim::System>& beforeSystems,
+            size_t beforeCurrentSystem,
             float beforeParticleSize)
         {
             if (_editOpen)
             {
                 // Inside a drag. endEdit() records the whole of it.
-                applyState(_system, _particleSize->get());
+                applyState(
+                    _systemValues(),
+                    _currentSystem->get(),
+                    _particleSize->get());
                 return;
             }
             auto command = std::make_shared<StateCommand>(
                 this,
                 name,
-                beforeSystem,
+                beforeSystems,
+                beforeCurrentSystem,
                 beforeParticleSize,
-                _system,
+                _systemValues(),
+                _currentSystem->get(),
                 _particleSize->get());
             _lastCommand = command;
             // push() runs exec(), which is what applies and re-simulates.
@@ -252,7 +456,8 @@ namespace fx
             if (!_editOpen)
             {
                 _editOpen = true;
-                _editBefore = _system;
+                _editBeforeSystems = _systemValues();
+                _editBeforeCurrentSystem = _currentSystem->get();
                 _editBeforeParticleSize = _particleSize->get();
             }
         }
@@ -262,15 +467,17 @@ namespace fx
             if (!_editOpen)
                 return;
             _editOpen = false;
-            if (_editBefore != _system ||
+            if (_editBeforeSystems != _systemValues() ||
                 _editBeforeParticleSize != _particleSize->get())
             {
                 auto command = std::make_shared<StateCommand>(
                     this,
                     name,
-                    _editBefore,
+                    _editBeforeSystems,
+                    _editBeforeCurrentSystem,
                     _editBeforeParticleSize,
-                    _system,
+                    _systemValues(),
+                    _currentSystem->get(),
                     _particleSize->get());
                 _lastCommand = command;
                 _commands->push(command);
@@ -316,7 +523,11 @@ namespace fx
             if (value == before)
                 return;
             _particleSize->setIfChanged(value);
-            _record("Set Point Size", _system, before);
+            _record(
+                "Set Particle Size",
+                _systemValues(),
+                _currentSystem->get(),
+                before);
         }
 
         DrawType SceneModel::getDrawType() const
@@ -468,7 +679,7 @@ namespace fx
         size_t SceneModel::getParticleCount() const
         {
             const auto& frame = _frame->get();
-            return frame ? frame->pool.size() : 0;
+            return frame ? frame->getParticleCount() : 0;
         }
 
         size_t SceneModel::getCachedFrameCount() const
@@ -497,11 +708,25 @@ namespace fx
                 _cache.get(*lastValid) :
                 std::make_shared<core::Frame>();
 
+            // What a system that has no frame yet starts from: the head of the
+            // range, and any system added since the frame being stepped from
+            // was cached.
+            const core::SystemFrame empty;
+
             while (at < frame)
             {
                 ++at;
-                auto next = std::make_shared<const core::Frame>(
-                    _system.step(*state, at, _frameRate));
+                auto stepped = std::make_shared<core::Frame>();
+                stepped->systems.reserve(_systems.size());
+                for (size_t i = 0; i < _systems.size(); ++i)
+                {
+                    const core::SystemFrame& prev = i < state->systems.size() ?
+                        state->systems[i] :
+                        empty;
+                    stepped->systems.push_back(
+                        _systems[i]->step(prev, at, _frameRate));
+                }
+                std::shared_ptr<const core::Frame> next = stepped;
                 _cache.set(at, next);
                 // Read it back rather than carrying `next` forward: a locked
                 // frame refused the write, and the frame after it has to be

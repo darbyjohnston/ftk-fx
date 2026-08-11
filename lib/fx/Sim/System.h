@@ -136,9 +136,9 @@ namespace fx
             void setSubsteps(int);
 
             //! Advance one frame. The result depends on nothing but the
-            //! arguments -- see core::Frame.
-            core::Frame step(
-                const core::Frame& prev,
+            //! arguments -- see core::SystemFrame.
+            core::SystemFrame step(
+                const core::SystemFrame& prev,
                 int frame,
                 double frameRate) const;
 

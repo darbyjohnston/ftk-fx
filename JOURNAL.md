@@ -7,6 +7,92 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — More than one system, and what a pointer into one costs
+
+Manipulators are what Phase 2 wants next, and §15 gates them on "more than one
+thing to move". So: a scene holds a list of systems, and the systems panel is
+the selection -- every other panel edits the current one, the viewport draws
+all of them.
+
+Three decisions worth the words.
+
+**One pool per system, one frame for the lot.** `core::Frame` split into
+`SystemFrame` (a pool and its emitted count) and a `Frame` holding one per
+system. `System::step` takes and returns a `SystemFrame`, so the solver did not
+learn that systems exist. The cache still holds one entry per frame, which
+means editing one system re-simulates all of them. That is the coarse answer
+and it is on purpose: §16 still has "layer caching granularity" open, and a
+cache per system would have answered it by accident, in the dark, while doing
+something else.
+
+**The file needed nothing.** It already wrote `"systems"` as an array with one
+entry in it -- a note in the old code says a file that has to grow an array
+later is a file every reader has to learn twice. Reading all of the entries
+instead of the first was the change. Two years of that habit is worth one
+afternoon of it.
+
+**Order is part of the scene.** Two systems the other way round is a different
+scene, and the test says so. It has to be: the list is the order they are
+solved in, and it will be the order they composite in.
+
+### The pointer problem, which was the real work
+
+`ParameterInfo` holds a `core::Parameter*` into a system, and the panels hold
+those between rebuilds. The old comment said they were safe because the
+model's system "is a member rather than something that can be replaced". Make
+it a `std::vector<System>` and that sentence stops being true twice over: a
+resize moves the elements, and `applyState` -- which runs on every step of a
+slider drag -- assigned a whole new vector over the old one.
+
+The fix is not shared pointers by themselves; it is *assigning into the systems
+that are already there*. `_systems` is a `vector<shared_ptr<System>>`, and
+`_setSystems` copies each value into the existing object rather than replacing
+it. The list can grow and shrink without moving the systems that stay, and a
+parameter edit leaves every address alone.
+
+That in turn is what let `applyState` keep the cheap path: it raises
+`sceneChanged` only when the *count* changed. A drag still raises nothing but
+`parameterChanged`, and the panels still refresh rather than rebuild -- which
+is the split those two observables were separated for in the first place.
+
+The undo state became the whole list plus the current index. Adding and
+removing a system are then not new commands, they are ordinary state changes,
+which is the second time whole-state undo has paid for the copying it does.
+Selection is in the state deliberately: undoing a removal brings the system
+back *and* selects it. The cost is that undoing a parameter edit also jumps the
+selection to where that edit was made, which is a fair description of where
+undo has just taken you.
+
+### A panel that never expected to be rebuilt
+
+The parameters panel builds its rows from the current system, so choosing
+another one has to rebuild it. It did -- and the screen went on showing the
+first build, with a name and a rate belonging to no system at all.
+
+`IPanel::_setContent()` was one line: `value->setParent(_p->panelLayout)`. It
+never took away what was there. Nothing had ever called it twice. So the panel
+held every build it had ever made, stacked, and each refresh wrote to the
+newest one while the oldest was the one on screen.
+
+Worth noticing how it presented: the *model* was right, the systems list was
+right, and the debug print said `name=sparks` five times while the screenshot
+said `particles`. Everything that reads state agreed; only the pixels
+disagreed. That is the same shape as the shader bug -- and it is the second
+time the answer has been that a sidecar reads state, so a shot has to be looked
+at.
+
+### Still open
+
+- Renaming happens in the parameters panel rather than in the list. Double
+  click to rename in place is what an artist would reach for; it needs a widget
+  swap in a row, and this did not.
+- Every system's particles go into one buffer and one draw call. Fine while
+  they share a draw type; per-system display settings would end that.
+- A disabled system keeps whatever particles it had at the moment it was
+  disabled -- except that any edit invalidates from the head of the range, so
+  in practice it re-simulates to empty. That is luck rather than design, and it
+  will stop being true when invalidation gets finer.
+
 ## 2026-08-09 — Half a handle outside the splitter, and a test suite nobody was running
 
 Drag a pane divider all the way to the top and its border line is drawn

@@ -212,27 +212,30 @@ namespace fx
         {
             if (!_frame)
                 return false;
-            const core::Pool& pool = _frame->pool;
             bool any = false;
-            for (size_t i = 0; i < pool.size(); ++i)
+            for (const auto& system : _frame->systems)
             {
-                if (!pool.alive[i])
-                    continue;
-                const V3F& p = pool.position[i];
-                if (!any)
+                const core::Pool& pool = system.pool;
+                for (size_t i = 0; i < pool.size(); ++i)
                 {
-                    min = p;
-                    max = p;
-                    any = true;
-                }
-                else
-                {
-                    min.x = std::min(min.x, p.x);
-                    min.y = std::min(min.y, p.y);
-                    min.z = std::min(min.z, p.z);
-                    max.x = std::max(max.x, p.x);
-                    max.y = std::max(max.y, p.y);
-                    max.z = std::max(max.z, p.z);
+                    if (!pool.alive[i])
+                        continue;
+                    const V3F& p = pool.position[i];
+                    if (!any)
+                    {
+                        min = p;
+                        max = p;
+                        any = true;
+                    }
+                    else
+                    {
+                        min.x = std::min(min.x, p.x);
+                        min.y = std::min(min.y, p.y);
+                        min.z = std::min(min.z, p.z);
+                        max.x = std::max(max.x, p.x);
+                        max.y = std::max(max.y, p.y);
+                        max.z = std::max(max.z, p.z);
+                    }
                 }
             }
             return any;
@@ -459,20 +462,27 @@ namespace fx
         void Viewport::_pointsUpdate()
         {
             _pointsDirty = false;
-            _pointCount = _frame ? _frame->pool.size() : 0;
+            _pointCount = _frame ? _frame->getParticleCount() : 0;
             if (0 == _pointCount)
                 return;
 
-            const core::Pool& pool = _frame->pool;
+            // Every system's particles into one buffer and one draw. They are
+            // solved apart and drawn together: the points are additive and
+            // unsorted, so which system a particle came from makes no
+            // difference to what ends up on screen.
             std::vector<uint8_t> data(_pointCount * vertexByteCount);
             uint8_t* p = data.data();
-            for (size_t i = 0; i < _pointCount; ++i)
+            for (const auto& system : _frame->systems)
             {
-                const float lifespan = pool.lifespan[i];
-                const float t = lifespan > 0.F ?
-                    clamp(pool.age[i] / lifespan, 0.F, 1.F) :
-                    0.F;
-                writeVertex(p, pool.position[i], ageColor(t));
+                const core::Pool& pool = system.pool;
+                for (size_t i = 0; i < pool.size(); ++i)
+                {
+                    const float lifespan = pool.lifespan[i];
+                    const float t = lifespan > 0.F ?
+                        clamp(pool.age[i] / lifespan, 0.F, 1.F) :
+                        0.F;
+                    writeVertex(p, pool.position[i], ageColor(t));
+                }
             }
 
             // Grow the buffer in steps rather than to the exact count, so that

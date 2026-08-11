@@ -62,9 +62,9 @@ namespace fx
                 Scene out;
                 out.range = ftk::RangeI(4, 96);
                 out.frameRate = 30.0;
-                out.system.setName("sparks");
-                out.system.setSubsteps(3);
-                auto& emitter = out.system.getEmitter();
+                out.systems[0].setName("sparks");
+                out.systems[0].setSubsteps(3);
+                auto& emitter = out.systems[0].getEmitter();
                 emitter.seed = 17;
                 emitter.shape = EmitterShape::Box;
                 emitter.surface = true;
@@ -76,8 +76,8 @@ namespace fx
                 emitter.transform.rotate.z.setConstant(35.F);
                 emitter.transform.scale.x.setConstant(2.F);
                 emitter.spread.setConstant(45.F);
-                out.system.getForces().gravity.y.setConstant(-3.5F);
-                out.system.getForces().drag.setConstant(.75F);
+                out.systems[0].getForces().gravity.y.setConstant(-3.5F);
+                out.systems[0].getForces().drag.setConstant(.75F);
                 return out;
             }
         }
@@ -128,29 +128,55 @@ namespace fx
             // Equality is the test for unsaved changes, so it has to notice a
             // change anywhere in the recipe rather than only near the top.
             Scene changed = scene;
-            changed.system.getEmitter().lifespanVariance.setConstant(.9F);
+            changed.systems[0].getEmitter().lifespanVariance.setConstant(.9F);
             FTK_CHECK(changed != scene);
             changed = scene;
-            changed.system.getForces().gravity.z.setConstant(1.F);
+            changed.systems[0].getForces().gravity.z.setConstant(1.F);
             FTK_CHECK(changed != scene);
             changed = scene;
-            changed.system.getEmitter().shape = EmitterShape::Sphere;
+            changed.systems[0].getEmitter().shape = EmitterShape::Sphere;
             FTK_CHECK(changed != scene);
             changed = scene;
-            changed.system.getEmitter().surface = false;
+            changed.systems[0].getEmitter().surface = false;
             FTK_CHECK(changed != scene);
             changed = scene;
-            changed.system.getEmitter().size.y.setConstant(9.F);
+            changed.systems[0].getEmitter().size.y.setConstant(9.F);
             FTK_CHECK(changed != scene);
             changed = scene;
-            changed.system.getEmitter().transform.rotate.x.setConstant(1.F);
+            changed.systems[0].getEmitter().transform.rotate.x.setConstant(1.F);
             FTK_CHECK(changed != scene);
             changed = scene;
-            changed.system.getEmitter().transform.scale.z.setConstant(3.F);
+            changed.systems[0].getEmitter().transform.scale.z.setConstant(3.F);
             FTK_CHECK(changed != scene);
             changed = scene;
             changed.range = ftk::RangeI(1, 10);
             FTK_CHECK(changed != scene);
+
+            // More than one system, which is what the "systems" array was
+            // written as an array for before there was a second one to put in
+            // it. Both survive, in order, and the two are kept apart: a change
+            // to the second is not a change to the first.
+            Scene two = scene;
+            two.systems.push_back(System());
+            two.systems[1].setName("sparks");
+            two.systems[1].getEmitter().rate.setConstant(900.F);
+            const auto twoBack = nlohmann::json(two).get<Scene>();
+            FTK_CHECK(twoBack == two);
+            FTK_CHECK(2 == twoBack.systems.size());
+            FTK_CHECK("sparks" == twoBack.systems[1].getName());
+            FTK_CHECK(twoBack.systems[0] != twoBack.systems[1]);
+            FTK_CHECK(two != scene);
+            changed = two;
+            changed.systems[1].getEmitter().speed.setConstant(2.F);
+            FTK_CHECK(changed != two);
+            FTK_CHECK(changed.systems[0] == two.systems[0]);
+
+            // Order is part of the scene: the same two systems the other way
+            // round is a different scene, because it is the order they are
+            // listed and solved in.
+            Scene swapped = two;
+            std::swap(swapped.systems[0], swapped.systems[1]);
+            FTK_CHECK(swapped != two);
         }
 
         void SceneTest::_file()
@@ -241,6 +267,24 @@ namespace fx
             // still opens.
             const auto scene = nlohmann::json::parse("{}").get<Scene>();
             FTK_CHECK(scene == Scene());
+            FTK_CHECK(1 == scene.systems.size());
+
+            // A file that lists no systems reads as one empty system rather
+            // than as none. A scene with nothing in it has nothing to show and
+            // nothing to edit, and the artist would have to know to add a
+            // system back before anything worked.
+            const auto empty =
+                nlohmann::json::parse(R"({ "systems": [] })").get<Scene>();
+            FTK_CHECK(1 == empty.systems.size());
+
+            // A list is a list, not a system.
+            try
+            {
+                nlohmann::json::parse(R"({ "systems": 3 })").get<Scene>();
+                FTK_CHECK(false);
+            }
+            catch (const std::exception&)
+            {}
         }
     }
 }

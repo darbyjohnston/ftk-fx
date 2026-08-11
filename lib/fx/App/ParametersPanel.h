@@ -16,6 +16,7 @@ namespace ftk
     class ComboBox;
     class FloatEditSlider;
     class FormLayout;
+    class LineEdit;
     class ToolButton;
 }
 
@@ -56,6 +57,15 @@ namespace fx
                 std::shared_ptr<ftk::ToolButton> keyButton;
             };
 
+            //! Build the controls for the current system.
+            //!
+            //! Called again when the selection changes, because the rows hold
+            //! pointers into the system they were built from. Rebuilt rather
+            //! than re-pointed: every system has the same parameters today,
+            //! which would make re-pointing work, but that stops being true
+            //! the moment a system can have two emitters.
+            void _widgetsUpdate();
+
             void _addRow(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<ftk::FormLayout>&,
@@ -73,6 +83,8 @@ namespace fx
             std::shared_ptr<ftk::ComboBox> _shapeComboBox;
             std::shared_ptr<ftk::CheckBox> _surfaceCheckBox;
             std::shared_ptr<ftk::ComboBox> _drawTypeComboBox;
+            std::shared_ptr<ftk::FloatEditSlider> _particleSizeSlider;
+            std::shared_ptr<ftk::LineEdit> _nameEdit;
             int _currentFrame = 1;
 
             //! Set while the panel is writing its own widgets, so that the
@@ -83,6 +95,7 @@ namespace fx
             std::shared_ptr<ftk::Observer<int> > _sceneObserver;
             std::shared_ptr<ftk::Observer<int> > _parameterObserver;
             std::shared_ptr<ftk::Observer<float> > _particleSizeObserver;
+            std::shared_ptr<ftk::Observer<size_t> > _currentSystemObserver;
         };
     }
 }

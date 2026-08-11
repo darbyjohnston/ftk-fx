@@ -21,7 +21,7 @@ namespace fx
             return
                 range == other.range &&
                 frameRate == other.frameRate &&
-                system == other.system;
+                systems == other.systems;
         }
 
         bool Scene::operator != (const Scene& other) const
@@ -138,10 +138,7 @@ namespace fx
                 { "version", core::getVersion() },
                 { "range", value.range },
                 { "frameRate", value.frameRate },
-                // A list with one entry in it. There is only ever one system
-                // today, and a file that has to grow an array later is a file
-                // every reader has to learn twice.
-                { "systems", nlohmann::json::array({ value.system }) }
+                { "systems", value.systems }
             };
         }
 
@@ -155,15 +152,21 @@ namespace fx
                 const auto& systems = json.at("systems");
                 if (!systems.is_array())
                     throw std::runtime_error("\"systems\" is not a list");
-                if (!systems.empty())
+                out.systems.clear();
+                for (const auto& system : systems)
                 {
-                    systems.at(0).get_to(out.system);
+                    out.systems.push_back(system.get<System>());
                 }
             }
             if (out.range.min() > out.range.max())
                 throw std::runtime_error("the frame range runs backwards");
             if (out.frameRate <= 0.0)
                 throw std::runtime_error("the frame rate is not positive");
+            // A file that lists no systems is a file with nothing in it. Read
+            // as one empty system rather than none, so that the panels have
+            // something to show and the artist has something to edit.
+            if (out.systems.empty())
+                out.systems.push_back(System());
         }
 
         Scene read(const std::filesystem::path& path)

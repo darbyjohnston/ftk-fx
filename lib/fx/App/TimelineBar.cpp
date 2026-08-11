@@ -124,7 +124,7 @@ namespace fx
                 model->observeFrame(),
                 [this](const std::shared_ptr<const core::Frame>& value)
                 {
-                    _particleCount = value ? value->pool.size() : 0;
+                    _particleCount = value ? value->getParticleCount() : 0;
                     _statusUpdate();
                 });
 
