@@ -58,6 +58,10 @@ namespace fx
             auto scrollWidget = ScrollWidget::create(context);
             scrollWidget->setWidget(_channelLayout);
             scrollWidget->setBorder(false);
+            // Takes the rest of the column. Without this it asks for the
+            // height of the channels it holds and stops there, so the list
+            // ends part way down and the space below it is nothing at all.
+            scrollWidget->setVStretch(Stretch::Expanding);
 
             auto channelColumn = VerticalLayout::create(context);
             channelColumn->setSpacingRole(SizeRole::None);

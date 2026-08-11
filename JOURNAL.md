@@ -7,6 +7,37 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-09 — A scroll bar past the bottom of its pane
+
+Reported from a four-pane layout: the curve editor's channel list ended part
+way down its column, and its scroll bar carried on past the bottom of the pane
+and over the transport.
+
+One symptom, two causes, and they need separate fixes.
+
+The scroll widget was not expanding, so the vertical layout gave it the height
+it asked for -- the height of the twenty-odd channels it holds. In a tall pane
+that is more than the column has, so it overflowed; in a short one the layout
+squeezed it and the list stopped early. `setVStretch(Stretch::Expanding)` makes
+it take what is there and scroll the rest, which is what a scroll widget is for.
+
+That alone is enough in every layout I could build, which is the trap. The pane
+had no reason to believe it: nothing stopped a child from drawing outside it,
+so the first arrangement that overfilled a pane put pixels over its neighbour.
+`setClipChildren(true)` on the pane is the guarantee. A pane is a bounded
+region of the window and its contents belong inside it, whatever the content is
+and whoever writes it next.
+
+Verified by taking the same shot four ways -- neither fix, each alone, both.
+Neither: the scroll bar runs 75 pixels past the pane. Clip alone: it stops at
+the edge, and the list is still wrong. Stretch alone: correct here, and only
+here. Both: the list fills its column and the horizontal scroll bar it needs
+appears inside the pane rather than under the transport.
+
+Worth remembering that the manifest's existing two-up curves shot showed
+neither symptom. It took a deliberately short pane to make the bug appear at
+all, which is the same lesson as the shader: the shot has to be built to fail.
+
 ## 2026-08-09 — Two ways to read a vertical axis
 
 The curve editor drew every channel against one range, which is right when the

@@ -28,6 +28,10 @@ namespace fx
             IContainer::_init(context, "fx::app::Pane", parent);
             setHStretch(Stretch::Expanding);
             setVStretch(Stretch::Expanding);
+            // A pane's contents stay inside it. A scroll bar is drawn the full
+            // height of the list it scrolls, and without this it carries on
+            // past the bottom of the pane and over whatever is below.
+            setClipChildren(true);
 
             _model = model;
             _viewType = viewType;
