@@ -50,6 +50,9 @@ namespace fx
             _columnLayout->setMarginRole(SizeRole::None);
             _columnLayout->setSpacingRole(SizeRole::None);
 
+            // Both, so that a column narrower than the widest panel in it can
+            // be scrolled across rather than quietly cutting off whatever is
+            // at the right edge -- which is where a list keeps its controls.
             _columnScroll = ScrollWidget::create(context, ScrollType::Both);
             _columnScroll->setBorder(false);
             _columnScroll->setWidget(_columnLayout);

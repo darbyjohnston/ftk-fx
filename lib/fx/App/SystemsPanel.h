@@ -11,8 +11,6 @@
 
 namespace ftk
 {
-    class ButtonGroup;
-    class CheckBox;
     class ToolButton;
     class VerticalLayout;
 }
@@ -22,6 +20,7 @@ namespace fx
     namespace app
     {
         class SceneModel;
+        class SystemRow;
 
         //! The systems panel: what is in the scene, and which of it is being
         //! edited.
@@ -58,16 +57,9 @@ namespace fx
             //! Show which system is current, and which are enabled.
             void _valuesUpdate();
 
-            struct Row
-            {
-                std::shared_ptr<ftk::CheckBox> enabledCheckBox;
-                std::shared_ptr<ftk::ToolButton> nameButton;
-            };
-
             std::weak_ptr<SceneModel> _model;
-            std::vector<Row> _rows;
+            std::vector<std::shared_ptr<SystemRow> > _rows;
             std::shared_ptr<ftk::VerticalLayout> _listLayout;
-            std::shared_ptr<ftk::ButtonGroup> _nameGroup;
             std::shared_ptr<ftk::ToolButton> _removeButton;
 
             //! What the rows were built from, which is what decides whether

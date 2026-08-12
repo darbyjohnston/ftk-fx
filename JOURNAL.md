@@ -7,6 +7,52 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — What makes a list a list
+
+The systems panel was a stack of widgets that happened to be arranged in rows.
+It is now a list, and the difference is almost entirely in where the highlight
+stops.
+
+feather-tk already knows how: `ListItemButton` sets its button role to None and
+fills its *whole geometry* with the checked colour -- nothing inset, nothing
+rounded -- and `ListItemsWidget` stacks them with no spacing at all. A rounded
+band with a margin around it says "this is a control". A band that runs corner
+to corner says "this is a row of something". Same information, entirely
+different object.
+
+So `SystemRow` borrows the drawing and not the class. `ListWidget`'s items are a
+string and a tooltip, and a system row has to carry controls -- one now, more
+later -- so it needs to be a widget rather than a value. What is copied is the
+order: the row's own colour, then whatever the pointer is doing to it, then the
+contents on top.
+
+The check box moved to the right, which is where a second and third column will
+go. It is a child of the row, so a press that lands on it never reaches the
+row: ticking a system does not also select it. Verified both ways -- clicking a
+name selected it and left the ticks alone, clicking a tick changed it and left
+the selection alone.
+
+### Two things that surfaced by moving it
+
+**The panel divider was already there.** IPanel has drawn one under its header
+since it was written. It was invisible: `Divider` draws in `Border`, and it sits
+directly beneath the header's own lighter block, between two tones it is already
+between. Proved by colouring it loudly for one build rather than by squinting --
+the line appeared exactly where it should have been all along. It draws in
+`Well` now, so it reads as the bottom edge of the title.
+
+**The panel column can be narrower than its panels.** The rows are as wide as
+the widest panel in the column, and the widest is Parameters. Put the check box
+on the right and it lands in whatever the column cannot show; on the left,
+nobody had ever noticed. `ScrollType::Vertical` looked like the fix and is the
+opposite of one -- it clamps the content to *at least* the viewport and then
+clips the overflow silently, where `Both` at least lets it be scrolled to.
+Left on `Both`, which is where it started.
+
+The underlying thing is a minimum width the panel column has and does not
+declare. Worth fixing when something else needs it; today it means a column
+dragged narrow hides the right-hand column of the list.
+
 ## 2026-08-11 — Three small ones, and what the first was really about
 
 **The transform sliders stopped short of the emitter's.** They were not set to

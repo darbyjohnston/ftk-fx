@@ -78,6 +78,12 @@ namespace fx
             p.label->setParent(hLayout);
             p.closeButton->setParent(hLayout);
             p.divider = Divider::create(context, Orientation::Vertical, p.layout);
+            // Border is what a divider draws by default and it is all but
+            // invisible here: it sits directly under the header's own lighter
+            // block, between two tones it is already between. A recessed one
+            // reads as the bottom edge of the title rather than as a line that
+            // happens to be there.
+            p.divider->setBackgroundRole(ColorRole::Well);
             p.panelLayout = VerticalLayout::create(context, p.layout);
             p.panelLayout->setSpacingRole(SizeRole::None);
             p.panelLayout->setHStretch(Stretch::Expanding);

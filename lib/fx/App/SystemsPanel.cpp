@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright Contributors to the ftk-fx project.
 
-#include <fx/App/SystemsPanel.h>
+#include <fx/App/SystemsPanelPrivate.h>
 
 #include <fx/App/SceneModel.h>
 
-#include <ftk/UI/ButtonGroup.h>
-#include <ftk/UI/CheckBox.h>
 #include <ftk/UI/Divider.h>
 #include <ftk/UI/RowLayout.h>
 #include <ftk/UI/ScreenshotTag.h>
@@ -33,25 +31,14 @@ namespace fx
                 parent);
             _model = model;
 
-            // Radio: there is always exactly one current system, and clicking
-            // the one that is already current leaves it current rather than
-            // leaving the panels pointed at nothing.
-            _nameGroup = ButtonGroup::create(context, ButtonGroupType::Radio);
             std::weak_ptr<SceneModel> weak(_model);
-            _nameGroup->setCheckedCallback(
-                [this, weak](int index, bool value)
-                {
-                    if (_updating || !value)
-                        return;
-                    if (auto model = weak.lock())
-                    {
-                        model->setCurrentSystem(index);
-                    }
-                });
 
+            // No margin and no spacing: the rows meet each other and reach the
+            // edges of the panel, which is the difference between a list and a
+            // stack of widgets.
             _listLayout = VerticalLayout::create(context);
-            _listLayout->setMarginRole(SizeRole::MarginSmall);
-            _listLayout->setSpacingRole(SizeRole::SpacingTool);
+            _listLayout->setMarginRole(SizeRole::None);
+            _listLayout->setSpacingRole(SizeRole::None);
 
             auto addButton = ToolButton::create(context);
             addButton->setIcon("SystemAdd");
@@ -159,16 +146,22 @@ namespace fx
                 child->setParent(nullptr);
             }
             _rows.clear();
-            _nameGroup->clearButtons();
 
             std::weak_ptr<SceneModel> weak(_model);
             for (size_t i = 0; i < names.size(); ++i)
             {
-                Row row;
-
-                row.enabledCheckBox = CheckBox::create(context);
-                row.enabledCheckBox->setTooltip("Solve this system");
-                row.enabledCheckBox->setCheckedCallback(
+                auto row = SystemRow::create(context, names[i], _listLayout);
+                row->setCurrentCallback(
+                    [this, weak, i]
+                    {
+                        if (_updating)
+                            return;
+                        if (auto model = weak.lock())
+                        {
+                            model->setCurrentSystem(i);
+                        }
+                    });
+                row->setSolvedCallback(
                     [this, weak, i](bool value)
                     {
                         if (_updating)
@@ -178,21 +171,7 @@ namespace fx
                             model->setSystemEnabled(i, value);
                         }
                     });
-
-                // A button rather than a label, so that the current system is
-                // shown the way every other current thing in the application
-                // is: checked.
-                row.nameButton = ToolButton::create(context, names[i]);
-                row.nameButton->setCheckable(true);
-                row.nameButton->setHStretch(Stretch::Expanding);
-                _nameGroup->addButton(row.nameButton);
-
-                auto rowLayout = HorizontalLayout::create(context, _listLayout);
-                rowLayout->setSpacingRole(SizeRole::SpacingTool);
-                row.enabledCheckBox->setParent(rowLayout);
-                row.nameButton->setParent(rowLayout);
-                setScreenshotTag(rowLayout, Format("Systems.{0}").arg(i));
-
+                setScreenshotTag(row, Format("Systems.{0}").arg(i));
                 _rows.push_back(row);
             }
 
@@ -209,9 +188,8 @@ namespace fx
             const size_t current = model->getCurrentSystem();
             for (size_t i = 0; i < _rows.size() && i < model->getSystemCount(); ++i)
             {
-                _rows[i].enabledCheckBox->setChecked(
-                    model->getSystem(i).isEnabled());
-                _rows[i].nameButton->setChecked(i == current);
+                _rows[i]->setSolved(model->getSystem(i).isEnabled());
+                _rows[i]->setCurrent(i == current);
             }
             // The last system is never removed, so the button says so rather
             // than the click doing nothing.
