@@ -7,6 +7,33 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — A dot instead of a border, and a shuttle that listens to the keyboard
+
+**Third go at the current-editor mark.** A border round the whole editor, then
+a bar along its top, now a filled dot at the start of the header. Each was
+quieter than the last, and the reason the first two were wrong is the same: the
+information is not "here is a region", it is "this one" -- and a region-sized
+mark says the first thing however faint it is drawn. The header is where the
+editor already says what it is showing. The dot is one more word in that
+sentence, and it sits where the eye goes to read the rest of it.
+
+**The shuttle takes modifiers.** A shuttle asks how fast, and how fast deserves
+more than one answer. Control is the fine step, Shift the large one.
+
+Shift rather than Alt, which is what was suggested: `DoubleEdit::scrollEvent`
+and the sliders already use Shift for the large step, so this is one convention
+in the toolkit instead of two. Alt is also the viewport's pan modifier, which
+is a weaker argument -- different widget -- but it pointed the same way.
+
+`ShuttleWidget` now keeps the modifiers of the drag and hands them out, read
+from the move rather than the press so a key taken up part way through takes
+effect from there. Additive; nothing that used the widget had to change.
+
+Tested by dragging the same distance three ways and checking the three
+distances differ. Two of those checks fail without the scaling -- which is
+worth saying, because the last test written against a feather-tk widget passed
+against broken code and the feature turned out not to be broken at all.
+
 ## 2026-08-11 — Shuttles for the transform, and a shot that had stopped asking
 
 A slider maps a made-up span of scene units onto a track. For a rate that is

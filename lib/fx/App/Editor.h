@@ -98,8 +98,6 @@ namespace fx
             //! it becomes the current one.
             void setPressCallback(const std::function<void(void)>&);
 
-            void sizeHintEvent(const ftk::SizeHintEvent&) override;
-            void drawOverlayEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void tickEvent(bool, bool, const ftk::TickEvent&) override;
             void mousePressEvent(ftk::MouseClickEvent&) override;
 
@@ -126,7 +124,6 @@ namespace fx
 
             bool _current = false;
             std::function<void(void)> _pressCallback;
-            int _border = 0;
             float _particleSize = 3.F;
             DrawType _drawType = DrawType::Point;
 
@@ -144,6 +141,7 @@ namespace fx
             //! current selections and change as the editor does.
             std::shared_ptr<ftk::ActionGroup> _editorTypeGroup;
             std::shared_ptr<ftk::ActionGroup> _viewTypeGroup;
+            std::shared_ptr<ftk::IWidget> _currentDot;
             std::shared_ptr<ftk::MenuBar> _menuBar;
             std::shared_ptr<ftk::Menu> _editorMenu;
             std::shared_ptr<ftk::Menu> _viewMenu;

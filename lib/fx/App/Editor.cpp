@@ -19,6 +19,93 @@ namespace fx
 {
     namespace app
     {
+        namespace
+        {
+            //! The mark that says which editor the menus and the keyboard are
+            //! aimed at: a filled dot at the start of the header, beside the
+            //! menus naming what the editor is showing.
+            //!
+            //! It used to be a bar along the top edge, and before that a
+            //! border round the whole editor. Both were a lot of accent colour
+            //! for one bit of information, and both put it somewhere the eye
+            //! was not already looking. The header is where the editor says
+            //! what it is; this is one more word in that sentence.
+            class CurrentDot : public IWidget
+            {
+            protected:
+                CurrentDot() = default;
+
+            public:
+                static std::shared_ptr<CurrentDot> create(
+                    const std::shared_ptr<Context>& context,
+                    const std::shared_ptr<IWidget>& parent = nullptr)
+                {
+                    auto out = std::shared_ptr<CurrentDot>(new CurrentDot);
+                    out->_init(context, "fx::app::CurrentDot", parent);
+                    return out;
+                }
+
+                void setCurrent(bool value)
+                {
+                    if (value == _current)
+                        return;
+                    _current = value;
+                    setDrawUpdate();
+                }
+
+                Size2I getSizeHint() const override
+                {
+                    const int s = _dot + _margin * 2;
+                    return Size2I(s, s);
+                }
+
+                void styleEvent(const StyleEvent& event) override
+                {
+                    IWidget::styleEvent(event);
+                    if (event.hasChanges())
+                    {
+                        _init2 = true;
+                    }
+                }
+
+                void sizeHintEvent(const SizeHintEvent& event) override
+                {
+                    IWidget::sizeHintEvent(event);
+                    if (_init2)
+                    {
+                        _init2 = false;
+                        _dot = event.style->getSizeRole(
+                            SizeRole::Border, event.displayScale) * 4;
+                        _margin = event.style->getSizeRole(
+                            SizeRole::MarginInside, event.displayScale);
+                    }
+                }
+
+                void drawEvent(
+                    const Box2I& drawRect,
+                    const DrawEvent& event) override
+                {
+                    IWidget::drawEvent(drawRect, event);
+                    if (!_current)
+                        return;
+                    const Box2I& g = getGeometry();
+                    event.render->drawMesh(
+                        circle(
+                            V2I(
+                                g.min.x + g.w() / 2,
+                                g.min.y + g.h() / 2),
+                            _dot / 2),
+                        event.style->getColorRole(ColorRole::KeyFocus));
+                }
+
+            private:
+                bool _current = false;
+                bool _init2 = true;
+                int _dot = 0;
+                int _margin = 0;
+            };
+        }
+
         void Editor::_init(
             const std::shared_ptr<Context>& context,
             const std::shared_ptr<SceneModel>& model,
@@ -41,7 +128,12 @@ namespace fx
 
             _setWidget(_layout);
 
-            _menuBar = MenuBar::create(context, _layout);
+            auto headerLayout = HorizontalLayout::create(context, _layout);
+            headerLayout->setSpacingRole(SizeRole::None);
+            headerLayout->setBackgroundRole(ColorRole::Button);
+            _currentDot = CurrentDot::create(context, headerLayout);
+            _menuBar = MenuBar::create(context, headerLayout);
+            _menuBar->setHStretch(Stretch::Expanding);
 
             // The actions outlive the menus they are put into, so the checked
             // state survives the rebuild that a content change causes.
@@ -262,7 +354,7 @@ namespace fx
             if (value == _current)
                 return;
             _current = value;
-            setDrawUpdate();
+            std::dynamic_pointer_cast<CurrentDot>(_currentDot)->setCurrent(value);
         }
 
         void Editor::setPressCallback(const std::function<void(void)>& value)
@@ -271,37 +363,6 @@ namespace fx
         }
 
 
-        void Editor::sizeHintEvent(const SizeHintEvent& event)
-        {
-            IWidget::sizeHintEvent(event);
-            _border = event.style->getSizeRole(
-                SizeRole::Border,
-                event.displayScale);
-        }
-
-
-        void Editor::drawOverlayEvent(const Box2I& drawRect, const DrawEvent& event)
-        {
-            // Mark the editor the menu actions and the keyboard apply to. With
-            // four of them on screen this is the difference between an
-            // arrangement and a guess.
-            //
-            // Drawn in the overlay pass rather than the ordinary one, which
-            // runs before the children: the content fills the editor, so a
-            // border drawn there survived only where the header did not reach.
-            if (_current)
-            {
-                // A bar along the top rather than a box round the whole
-                // editor. Four editors each outlined in an accent colour is a
-                // lot of colour for one bit of information, and the top edge
-                // is where the header already is -- the eye is looking there
-                // to read what the editor is showing.
-                const Box2I& g = getGeometry();
-                event.render->drawRect(
-                    Box2I(g.min.x, g.min.y, g.w(), _border),
-                    event.style->getColorRole(ColorRole::KeyFocus));
-            }
-        }
 
         void Editor::mousePressEvent(MouseClickEvent& event)
         {
