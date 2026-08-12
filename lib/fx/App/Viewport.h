@@ -201,6 +201,9 @@ namespace fx
             //! it looks at is the mode's only say in picking.
             Arm _gizmoPick(const ftk::V2I&) const;
 
+            //! What the drag will be called on the undo stack.
+            std::string _gizmoCommand() const;
+
             //! Take the current system to where the drag has taken it.
             void _gizmoMove(const ftk::V2I& pos);
 

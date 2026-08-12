@@ -1434,12 +1434,17 @@ namespace fx
             if (Arm::None == _gizmoDrag)
                 return;
             _gizmoDrag = Arm::None;
+            // Asked again now the drag is over. A drag holds its arm however
+            // far the pointer wanders off it, and the hover was left holding
+            // it too -- so an arm stayed lit after the button came up, until
+            // something else moved the pointer. It read as a selection.
+            _gizmoHover = _gizmoPick(event.pos);
             if (auto model = _model.lock())
             {
                 // Closed even when nothing moved: endEdit() records nothing
                 // when the state matches, and leaving an edit open is how undo
                 // goes quiet for the rest of the session.
-                model->endEdit("Move System");
+                model->endEdit(_gizmoCommand());
             }
             setDrawUpdate();
         }
@@ -1451,6 +1456,22 @@ namespace fx
                 _gizmoHover = Arm::None;
                 setDrawUpdate();
             }
+        }
+
+        std::string Viewport::_gizmoCommand() const
+        {
+            // What undo will be called. The name is picked from the mode
+            // rather than written at each place that edits, so the entry that
+            // opens the edit and the one that closes it cannot disagree --
+            // which they did, and every rotate and scale went onto the undo
+            // stack as "Move System".
+            switch (_gizmoMode)
+            {
+            case GizmoMode::Rotate: return "Rotate System";
+            case GizmoMode::Scale: return "Scale System";
+            default: break;
+            }
+            return "Move System";
         }
 
         void Viewport::_gizmoMove(const V2I& pos)
@@ -1523,7 +1544,7 @@ namespace fx
             case Arm::Z: setValue(translate.z, frame, value.z); break;
             default: break;
             }
-            model->systemChanged("Move System", before);
+            model->systemChanged(_gizmoCommand(), before);
         }
 
         void Viewport::_gizmoRotate(const V2I& pos)
@@ -1572,7 +1593,7 @@ namespace fx
             case Arm::Z: setValue(rotate.z, frame, value.z); break;
             default: break;
             }
-            model->systemChanged("Rotate System", before);
+            model->systemChanged(_gizmoCommand(), before);
         }
 
         void Viewport::_gizmoScale(const V2I& pos)
@@ -1611,7 +1632,7 @@ namespace fx
             case Arm::Z: setValue(scale.z, frame, value.z); break;
             default: break;
             }
-            model->systemChanged("Scale System", before);
+            model->systemChanged(_gizmoCommand(), before);
         }
 
         void Viewport::scrollEvent(ScrollEvent& event)
