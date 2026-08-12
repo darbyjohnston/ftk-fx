@@ -769,7 +769,13 @@ namespace fx
             {
                 any |= arm.valid;
             }
-            if (!any)
+            // A drag still has a rail to draw when it has no arms left. An
+            // emitter carried far enough down its axis projects a world unit
+            // to less than a pixel, and an arm measured in those pixels stops
+            // being drawable -- which is right for an arm and wrong for the
+            // line it runs along, since that line is what the drag is being
+            // solved against and it has not moved.
+            if (!any && Arm::None == _gizmoDrag)
                 return;
 
             const ClipRectEnabledState clipRectEnabledState(event.render);
@@ -795,23 +801,24 @@ namespace fx
             // falling behind rather than as the pointer having left the rail.
             if (Arm::None != _gizmoDrag)
             {
+                // From the line recorded at the press rather than from the
+                // arms as they stand. The axis does not move while it is
+                // dragged along -- the emitter slides down it -- so this is
+                // the same line, and it is there to be drawn even when the
+                // emitter has gone somewhere the arms cannot be measured.
                 const size_t i = static_cast<size_t>(_gizmoDrag) - 1;
-                if (arms[i].valid)
-                {
-                    const float reach =
-                        static_cast<float>(g.w() + g.h());
-                    Color4F rail = colors[i];
-                    rail.a = .25F;
-                    event.render->drawLine(
-                        V2F(
-                            arms[i].origin.x - arms[i].dir.x * reach,
-                            arms[i].origin.y - arms[i].dir.y * reach),
-                        V2F(
-                            arms[i].origin.x + arms[i].dir.x * reach,
-                            arms[i].origin.y + arms[i].dir.y * reach),
-                        rail,
-                        lineOptions);
-                }
+                const float reach = static_cast<float>(g.w() + g.h());
+                Color4F rail = colors[i];
+                rail.a = .25F;
+                event.render->drawLine(
+                    V2F(
+                        _gizmoScreen.x - _gizmoDir.x * reach,
+                        _gizmoScreen.y - _gizmoDir.y * reach),
+                    V2F(
+                        _gizmoScreen.x + _gizmoDir.x * reach,
+                        _gizmoScreen.y + _gizmoDir.y * reach),
+                    rail,
+                    lineOptions);
             }
 
             for (size_t i = 0; i < arms.size(); ++i)

@@ -68,6 +68,22 @@ denominator is constant, and none of this can happen. That is a good sign about
 the formulation: the degeneracy is exactly where the geometry says it should
 be, and nowhere else.
 
+### A postscript on the rail
+
+The rail vanished when the pointer went far outside the viewport. It was being
+drawn from the arms as recomputed each frame, and an emitter carried far enough
+down its axis projects a world unit to under a pixel -- at which point an arm
+stops being drawable, and took the line with it.
+
+Right for the arm, wrong for the line, and the reason is sitting in the solve:
+the axis does not move while it is dragged along, the emitter slides down it.
+That is exactly why the press records the line once and keeps it. Drawing the
+rail from the arms was drawing a second thing that usually coincided with it.
+
+Now it comes from the recorded line, so it survives the arms it belongs to.
+Which turns out to be the most useful frame of all: the emitter gone off
+screen, and the one line that says where it went and which way to drag it back.
+
 ### Three solves for one drag
 
 Nearest-point between two lines, then a drag plane, now the projection. Not a

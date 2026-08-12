@@ -1355,6 +1355,36 @@
           "caption": "Dragged well outside the window; the slider opens up rather than reading its own end stop"
         }
       ]
+    },
+    {
+      "id": "manipulator-rail-far",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "dragHold": [
+            [
+              630,
+              838
+            ],
+            [
+              -900,
+              300
+            ]
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Held with the emitter carried off screen: the arms cannot be measured any more, the line it went down still can"
+        }
+      ]
     }
   ]
 }
