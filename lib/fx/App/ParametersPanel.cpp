@@ -9,6 +9,7 @@
 #include <ftk/UI/Bellows.h>
 #include <ftk/UI/CheckBox.h>
 #include <ftk/UI/ComboBox.h>
+#include <ftk/UI/FloatEditShuttle.h>
 #include <ftk/UI/FloatEditSlider.h>
 #include <ftk/UI/FormLayout.h>
 #include <ftk/UI/IntEditSlider.h>
@@ -25,6 +26,32 @@ namespace fx
 {
     namespace app
     {
+        std::shared_ptr<IWidget> ParametersPanel::Row::getWidget() const
+        {
+            return slider ?
+                std::static_pointer_cast<IWidget>(slider) :
+                std::static_pointer_cast<IWidget>(shuttle);
+        }
+
+        void ParametersPanel::Row::setValue(float value)
+        {
+            if (slider) slider->setValue(value);
+            else shuttle->setValue(value);
+        }
+
+        void ParametersPanel::Row::setEnabled(bool value)
+        {
+            getWidget()->setEnabled(value);
+        }
+
+        void ParametersPanel::Row::setRangeFor(float value)
+        {
+            const float lo = std::min(value, info.min);
+            const float hi = std::max(value, info.max);
+            if (slider) slider->setRange(lo, hi);
+            else shuttle->setRange(lo, hi);
+        }
+
         // Every row gets a default, and so a reset button. The three that had
         // none looked like rows that could not be reset rather than rows whose
         // author forgot, which is worse than not offering it anywhere.
@@ -36,17 +63,29 @@ namespace fx
             Row row;
             row.info = info;
 
-            row.slider = FloatEditSlider::create(context);
             // Otherwise a row is as wide as the widest thing in its own group,
-            // so Transform's sliders stop short of Emitter's and the column
+            // so Transform's controls stop short of Emitter's and the column
             // reads as two panels that failed to line up.
-            row.slider->setHStretch(Stretch::Expanding);
-            row.slider->setRange(info.min, info.max);
-            row.slider->setValue(info.parameter->getConstant());
-            row.slider->setDefault(info.defaultValue);
+            if (ParameterControl::Shuttle == info.control)
+            {
+                row.shuttle = FloatEditShuttle::create(context);
+                row.shuttle->setHStretch(Stretch::Expanding);
+                row.shuttle->setRange(info.min, info.max);
+                row.shuttle->setStep(info.step);
+                row.shuttle->setValue(info.parameter->getConstant());
+                row.shuttle->setDefault(info.defaultValue);
+            }
+            else
+            {
+                row.slider = FloatEditSlider::create(context);
+                row.slider->setHStretch(Stretch::Expanding);
+                row.slider->setRange(info.min, info.max);
+                row.slider->setValue(info.parameter->getConstant());
+                row.slider->setDefault(info.defaultValue);
+            }
             std::weak_ptr<SceneModel> weak(_model);
             const ParameterInfo captured = info;
-            row.slider->setCallback(
+            const auto valueCallback = 
                 [this, weak, captured](float value)
                 {
                     if (_updating)
@@ -65,11 +104,11 @@ namespace fx
                     setValue(*captured.parameter, _currentFrame, value);
                     model->systemChanged("Set " + captured.name, before);
                     _valuesUpdate();
-                });
+                };
 
             // Closed when the value changed with the mouse up, which is a
             // typed value or the end of a drag. Both are one edit.
-            row.slider->setPressedCallback(
+            const auto pressedCallback =
                 [weak, captured](float, bool pressed)
                 {
                     if (auto model = weak.lock())
@@ -79,7 +118,17 @@ namespace fx
                             model->endEdit("Set " + captured.name);
                         }
                     }
-                });
+                };
+            if (row.shuttle)
+            {
+                row.shuttle->setCallback(valueCallback);
+                row.shuttle->setPressedCallback(pressedCallback);
+            }
+            else
+            {
+                row.slider->setCallback(valueCallback);
+                row.slider->setPressedCallback(pressedCallback);
+            }
 
             row.keyButton = ToolButton::create(context);
             row.keyButton->setIcon("Key");
@@ -100,12 +149,12 @@ namespace fx
             auto hLayout = HorizontalLayout::create(context);
             hLayout->setSpacingRole(SizeRole::SpacingTool);
             hLayout->setHStretch(Stretch::Expanding);
-            row.slider->setParent(hLayout);
+            row.getWidget()->setParent(hLayout);
             row.keyButton->setParent(hLayout);
             layout->addRow(info.name + ":", hLayout);
-            // Tagged so a shot can find the slider rather than guess where it
+            // Tagged so a shot can find the control rather than guess where it
             // is; a drag on one is the only way to reach the press callbacks.
-            setScreenshotTag(row.slider, "Parameters." + info.name);
+            setScreenshotTag(row.getWidget(), "Parameters." + info.name);
 
             _rows.push_back(row);
         }
@@ -176,7 +225,7 @@ namespace fx
                 {
                     if (0 == row.info.name.compare(0, 4, "Size"))
                     {
-                        row.slider->setEnabled(sim::hasVolume(emitter.shape));
+                        row.setEnabled(sim::hasVolume(emitter.shape));
                     }
                 }
                 _surfaceCheckBox->setEnabled(sim::hasVolume(emitter.shape));
@@ -193,10 +242,8 @@ namespace fx
                 // anywhere. Opened up to hold whatever the value actually is,
                 // and closed again when it comes back, so the number shown is
                 // the number in the scene rather than the end of the track.
-                row.slider->setRange(
-                    std::min(value, row.info.min),
-                    std::max(value, row.info.max));
-                row.slider->setValue(value);
+                row.setRangeFor(value);
+                row.setValue(value);
                 bool keyed = false;
                 if (core::Parameter::Type::Curve == parameter->getType())
                 {

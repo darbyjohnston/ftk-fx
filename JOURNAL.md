@@ -7,6 +7,72 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — Shuttles for the transform, and a shot that had stopped asking
+
+A slider maps a made-up span of scene units onto a track. For a rate that is
+fine: it runs from none to a lot, and where in that it sits is information. For
+a translation there is no span. The ends are invented, the artist drags past
+them, and then the panel has to be taught not to lie about it -- which it was,
+yesterday, and that should have been the clue.
+
+So the transform rows shuttle instead. A shuttle asks how fast, not how far
+along: drag it and the value moves at a rate, let go and it stops. Nothing has
+to be decided about where the ends are, because there are none. The ranges stay
+as clamps, wide enough not to be met by accident.
+
+Measured: a hundred pixels of drag at a step of a tenth gives 0.80, one undo
+takes it back, and the scene file has 0.8. Rotate steps by a degree, scale by a
+hundredth.
+
+The rows are a little sparse -- a shuttle is a fixed-size knob, so where a
+slider filled the row there is now a gap before the key column. The key
+diamonds still line up across every group, which is the alignment worth having.
+
+### The part I got wrong first
+
+Before writing any of it I decided `FloatEditShuttle` had a bug: its callback
+is wired from the edit box, and the shuttle writes to the model directly, so
+plainly a shuttle drag would never be reported. I fixed all three shuttle
+widgets in feather-tk and wrote a test.
+
+The test passed with the fix removed.
+
+`FloatEdit` observes the model and fires its callback on *any* change,
+including one the shuttle made. There was no bug. My fix would have double-fired
+every callback in three widgets, into a library, on a premise I never checked --
+and the only reason it did not is that I A/B'd the test out of habit rather than
+suspicion.
+
+Reverted. The test stayed: it drives a real shuttle drag through injected mouse
+events, which nothing did before, and it is now the thing that would catch this
+if the wiring ever did break. Ninety-five tests.
+
+### A shot that had quietly stopped asking anything
+
+`undo-slider-drag` drags two sliders and undoes one. Adding the System group and
+the shuttles moved the panel's contents down, and the shot's coordinates --
+written months of layout ago -- landed on nothing. It captured a perfectly good
+picture of a scene nobody had edited, and passed, with a caption describing two
+drags that never happened. Second time: `panes-four-dragged` did the same thing
+when a splitter moved.
+
+Twice is a pattern, so the harness now takes an `expect` block:
+
+    "expect": { "Parameters.Rate": "1451", "Parameters.Speed": "6.00" }
+
+Each entry names a tagged widget and a string its text must contain, checked
+before the picture is written. Those two together cannot pass unless all three
+steps landed: the rate moved and stayed, the speed moved and was undone -- and
+had the second drag missed, the undo would have taken the rate back instead.
+Verified by pointing the drag at empty space and watching the shot fail.
+
+Finding the right coordinates took four wrong guesses, all of the same kind:
+reading a position off a magnified crop instead of asking the program. The last
+one was the good one -- the rows were at y=1206 in a window 1200 pixels tall,
+scrolled below the bottom edge, and the sidecar records geometry for widgets
+that are clipped just as happily as for widgets you can see. A box in the
+sidecar does not mean a thing on screen.
+
 ## 2026-08-11 — What makes a list a list
 
 The systems panel was a stack of widgets that happened to be arranged in rows.

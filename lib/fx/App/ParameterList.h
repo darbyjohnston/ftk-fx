@@ -12,12 +12,27 @@ namespace fx
 {
     namespace app
     {
+        //! What the panel puts beside the number.
+        enum class ParameterControl
+        {
+            //! A slider, for a value with a range worth showing: a rate runs
+            //! from none to a lot, and where in that it sits means something.
+            Slider,
+
+            //! A shuttle, for a value with no range at all. A translation is
+            //! as far as the artist drags it, and a slider can only offer a
+            //! made-up span of scene units and then lie when the value leaves
+            //! it. A shuttle asks how fast, not how far along.
+            Shuttle
+        };
+
         //! One row of the parameter panel, and one channel of the curve
         //! editor.
         //!
         //! The range is interface knowledge rather than something the solver
         //! has an opinion about -- a rate of a million is meaningful, it is
-        //! just not what a slider should span.
+        //! just not what a slider should span. For a shuttle it is only a
+        //! clamp, since there is no track for it to be a span of.
         struct ParameterInfo
         {
             std::string group;
@@ -32,6 +47,12 @@ namespace fx
 
             //! The value a fresh scene has, for the reset button.
             float defaultValue = 0.F;
+
+            ParameterControl control = ParameterControl::Slider;
+
+            //! How much one notch of a shuttle is worth. Unused by a slider,
+            //! which has its range to divide up instead.
+            float step = .1F;
 
             //! "Emitter/Rate", which is what a curve is stored and looked up
             //! under.

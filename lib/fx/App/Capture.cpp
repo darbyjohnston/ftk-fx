@@ -696,6 +696,17 @@ namespace fx
                 return;
             }
 
+            // Checked before the picture is written, so a shot whose
+            // coordinates have gone stale says so instead of quietly
+            // photographing a scene nobody edited.
+            const std::string expectFailure = _expectFailure();
+            if (!expectFailure.empty())
+            {
+                note(p.shotId, expectFailure);
+                _finish(false);
+                return;
+            }
+
             std::error_code ec;
             std::filesystem::create_directories(p.outputDir, ec);
             const auto png = p.outputDir / (p.shotId + ".png");
@@ -733,6 +744,38 @@ namespace fx
                 return false;
             }
             return true;
+        }
+
+        std::string Capture::_expectFailure() const
+        {
+            FTK_P();
+            if (!p.shot.contains("expect"))
+                return std::string();
+            auto app = p.app.lock();
+            if (!app || app->getWindows().empty())
+                return "no window to look at";
+            std::vector<std::shared_ptr<ftk::IWidget> > tagged;
+            collect(app->getWindows().front(), tagged);
+
+            for (const auto& i : p.shot.at("expect").items())
+            {
+                bool found = false;
+                for (const auto& w : tagged)
+                {
+                    if (ftk::getScreenshotTag(w) != i.key())
+                        continue;
+                    found = true;
+                    const std::string text = widgetText(w);
+                    const std::string want = i.value().get<std::string>();
+                    if (text.find(want) == std::string::npos)
+                        return ftk::Format("{0} reads \"{1}\", expected \"{2}\"").
+                            arg(i.key()).arg(text).arg(want);
+                    break;
+                }
+                if (!found)
+                    return ftk::Format("nothing tagged {0}").arg(i.key());
+            }
+            return std::string();
         }
 
         void Capture::_writeMetadata(const std::filesystem::path& path) const

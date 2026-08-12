@@ -76,6 +76,14 @@ namespace fx
             void _finish(bool);
 
             bool _writePNG(const std::filesystem::path&) const;
+            //! Why the shot's "expect" block is not satisfied, or empty when
+            //! it is. A shot that clicks or drags is aimed at coordinates, and
+            //! coordinates go stale the moment the layout moves under them --
+            //! silently, because a drag that lands on nothing still captures a
+            //! perfectly good picture of a scene nobody edited. This is how a
+            //! shot says what it was supposed to change.
+            std::string _expectFailure() const;
+
             void _writeMetadata(const std::filesystem::path&) const;
 
             FTK_PRIVATE();

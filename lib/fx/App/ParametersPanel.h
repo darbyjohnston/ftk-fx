@@ -14,6 +14,7 @@ namespace ftk
 {
     class CheckBox;
     class ComboBox;
+    class FloatEditShuttle;
     class FloatEditSlider;
     class FormLayout;
     class LineEdit;
@@ -50,11 +51,26 @@ namespace fx
 
         private:
             //! One row: a slider for the value and a button that keys it.
+            //! One row: the value, and a button that keys it. The value is a
+            //! slider or a shuttle, never both -- kept as two members rather
+            //! than behind an interface because there are two of them and
+            //! they are told apart three times.
             struct Row
             {
                 ParameterInfo info;
                 std::shared_ptr<ftk::FloatEditSlider> slider;
+                std::shared_ptr<ftk::FloatEditShuttle> shuttle;
                 std::shared_ptr<ftk::ToolButton> keyButton;
+
+                //! The widget the row actually built.
+                std::shared_ptr<ftk::IWidget> getWidget() const;
+
+                void setValue(float);
+                void setEnabled(bool);
+
+                //! Open the range far enough to hold the value, so the number
+                //! shown is the number in the scene.
+                void setRangeFor(float);
             };
 
             //! Build the controls for the current system.

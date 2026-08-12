@@ -75,6 +75,17 @@ one per settle, so a click on what a previous click opened finds it on screen.
 Their coordinates are in the same pixels as the boxes in a sidecar, which is
 where to read them from.
 
+A shot may set "expect", which is how a shot that clicks or drags says what it
+was supposed to change:
+
+    "expect": { "Parameters.Speed": "6.00" }
+
+Each entry names a tagged widget and a string its text has to contain; the shot
+fails if it does not. Coordinates go stale the moment the layout moves under
+them, and a drag that lands on nothing still captures a perfectly good picture
+of a scene nobody edited -- which is how two shots quietly stopped testing
+anything before this existed.
+
 A shot may also set "settle" in seconds to wait longer before capturing, and
 "splitter" in its window block to move the panel column, which is how a shot of
 a wide panel gets room for it.

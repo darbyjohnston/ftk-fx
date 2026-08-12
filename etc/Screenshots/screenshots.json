@@ -572,7 +572,10 @@
           "id": "MainWindow.Timeline",
           "caption": "The key at frame 40 dragged down, and the sim re-run"
         }
-      ]
+      ],
+      "expect": {
+        "MainWindow.Editor0": "Curves"
+      }
     },
     {
       "id": "readme",
@@ -704,7 +707,7 @@
       "id": "undo-slider-drag",
       "window": {
         "w": 900,
-        "h": 600,
+        "h": 820,
         "splitter": 0.35
       },
       "setup": [
@@ -714,24 +717,24 @@
         {
           "drag": [
             [
-              1100,
-              252
+              1200,
+              1228
             ],
             [
               1500,
-              252
+              1228
             ]
           ]
         },
         {
           "drag": [
             [
-              1100,
-              316
+              1200,
+              1292
             ],
             [
-              1400,
-              316
+              1450,
+              1292
             ]
           ]
         },
@@ -744,7 +747,11 @@
           "id": "MainWindow.Panel.Parameters",
           "caption": "Two slider drags, one undone: Speed back, Rate still moved"
         }
-      ]
+      ],
+      "expect": {
+        "Parameters.Rate": "1451",
+        "Parameters.Speed": "6.00"
+      }
     },
     {
       "id": "frame-view",
@@ -1204,7 +1211,10 @@
           "id": "Parameters.Translate X",
           "caption": "Dragged along the arm; the whole gesture is one undo step"
         }
-      ]
+      ],
+      "expect": {
+        "Parameters.Translate X": "9.4"
+      }
     },
     {
       "id": "manipulator-back",
@@ -1249,7 +1259,10 @@
           "id": "Parameters.Translate Z",
           "caption": "Dragged away down the Z arm and back; the value follows the pointer home"
         }
-      ]
+      ],
+      "expect": {
+        "Parameters.Translate Z": "-1.00"
+      }
     },
     {
       "id": "manipulator-edge",
@@ -1354,7 +1367,10 @@
           "id": "Parameters.Translate Z",
           "caption": "Dragged well outside the window; the slider opens up rather than reading its own end stop"
         }
-      ]
+      ],
+      "expect": {
+        "Parameters.Translate Z": "-"
+      }
     },
     {
       "id": "manipulator-rail-far",
