@@ -7,6 +7,33 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — Test runs stay off the screen
+
+The feather-tk suite makes dozens of applications and shows a window from most
+of them. On a developer's machine they flicker past over whatever is being
+worked on, and any one of them can be clicked into while a test is driving it.
+That last part is the real problem: a stray click does not land in an idle
+window, it lands in a test that is halfway through a gesture.
+
+Everything needed was already there. `App` has an offscreen mode, applied to
+each window as it is added, and the GL windows are created hidden -- `show()`
+is what reveals them. Nothing had to change about how a window is made, only
+about whether `show()` is honoured.
+
+What was missing was a way to decide it *before any application exists*, which
+is where the decision belongs: the process is a test runner, and it makes
+dozens of applications rather than one. So `App::setOffscreenDefault()`, static
+for that reason, and `ftk-test` sets it.
+
+`-exit` implies it now as well. A run whose whole purpose is to start the
+interface and stop has nobody to show a window to, and that flag is what the
+examples registered as tests are run with -- seven more windows per `ctest`.
+
+Verified by asking a window in a test whether it was offscreen rather than by
+watching the screen and hoping: it says yes, ninety-five tests pass, and the
+screenshot harness -- which depends on the same mechanism for the opposite
+reason -- still captures all thirty-nine shots.
+
 ## 2026-08-11 — Driving a window without a person at it
 
 Asked what feather-tk could add to make testing easier. The answer came out of
