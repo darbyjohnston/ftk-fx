@@ -26,6 +26,12 @@ later -- so it needs to be a widget rather than a value. What is copied is the
 order: the row's own colour, then whatever the pointer is doing to it, then the
 contents on top.
 
+The name is padded sideways and not vertically -- `Label` takes a role per
+axis -- which is the same split feather-tk's list items make: the row's margin
+is the gap to the panel edge, and the pad is the gap from the highlight's edge
+to the text. One role for both would have made the rows taller to fix a
+horizontal problem.
+
 The check box moved to the right, which is where a second and third column will
 go. It is a child of the row, so a press that lands on it never reaches the
 row: ticking a system does not also select it. Verified both ways -- clicking a

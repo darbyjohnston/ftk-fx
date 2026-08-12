@@ -23,6 +23,12 @@ namespace fx
             _setMousePressEnabled(true);
 
             _label = Label::create(context, text);
+            // Padded sideways only, the way feather-tk pads a list item: the
+            // row's margin is the gap to the panel edge, and this is the gap
+            // from the highlight's edge to the text. Without it the name sits
+            // against the side of the panel. Nothing vertical, so the rows
+            // keep the height they had.
+            _label->setMarginRole(SizeRole::LabelPad, SizeRole::None);
             _label->setHStretch(Stretch::Expanding);
 
             // On the right, where the columns will be. There is one control

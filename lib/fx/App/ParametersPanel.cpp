@@ -308,6 +308,7 @@ namespace fx
             // picks a system; this panel is what edits the one that is picked,
             // and the name is one of the things it has.
             auto nameEdit = LineEdit::create(context);
+            nameEdit->setHStretch(Stretch::Expanding);
             nameEdit->setText(model->getSystem().getName());
             nameEdit->setCallbackOnFocusLost(true);
             nameEdit->setTooltip("What this system is called");
