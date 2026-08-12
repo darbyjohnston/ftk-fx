@@ -266,6 +266,13 @@ namespace fx
             ftk::V3F _gizmoStartRotate;
             ftk::V3F _gizmoStartScale = ftk::V3F(1.F, 1.F, 1.F);
 
+            //! The angles the last move of a rotate wrote. Any rotation can
+            //! be described by more than one set of them, and this is what
+            //! picks between them: the set nearest the one before it. Without
+            //! it a drag would jump between two descriptions of the same
+            //! pose, and winding past a full turn would be lost.
+            ftk::V3F _gizmoRotatePrev;
+
             //! Where the pointer was around the ring at the last move, and
             //! how far it has been around in total. Kept as a running total
             //! rather than as the difference from the press so that passing

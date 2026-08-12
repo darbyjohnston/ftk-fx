@@ -7,6 +7,71 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — A ring that says world has to turn about world
+
+The rings were drawn on the world's axes and each one wrote a single Euler
+angle. Those are the same thing only while the other two angles are zero,
+which is exactly the state every shot of the rotate manipulator had been taken
+in. The entry below already called this out as a thing to fix; here it is.
+
+Each angle is applied after the ones inside it, so `rotate.x` is a turn about
+an axis the other two have already moved. Adding a drag to one of them is
+therefore a turn about a local axis, whatever the ring it came from was drawn
+on. The measurement is flat: start the emitter at a quarter turn about z, grab
+the ring drawn about world y, and drag a quarter turn.
+
+| | rotate x | rotate y | rotate z |
+|---|---|---|---|
+| writing one angle | 0.00 | -90.05 | 90.00 |
+| composing | -90.05 | 0.00 | 90.00 |
+
+Both are a quarter turn. Only the second is a quarter turn about world y --
+the first turned it about the emitter's own y, which after that first quarter
+turn is pointing along world *minus x*. The hand was on a ring at the top of
+the screen and the emitter went round an axis at ninety degrees to it.
+
+So the drag now builds the turn its ring stands for, puts it in front of the
+orientation the press started from, and reads three angles back out of the
+result. All three get written, because one turn about one world axis generally
+is a change in all of them.
+
+(The 0.05 is the press point rounding to whole pixels, the same 0.1% the scale
+drag has.)
+
+### Reading angles back out is where the sharp edges are
+
+Two sets of angles describe any rotation, and each has more versions of itself
+whole turns apart, so which one to return is a question with no derivable
+answer -- it has to be asked. `eulerZYX` takes the angles to stay near, and a
+drag passes what its last move wrote. That is what keeps a gesture round and
+round winding to 360 instead of starting again at zero, and what stops a drag
+crossing the fold at ninety degrees from taking the long way round.
+
+It went next to `getRotation`, which is the thing it inverts, and it has a test
+rather than a screenshot: round trips through nine poses, a full turn one
+degree at a time and back, a sweep straight through the fold, and the two
+straight-up poses where only the sum of the outer and inner turns is decided.
+
+That test compares rotations through their matrices, never angles against
+angles. Angles that differ are not rotations that differ, and a test that
+misses this fails on correct answers -- which would have been the more
+expensive mistake, because it would have been "fixed" by making the code wrong.
+
+Both halves earned their place by being taken out: dropping the choice between
+the two sets fails three checks, and dropping the winding fails two. Different
+checks, which is the useful part -- they are guarding different things.
+
+### What feather-tk did not have
+
+`rotateX/Y/Z` and nothing else: no rotation about an arbitrary axis, and no way
+back from a matrix to angles. The first did not bite here because the rings are
+on world axes, so the three that exist are exactly the three needed -- it will
+bite when the view-aligned ring arrives. The second is now written here and
+could be a `Matrix.h` free function; the "near" argument is the part that makes
+it worth sharing, since that is the bit everyone gets wrong.
+
+---
+
 ## 2026-08-12 — The scale arms were pointing at the wrong axes
 
 Asked whether the manipulator ought to turn with the emitter -- if it is
@@ -141,7 +206,7 @@ are zero. That is what three Euler sliders in a panel already do, so the
 manipulator is not lying about anything the rest of the interface is not -- but
 a ring labelled with a world axis that turns about a local one once its
 neighbours are non-zero is a thing to fix, either with local-axis rings or with
-a real orientation.
+a real orientation. *(Fixed the same day: see the entry above.)*
 
 No uniform scale: three axes, no centre handle. No screen-space ring either,
 the outer one that turns about the view.

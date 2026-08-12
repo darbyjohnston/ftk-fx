@@ -1519,6 +1519,53 @@
           "caption": "Rotate: three rings of one radius, held a quarter turn round. The faint spoke is the bearing the turn is read off"
         }
       ]
+    },
+    {
+      "id": "manipulator-rotate-compose",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "transform": {
+            "rotate": [
+              0,
+              0,
+              90
+            ]
+          }
+        },
+        {
+          "gizmo": "Rotate"
+        },
+        {
+          "dragHold": [
+            [
+              663,
+              861
+            ],
+            [
+              540,
+              884
+            ]
+          ]
+        }
+      ],
+      "expect": {
+        "Parameters.Rotate X": "-90.0",
+        "Parameters.Rotate Y": "0.00",
+        "Parameters.Rotate Z": "90.00"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Already turned a quarter about z, then the y ring dragged a quarter round. A turn about world y, read back as three angles: writing the y angle alone would have turned it about world -x instead"
+        }
+      ]
     }
   ]
 }

@@ -1375,6 +1375,7 @@ namespace fx
                 _gizmoAnglePrev = std::atan2(
                     event.pos.y - centre.y, event.pos.x - centre.x);
                 _gizmoAngleTotal = 0.F;
+                _gizmoRotatePrev = _gizmoStartRotate;
 
                 // Which way a turn on screen turns the axis in the scene,
                 // taken by walking a point a little way round the ring and
@@ -1599,25 +1600,41 @@ namespace fx
             _gizmoAngleTotal += step;
 
             const float degrees = _gizmoAngleTotal * _gizmoAngleSign * 180.F / pi;
-            V3F value = _gizmoStartRotate;
+
+            // The turn the ring stands for, put in front of the orientation
+            // the drag started from. In front rather than behind, because the
+            // rings are drawn on the world's axes and that is the side a
+            // world axis goes.
+            //
+            // The three angles are then read back out of the result. Adding
+            // the turn to one of them instead is only the same thing while
+            // the other two are zero: each angle is applied after the ones
+            // inside it, so rotate.x is a turn about an axis the other two
+            // have already moved. The ring said world and the angle meant
+            // something else, and the ring is what the hand is on.
+            M44F turn;
             switch (_gizmoDrag)
             {
-            case Arm::X: value.x = _gizmoStartRotate.x + degrees; break;
-            case Arm::Y: value.y = _gizmoStartRotate.y + degrees; break;
-            case Arm::Z: value.z = _gizmoStartRotate.z + degrees; break;
+            case Arm::X: turn = rotateX(degrees); break;
+            case Arm::Y: turn = rotateY(degrees); break;
+            case Arm::Z: turn = rotateZ(degrees); break;
             default: break;
             }
+            const M44F start =
+                rotateZ(_gizmoStartRotate.z) *
+                rotateY(_gizmoStartRotate.y) *
+                rotateX(_gizmoStartRotate.x);
+            const V3F value = sim::eulerZYX(turn * start, _gizmoRotatePrev);
+            _gizmoRotatePrev = value;
 
             const sim::System before = model->getSystem();
             auto& rotate = model->getSystem().getEmitter().transform.rotate;
             const double frame = _currentFrame;
-            switch (_gizmoDrag)
-            {
-            case Arm::X: setValue(rotate.x, frame, value.x); break;
-            case Arm::Y: setValue(rotate.y, frame, value.y); break;
-            case Arm::Z: setValue(rotate.z, frame, value.z); break;
-            default: break;
-            }
+            // All three, whichever ring was grabbed: one turn about one world
+            // axis is generally a change in all of them.
+            setValue(rotate.x, frame, value.x);
+            setValue(rotate.y, frame, value.y);
+            setValue(rotate.z, frame, value.z);
             model->systemChanged(_gizmoCommand(), before);
         }
 

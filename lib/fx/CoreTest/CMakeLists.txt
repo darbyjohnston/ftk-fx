@@ -3,14 +3,16 @@ set(HEADERS
     CurveTest.h
     PoolTest.h
     SceneTest.h
-    SystemTest.h)
+    SystemTest.h
+    TransformTest.h)
 
 set(SOURCE
     CacheTest.cpp
     CurveTest.cpp
     PoolTest.cpp
     SceneTest.cpp
-    SystemTest.cpp)
+    SystemTest.cpp
+    TransformTest.cpp)
 
 add_library(fxCoreTest ${HEADERS} ${SOURCE})
 
