@@ -1265,6 +1265,47 @@
       }
     },
     {
+      "id": "manipulator-plane",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "view": {
+            "index": 0,
+            "type": "Front"
+          }
+        },
+        {
+          "dragHold": [
+            [
+              590,
+              799
+            ],
+            [
+              654,
+              735
+            ]
+          ]
+        }
+      ],
+      "expect": {
+        "Parameters.Translate X": "2.00",
+        "Parameters.Translate Y": "2.00",
+        "Parameters.Translate Z": "0.00"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "The middle of the translate manipulator slides in the plane of the screen. Front on that plane is xy, so z has to come back untouched -- which is the half of this worth asserting"
+        }
+      ]
+    },
+    {
       "id": "manipulator-edge",
       "window": {
         "w": 900,

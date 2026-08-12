@@ -789,6 +789,42 @@ namespace fx
 
         namespace
         {
+            //! A triangle with its point at the end of an arm, for drawing
+            //! the head of an arrow.
+            TriMesh2F arrowHead(
+                const V2F& tip,
+                const V2F& dir,
+                float length,
+                float halfWidth)
+            {
+                const V2F back(
+                    tip.x - dir.x * length, tip.y - dir.y * length);
+                const V2F side(-dir.y * halfWidth, dir.x * halfWidth);
+                TriMesh2F out;
+                out.v.emplace_back(tip.x, tip.y);
+                out.v.emplace_back(back.x + side.x, back.y + side.y);
+                out.v.emplace_back(back.x - side.x, back.y - side.y);
+                out.triangles.emplace_back(1, 2, 3);
+                return out;
+            }
+
+            //! Where a ray meets a plane, given a point on the plane and its
+            //! normal. False when the two never meet.
+            bool rayPlane(
+                const V3F& rayOrigin,
+                const V3F& rayDir,
+                const V3F& planePoint,
+                const V3F& normal,
+                V3F& out)
+            {
+                const float denom = dot(rayDir, normal);
+                if (std::abs(denom) < .000001F)
+                    return false;
+                out = rayOrigin + rayDir *
+                    (dot(planePoint - rayOrigin, normal) / denom);
+                return true;
+            }
+
             //! How far a point is from a segment, in pixels.
             float distanceToSegment(const V2F& p, const V2F& a, const V2F& b)
             {
@@ -961,7 +997,7 @@ namespace fx
             // The middle first and on its own. Every arm starts there, so a
             // press near the middle is within a pixel of all three and the
             // nearest-wins below would hand it to whichever rounded lowest.
-            if (GizmoMode::Scale == _gizmoMode)
+            if (GizmoMode::Rotate != _gizmoMode)
             {
                 for (const auto& arm : arms)
                 {
@@ -1138,21 +1174,25 @@ namespace fx
                 }
                 else
                 {
+                    // An arrow rather than a dot. A dot says "this end", an
+                    // arrow says which way, and the manipulator that moves
+                    // things is the one where that is worth saying.
                     event.render->drawMesh(
-                        circle(
-                            V2I(
-                                static_cast<int>(arms[i].tip.x),
-                                static_cast<int>(arms[i].tip.y)),
-                            _size.dot),
+                        arrowHead(
+                            arms[i].tip,
+                            arms[i].dir,
+                            static_cast<float>(_size.dot) * 3.F,
+                            static_cast<float>(_size.dot) * 1.4F),
                         color);
                 }
             }
 
-            // The handle in the middle, which takes all three at once. Drawn
-            // last so it sits over the ends of the arms leaving it, and in
-            // the colour nothing else uses: it belongs to no axis, and giving
-            // it one of the three would say it did.
-            if (GizmoMode::Scale == _gizmoMode)
+            // The handle in the middle: all three axes at once for scale,
+            // and the plane of the screen for translate. Drawn last so it
+            // sits over the ends of the arms leaving it, and in the colour
+            // nothing else uses -- it belongs to no axis, and giving it one
+            // of the three would say it did.
+            if (GizmoMode::Rotate != _gizmoMode)
             {
                 for (const auto& arm : arms)
                 {
@@ -1591,6 +1631,28 @@ namespace fx
                 _gizmoHover = arm;
                 _gizmoStart = origin;
                 _gizmoScreen = arms[i].origin;
+                if (GizmoMode::Translate == _gizmoMode)
+                {
+                    // The plane of the screen, through where the emitter is.
+                    // A drag plane was taken out of the axis drags for being
+                    // edge-on at the worst moment; this one cannot be. It is
+                    // square to the camera by construction, so every ray
+                    // through the viewport meets it at a decent angle, and
+                    // holding the grabbed point under the pointer -- the
+                    // thing that was unusable along an axis -- is exactly
+                    // right here.
+                    _gizmoViewAxis = _cameraForward();
+                    V3F rayOrigin;
+                    V3F rayDir;
+                    if (!_ray(pos, rayOrigin, rayDir) ||
+                        !rayPlane(
+                            rayOrigin, rayDir, origin, _gizmoViewAxis,
+                            _gizmoGrab))
+                    {
+                        return false;
+                    }
+                    return true;
+                }
                 _gizmoDir = V2F(0.7071F, -0.7071F);
                 _gizmoU = (pos.x - _gizmoScreen.x) * _gizmoDir.x +
                     (pos.y - _gizmoScreen.y) * _gizmoDir.y;
@@ -1693,6 +1755,29 @@ namespace fx
             if (!model)
                 return;
 
+            V3F value = _gizmoStart;
+            if (Arm::Centre == _gizmoDrag)
+            {
+                V3F rayOrigin;
+                V3F rayDir;
+                V3F hit;
+                if (!_ray(pos, rayOrigin, rayDir) ||
+                    !rayPlane(
+                        rayOrigin, rayDir, _gizmoStart, _gizmoViewAxis, hit))
+                {
+                    return;
+                }
+                value = _gizmoStart + (hit - _gizmoGrab);
+                const sim::System before = model->getSystem();
+                auto& t = model->getSystem().getEmitter().transform.translate;
+                const double frame = _currentFrame;
+                setValue(t.x, frame, value.x);
+                setValue(t.y, frame, value.y);
+                setValue(t.z, frame, value.z);
+                model->systemChanged(_gizmoCommand(), before);
+                return;
+            }
+
             // Against the axis the drag started on, which stays where it was
             // for the whole gesture. Solving against the arm where it is now
             // would be a loop: the answer moves the emitter, the emitter moves
@@ -1725,7 +1810,6 @@ namespace fx
             if (denom * _gizmoDenom <= 0.F)
                 return;
 
-            V3F value = _gizmoStart;
             switch (_gizmoDrag)
             {
             case Arm::X: value.x = _gizmoStart.x + distance; break;

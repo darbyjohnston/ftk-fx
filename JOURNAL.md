@@ -7,6 +7,55 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — The rest of the Maya picture, and a drag plane that is fine
+
+The two remaining things the reference named, both on translate.
+
+**Arrows instead of dots on the ends of the arms.** A dot says "this end"; an
+arrow says which way. The manipulator that moves things is the one where that is
+worth saying, and the three modes now differ at the ends in three ways -- arrow,
+box, and the rings having no ends at all.
+
+**A handle in the middle that slides in the plane of the screen.** This is the
+one used most for rough placement, because it is the only one that does not make
+you decide which axis you meant first.
+
+### A drag plane, after taking one out
+
+The axis drags used to solve against a plane and it was removed for being
+edge-on at the worst moment: an axis pointing near the camera made the plane
+nearly parallel to the ray, the intersection ran away, and the manipulator flew
+across the viewport. The fix was to stop asking the scene where a pixel is.
+
+This handle asks the scene where a pixel is, and that is right. Its plane is
+square to the camera *by construction* -- it is the screen -- so every ray
+through the viewport meets it near head on and the intersection is
+well-conditioned everywhere. Holding the grabbed point under the pointer, the
+thing that was unusable along an axis, is exactly what is wanted here.
+
+Worth writing down because the shape of the code is the thing that was rejected,
+and the reason it was rejected does not apply. The lesson was never "planes are
+bad"; it was "a plane you cannot choose the angle of is bad".
+
+### Reading the wrong number off my own sidecar
+
+The check for this was authored from the arm tip in the sidecar, on the
+assumption that an arm a hundred pixels long said something about how many
+pixels a unit covers. It does not: the arm is drawn a fixed length whatever the
+zoom, so the tip gives a direction and nothing else. The drag came out at 2.99
+where 1.00 was expected, and the first guess was that the maths was wrong.
+
+The maths was right -- z came back exactly 0.00, which is the property being
+tested -- and the expectation was built on a number that was never there. The
+sidecar now writes `pixelsPerUnit` beside each tip: 32.067 here, and 96 pixels
+divided by it is 2.99, which is what the panel had been saying all along.
+
+Second time in two days that the sidecar has been the fix for a guess. The
+pattern is worth naming: when a check needs a number, the program should be made
+to write that number down, not the nearest-looking one that is already there.
+
+---
+
 ## 2026-08-12 — Three things from a picture of Maya, and a bug underneath them
 
 A reference image of Maya's three manipulators, offered as "just for reference",

@@ -314,8 +314,15 @@ namespace fx
             ftk::V3F _gizmoStartRotate;
             ftk::V3F _gizmoStartScale = ftk::V3F(1.F, 1.F, 1.F);
 
+            //! Where the pointer met the plane of the screen when the
+            //! middle of the translate manipulator was grabbed. What moves
+            //! is the difference from this, so the point that was taken hold
+            //! of stays under the pointer.
+            ftk::V3F _gizmoGrab;
+
             //! The axis the view ring was turning about when it was
-            //! grabbed. Held for the drag so that the turn is measured
+            //! grabbed, or the normal of the plane a middle-handle
+            //! translate slides in. Held for the drag so that it is measured
             //! against the axis it started on.
             ftk::V3F _gizmoViewAxis;
 

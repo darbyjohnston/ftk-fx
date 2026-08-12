@@ -863,7 +863,13 @@ namespace fx
                         if (!arm.valid)
                             continue;
                         origin = arm.origin;
-                        arms.push_back({ { "tip", { arm.tip.x, arm.tip.y } } });
+                        // The tip is a fixed distance along the arm, so it
+                        // gives the direction and says nothing about scale.
+                        // Authoring a drag of a known world distance needs
+                        // the pixels a unit covers, which is this.
+                        arms.push_back({
+                            { "tip", { arm.tip.x, arm.tip.y } },
+                            { "pixelsPerUnit", arm.pixelsPerUnit } });
                     }
                     if (!arms.empty())
                     {
