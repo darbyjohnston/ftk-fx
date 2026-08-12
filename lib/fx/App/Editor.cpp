@@ -55,8 +55,13 @@ namespace fx
 
                 Size2I getSizeHint() const override
                 {
-                    const int s = _dot + _margin * 2;
-                    return Size2I(s, s);
+                    // More room on the left than the right: the dot is the
+                    // start of the header, and hard against the edge it reads
+                    // as something that fell off rather than the first thing
+                    // in a row.
+                    return Size2I(
+                        _pad + _dot + _margin,
+                        _dot + _margin * 2);
                 }
 
                 void styleEvent(const StyleEvent& event) override
@@ -75,9 +80,11 @@ namespace fx
                     {
                         _init2 = false;
                         _dot = event.style->getSizeRole(
-                            SizeRole::Border, event.displayScale) * 4;
+                            SizeRole::Border, event.displayScale) * 8;
                         _margin = event.style->getSizeRole(
                             SizeRole::MarginInside, event.displayScale);
+                        _pad = event.style->getSizeRole(
+                            SizeRole::MarginSmall, event.displayScale);
                     }
                 }
 
@@ -92,7 +99,7 @@ namespace fx
                     event.render->drawMesh(
                         circle(
                             V2I(
-                                g.min.x + g.w() / 2,
+                                g.min.x + _pad + _dot / 2,
                                 g.min.y + g.h() / 2),
                             _dot / 2),
                         event.style->getColorRole(ColorRole::KeyFocus));
@@ -103,6 +110,7 @@ namespace fx
                 bool _init2 = true;
                 int _dot = 0;
                 int _margin = 0;
+                int _pad = 0;
             };
         }
 
