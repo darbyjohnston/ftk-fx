@@ -719,7 +719,37 @@ namespace fx
             return V3F(0.F, 0.F, 0.F);
         }
 
-        std::array<Viewport::ArmScreen, 3> Viewport::_gizmoArms() const
+        std::array<V3F, 3> Viewport::_gizmoArmAxes() const
+        {
+            std::array<V3F, 3> out =
+            {
+                V3F(1.F, 0.F, 0.F),
+                V3F(0.F, 1.F, 0.F),
+                V3F(0.F, 0.F, 1.F)
+            };
+            // The transform is translate * rotate * scale, so the scale is
+            // applied before the rotation and stretches the emitter along the
+            // axes it carries with it rather than the world's. Drawn along
+            // the world's, the arm pointed one way while the emitter grew
+            // another as soon as it was turned. Nothing here for translate:
+            // its own term is outside the rotation, and world axes are what
+            // it really moves along.
+            if (GizmoMode::Scale == _gizmoMode)
+            {
+                if (auto model = _model.lock())
+                {
+                    const M44F m = model->getSystem().getEmitter().
+                        transform.getRotation(_currentFrame);
+                    for (auto& axis : out)
+                    {
+                        axis = m * axis;
+                    }
+                }
+            }
+            return out;
+        }
+
+        std::array<Viewport::ArmScreen, 3> Viewport::getGizmoArms() const
         {
             std::array<ArmScreen, 3> out;
             V3F origin;
@@ -729,12 +759,7 @@ namespace fx
             if (!_project(origin, o))
                 return out;
 
-            const std::array<V3F, 3> axes =
-            {
-                V3F(1.F, 0.F, 0.F),
-                V3F(0.F, 1.F, 0.F),
-                V3F(0.F, 0.F, 1.F)
-            };
+            const std::array<V3F, 3> axes = _gizmoArmAxes();
             for (size_t i = 0; i < axes.size(); ++i)
             {
                 // A unit along the axis, projected. Its length on screen is
@@ -787,7 +812,7 @@ namespace fx
             // the view is set up, an arm already knows how many pixels a unit
             // of its axis covers; a radius that lands at the arms' length on
             // screen is that, averaged over the axes that could be measured.
-            const auto arms = _gizmoArms();
+            const auto arms = getGizmoArms();
             float total = 0.F;
             int count = 0;
             for (const auto& arm : arms)
@@ -869,7 +894,7 @@ namespace fx
                 }
                 return out;
             }
-            const auto arms = _gizmoArms();
+            const auto arms = getGizmoArms();
             for (size_t i = 0; i < arms.size(); ++i)
             {
                 if (!arms[i].valid)
@@ -891,7 +916,7 @@ namespace fx
             const Box2I& drawRect,
             const DrawEvent& event)
         {
-            const auto arms = _gizmoArms();
+            const auto arms = getGizmoArms();
             bool any = false;
             for (const auto& arm : arms)
             {
@@ -1390,7 +1415,7 @@ namespace fx
                 return;
             }
 
-            const auto arms = _gizmoArms();
+            const auto arms = getGizmoArms();
             if (!arms[index].valid)
                 return;
             _gizmoDrag = arm;

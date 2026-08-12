@@ -1439,6 +1439,52 @@
       ]
     },
     {
+      "id": "manipulator-scale-local",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "transform": {
+            "rotate": [
+              0,
+              0,
+              90
+            ]
+          }
+        },
+        {
+          "gizmo": "Scale"
+        },
+        {
+          "dragHold": [
+            [
+              590,
+              763
+            ],
+            [
+              590,
+              667
+            ]
+          ]
+        }
+      ],
+      "expect": {
+        "Parameters.Scale X": "2.00",
+        "Parameters.Scale Y": "1.00"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Turned a quarter turn about z, the x arm points up: scale is applied inside the rotation, so its arms turn with the emitter. Dragging this one is Scale X"
+        }
+      ]
+    },
+    {
       "id": "manipulator-rotate",
       "window": {
         "w": 900,

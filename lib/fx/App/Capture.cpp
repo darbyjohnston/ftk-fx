@@ -848,6 +848,33 @@ namespace fx
                 out["annotate"] = p.shot.at("annotate");
             }
 
+            // Where the manipulator's arms landed, in the same pixel space as
+            // the boxes. A drag aimed at an arm was authored by reading a
+            // picture, and a drag that misses still writes a screenshot --
+            // this is the arm saying where it is instead.
+            if (auto editor = app->getMainWindow()->getEditors()->getCurrent())
+            {
+                if (auto viewport = editor->getViewport())
+                {
+                    nlohmann::json arms = nlohmann::json::array();
+                    ftk::V2F origin;
+                    for (const auto& arm : viewport->getGizmoArms())
+                    {
+                        if (!arm.valid)
+                            continue;
+                        origin = arm.origin;
+                        arms.push_back({ { "tip", { arm.tip.x, arm.tip.y } } });
+                    }
+                    if (!arms.empty())
+                    {
+                        out["gizmo"] = {
+                            { "mode", getLabel(viewport->getGizmoMode()) },
+                            { "origin", { origin.x, origin.y } },
+                            { "arms", arms } };
+                    }
+                }
+            }
+
             std::ofstream f(path);
             f << out.dump(2) << std::endl;
         }

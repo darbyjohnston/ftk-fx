@@ -7,6 +7,60 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — The scale arms were pointing at the wrong axes
+
+Asked whether the manipulator ought to turn with the emitter -- if it is
+rotated, should dragging move it along the world's axes or its own? The answer
+turned out to be different for each of the three modes, and one of them was not
+a preference at all.
+
+The transform is `translate * rotate * scale`. The scale is applied *inside*
+the rotation, so `scale.x` stretches the emitter along an axis it carries with
+it. The arms were drawn along the world's. With no rotation the two coincide,
+which is why this survived being built, measured and shipped: every shot of it
+had the emitter square to the world. Turn the emitter and the arm pointed one
+way while the thing grew another.
+
+The translate arms stay world. Not an inconsistency -- the same rule read the
+other way: the translation is added *outside* the rotation, so `translate.x`
+really is a world distance, and world arms are what it moves along.
+
+Measured by taking the fix back out, which is the only way a screenshot proves
+anything: with the emitter turned 45 degrees, the scale gizmo moved 1646
+viewport pixels with the fix and **zero** without. The translate gizmo moved
+zero either way -- a control that came free, and the thing that says the change
+is confined to the mode it was meant for.
+
+### Arms that say where they are
+
+The sharper measurement came from a new line in the capture sidecar: the
+manipulator's origin and its three arm ends, in the same pixel space as the
+widget boxes. Turned a quarter turn about z, the x arm's end lands on
+(590.0, 715.06) -- to the last digit, where the y arm's end was. The z arm does
+not move, which is what a rotation about z should do to it.
+
+This exists because authoring a drag shot by reading coordinates off a picture
+is guessing, and a guess that misses the arm still writes a perfectly good
+screenshot. That is the same failure as the shot that had stopped asking, and
+it has now cost enough afternoons to be worth a public accessor and eight lines
+of JSON. Guessing at coordinates is the single most repeated mistake on this
+project; this is the first change that removes the need to.
+
+`manipulator-scale-local` is the regression: a quarter turn about z, then a
+drag straight *up* the screen, which now runs along the x arm. It asserts
+`Scale X` reads 2.00 and `Scale Y` reads 1.00. Before the fix that same gesture
+was a Y drag.
+
+### Still on paper
+
+Rotate is untouched and still owes the fix described below: rings on world axes
+writing Euler angles. Doing it properly means giving up writing one Euler
+component per drag -- compose a turn about the grabbed axis onto the current
+orientation and decompose back to ZYX -- and that is what makes any ring
+orientation, world or local, tell the truth.
+
+---
+
 ## 2026-08-12 — Rotate and scale, and a sign nobody should reason about
 
 §15 said "rotate and scale next", and the journal added a condition: once the

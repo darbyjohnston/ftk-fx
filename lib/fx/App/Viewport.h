@@ -82,6 +82,31 @@ namespace fx
             //! its editor becomes the current one.
             void setPressCallback(const std::function<void(void)>&);
 
+            //! An arm as it lands on screen: where it starts, where it ends,
+            //! and how many pixels a world unit covers along it. The last is
+            //! what turns a drag in pixels back into a distance in the scene,
+            //! and it falls out of the projection rather than being derived
+            //! again from the camera.
+            struct ArmScreen
+            {
+                bool valid = false;
+                ftk::V2F origin;
+                ftk::V2F tip;
+                ftk::V2F dir;
+                float pixelsPerUnit = 0.F;
+            };
+
+            //! The three arms on screen, in the same pixel space as mouse
+            //! positions. Empty valid flags where an arm points at the camera
+            //! and has nowhere to go.
+            //!
+            //! Public so that a capture can write down where the arms actually
+            //! landed. A drag shot aimed at an arm was authored by reading
+            //! coordinates off a picture, which is guessing -- and a guess
+            //! that misses the arm still produces a screenshot, so the shot
+            //! looks taken while testing nothing.
+            std::array<ArmScreen, 3> getGizmoArms() const;
+
             ///@}
 
             void setGeometry(const ftk::Box2I&) override;
@@ -103,20 +128,6 @@ namespace fx
                 X,
                 Y,
                 Z
-            };
-
-            //! An arm as it lands on screen: where it starts, where it ends,
-            //! and how many pixels a world unit covers along it. The last is
-            //! what turns a drag in pixels back into a distance in the scene,
-            //! and it falls out of the projection rather than being derived
-            //! again from the camera.
-            struct ArmScreen
-            {
-                bool valid = false;
-                ftk::V2F origin;
-                ftk::V2F tip;
-                ftk::V2F dir;
-                float pixelsPerUnit = 0.F;
             };
 
             void _setOrbit(const ftk::V2F&);
@@ -175,13 +186,17 @@ namespace fx
             //! The world axis an arm runs along.
             static ftk::V3F _gizmoAxis(Arm);
 
+            //! The three directions the arms stand for, which are not the
+            //! same in every mode. A translation is added outside the
+            //! rotation and so runs along the world's axes; a scale is
+            //! applied inside it and runs along the emitter's own, so an arm
+            //! drawn along the world's would point one way while the emitter
+            //! stretched another.
+            std::array<ftk::V3F, 3> _gizmoArmAxes() const;
+
             //! Where the manipulator is: the current system's emitter, at the
             //! current frame. False when there is no model to ask.
             bool _gizmoOrigin(ftk::V3F& out) const;
-
-            //! The three arms on screen. Empty valid flags where an arm points
-            //! at the camera and has nowhere to go.
-            std::array<ArmScreen, 3> _gizmoArms() const;
 
             //! How far a ring stands from the origin, in the scene, so that
             //! it lands at about the arms' length on screen. One radius for
