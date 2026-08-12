@@ -7,6 +7,36 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — Catching the branch up before it got expensive
+
+`widget-api` had been running alongside feather-tk's and tlRender's mains for
+long enough to be worth checking on: nine commits had landed on one and
+twenty-five on the other, and the branch had never seen any of them.
+
+Merged main *into* the branch rather than the branch into main, which is the
+order that matters. The conflicts get resolved where the whole thing can be
+built and tested together, rather than landing half-verified on main -- and
+once it is done, the merge to main is a fast-forward, so the part that touches
+everyone else's branch is the part with nothing in it.
+
+feather-tk had exactly one conflict. Main had added a `getLineEdit()` accessor
+to `FileEdit`; this branch had moved `FileEdit` onto `IContainer`, which meant
+deleting the `getSizeHint` and `setGeometry` overrides main was still adding
+around. Kept the accessor, dropped the overrides. tlRender had none at all --
+its `deps/ftk` pointer looked like a conflict and was not, because this branch's
+feather-tk now contains main's, so one side was an ancestor of the other and
+git resolved it without being asked.
+
+Verified after each merge rather than before: ninety-five feather-tk tests, ten
+ctest, thirty-nine shots. That is the whole point of doing it on the branch --
+the twenty-five commits that arrived from tlRender's main include FFmpeg pipe
+changes, new comparison modes and timeline fixes, and "it merged cleanly" says
+nothing about whether any of that still works here.
+
+The reason to do this now rather than when it becomes urgent: the one conflict
+was five lines. A month of the same drift and the same conflict is a rebase
+nobody wants to start.
+
 ## 2026-08-11 — Test runs stay off the screen
 
 The feather-tk suite makes dozens of applications and shows a window from most
