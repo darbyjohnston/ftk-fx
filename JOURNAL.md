@@ -38,6 +38,25 @@ as the ring being broken. It moves 3357 pixels, which is how it was checked.
 Both new handles are drawn in a colour none of the three axes uses. Neither
 belongs to an axis, and giving either one of the three colours would say it did.
 
+### Which axis the view ring uses, since there are two candidates
+
+The camera's forward axis, not the direction from the camera to the emitter.
+They are the same thing only while the gizmo is in the middle of the viewport,
+and the difference is what the ring is: forward keeps its plane parallel to the
+image plane, so it is a circle lying *on the screen*; camera-to-emitter would
+tilt it as the gizmo moved off-axis, making it a billboard facing the camera and
+drawing it as an ellipse.
+
+Forward is the right one because it is what the gesture is. Turning something in
+the plane you are looking at means the ring should be the circle your hand
+traces, and that circle does not care where in the window the thing is.
+
+Measured with the emitter at 7, 3, 4, which puts the gizmo near the right edge:
+the ring comes out 316 by 315 pixels, a ratio of 1.003. It stays exactly
+circular anywhere, because a circle in a plane parallel to the image plane
+projects through a perspective camera by a similarity -- position changes its
+size and nothing else. The 0.3% is rasterisation.
+
 ### The dashes that were not dashes
 
 The view ring first drew as alternating bright and faint dashes. The fade asks
