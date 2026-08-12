@@ -126,6 +126,30 @@ namespace fx
         std::string getLabel(DrawType);
         bool fromString(const std::string&, DrawType&);
 
+        //! What the viewport's manipulator does with the arm that is grabbed.
+        //!
+        //! One manipulator with three modes rather than three manipulators:
+        //! they share an origin, a pick, a drag and a command, and differ only
+        //! in what the drag means.
+        enum class GizmoMode
+        {
+            //! Arms. Sliding one moves the emitter along that axis.
+            Translate,
+
+            //! Rings. Turning one turns the emitter about that axis.
+            Rotate,
+
+            //! Arms with square ends. Sliding one scales along that axis.
+            Scale,
+
+            Count,
+            First = Translate
+        };
+
+        std::vector<std::string> getGizmoModeLabels();
+        std::string getLabel(GizmoMode);
+        bool fromString(const std::string&, GizmoMode&);
+
         //! Get the number of editors an arrangement shows.
         int getEditorCount(EditorLayout);
 

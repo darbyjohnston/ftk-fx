@@ -2,6 +2,57 @@
 <!-- Drawn at the size the reset button uses, since they sit in the same row
      as each other -- smaller than the tool bar icons because it belongs to a
      row of sliders rather than to a tool bar. -->
-<svg width="11" height="11" viewBox="0 0 11 11" xmlns="http://www.w3.org/2000/svg">
-  <path style="fill:#f0f0f0;fill-opacity:1;stroke:none" d="M 5.5,0.7 10.3,5.5 5.5,10.3 0.7,5.5 Z" />
+
+<svg
+   width="11"
+   height="11"
+   viewBox="0 0 11 11"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="Key.svg"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="56.439978"
+     inkscape:cx="5.5014196"
+     inkscape:cy="5.4925606"
+     inkscape:window-width="1616"
+     inkscape:window-height="1027"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <path
+     style="fill:#f0f0f0;fill-opacity:1;stroke:none;stroke-width:1"
+     d="M 5.4999999,0.55025257 10.449747,5.4999999 5.4999999,10.449747 0.55025257,5.4999999 Z"
+     id="path1" />
 </svg>

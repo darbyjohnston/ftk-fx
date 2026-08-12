@@ -1401,6 +1401,78 @@
           "caption": "Held with the emitter carried off screen: the arms cannot be measured any more, the line it went down still can"
         }
       ]
+    },
+    {
+      "id": "manipulator-scale",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "gizmo": "Scale"
+        },
+        {
+          "dragHold": [
+            [
+              628,
+              798
+            ],
+            [
+              719,
+              768
+            ]
+          ]
+        }
+      ],
+      "expect": {
+        "Parameters.Scale X": "2.00"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Scale: the same three arms with square ends, held mid-drag. One arm's length out doubles, the same back halves"
+        }
+      ]
+    },
+    {
+      "id": "manipulator-rotate",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "gizmo": "Rotate"
+        },
+        {
+          "dragHold": [
+            [
+              663,
+              861
+            ],
+            [
+              540,
+              884
+            ]
+          ]
+        }
+      ],
+      "expect": {
+        "Parameters.Rotate Y": "-90"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Rotate: three rings of one radius, held a quarter turn round. The faint spoke is the bearing the turn is read off"
+        }
+      ]
     }
   ]
 }

@@ -1,10 +1,75 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- One of the editor arrangements, drawn as the arrangement itself so the
      button shows what it does. Twenty across, like the icons feather-tk ships. -->
-<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-  <g style="fill:#f0f0f0;fill-opacity:1;stroke:none">
-    <rect x="2" y="2" width="7" height="7"/>
-    <rect x="11" y="2" width="7" height="7"/>
-    <rect x="2" y="11" width="16" height="7"/>
+
+<svg
+   width="20"
+   height="20"
+   viewBox="0 0 20 20"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="LayoutThree.svg"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="31.041988"
+     inkscape:cx="9.9864739"
+     inkscape:cy="9.9864739"
+     inkscape:window-width="1629"
+     inkscape:window-height="1027"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg3">
+    <inkscape:grid
+       id="grid3"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <g
+     style="fill:#f0f0f0;fill-opacity:1;stroke:none"
+     id="g3">
+    <rect
+       x="2"
+       y="2"
+       width="7"
+       height="7"
+       id="rect1" />
+    <rect
+       x="11"
+       y="2"
+       width="7"
+       height="7"
+       id="rect2" />
+    <rect
+       x="2"
+       y="11"
+       width="16"
+       height="7"
+       id="rect3" />
   </g>
 </svg>

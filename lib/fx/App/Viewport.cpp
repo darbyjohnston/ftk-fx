@@ -157,6 +157,7 @@ namespace fx
             const std::shared_ptr<IWidget>& parent)
         {
             IWidget::_init(context, "fx::app::Viewport", parent);
+            setAcceptsKeyFocus(true);
             setHStretch(Stretch::Expanding);
             setVStretch(Stretch::Expanding);
 
@@ -341,6 +342,50 @@ namespace fx
             _drawType = value;
             _doRender = true;
             setDrawUpdate();
+        }
+
+        GizmoMode Viewport::getGizmoMode() const
+        {
+            return _gizmoMode;
+        }
+
+        void Viewport::setGizmoMode(GizmoMode value)
+        {
+            if (value == _gizmoMode)
+                return;
+            _gizmoMode = value;
+            // A mode changed mid-drag would carry the press of one manipulator
+            // into the arithmetic of another.
+            _gizmoDrag = Arm::None;
+            _gizmoHover = Arm::None;
+            setDrawUpdate();
+        }
+
+        void Viewport::keyPressEvent(KeyEvent& event)
+        {
+            // Where a DCC user's hand already is. Not put on the menus: the
+            // mode belongs to the viewport the pointer is over, and a menu
+            // item would have to say which viewport it meant.
+            if (0 == event.modifiers)
+            {
+                switch (event.key)
+                {
+                case Key::W:
+                    event.accept = true;
+                    setGizmoMode(GizmoMode::Translate);
+                    return;
+                case Key::E:
+                    event.accept = true;
+                    setGizmoMode(GizmoMode::Rotate);
+                    return;
+                case Key::R:
+                    event.accept = true;
+                    setGizmoMode(GizmoMode::Scale);
+                    return;
+                default: break;
+                }
+            }
+            IWidget::keyPressEvent(event);
         }
 
         float Viewport::getParticleSize() const
@@ -736,12 +781,95 @@ namespace fx
             }
         }
 
+        float Viewport::_gizmoRadius() const
+        {
+            // From the arms' own scale rather than from the camera. However
+            // the view is set up, an arm already knows how many pixels a unit
+            // of its axis covers; a radius that lands at the arms' length on
+            // screen is that, averaged over the axes that could be measured.
+            const auto arms = _gizmoArms();
+            float total = 0.F;
+            int count = 0;
+            for (const auto& arm : arms)
+            {
+                if (!arm.valid)
+                    continue;
+                total += arm.pixelsPerUnit;
+                ++count;
+            }
+            if (!count || total <= 0.F)
+                return 0.F;
+            const float pixelsPerUnit = total / count;
+            return static_cast<float>(_size.gizmo) / pixelsPerUnit;
+        }
+
+        std::vector<std::pair<V2F, V2F> > Viewport::_gizmoRing(Arm arm) const
+        {
+            std::vector<std::pair<V2F, V2F> > out;
+            V3F origin;
+            if (Arm::None == arm || !_gizmoOrigin(origin))
+                return out;
+            const float radius = _gizmoRadius();
+            if (radius <= 0.F)
+                return out;
+
+            // The two axes the ring turns in, which are the ones the axis
+            // being turned about is not.
+            const V3F axis = _gizmoAxis(arm);
+            const V3F u = V3F(axis.y, axis.z, axis.x);
+            const V3F v = cross(axis, u);
+
+            // Enough samples that the straight pieces between them are under
+            // a pixel at the size these are drawn.
+            const int steps = 64;
+            V2F prev;
+            bool prevValid = false;
+            for (int i = 0; i <= steps; ++i)
+            {
+                const float t = i / static_cast<float>(steps) * 2.F * pi;
+                const V3F p = origin +
+                    u * (std::cos(t) * radius) +
+                    v * (std::sin(t) * radius);
+                V2F s;
+                const bool valid = _project(p, s);
+                if (valid && prevValid)
+                {
+                    out.push_back(std::make_pair(prev, s));
+                }
+                prev = s;
+                prevValid = valid;
+            }
+            return out;
+        }
+
         Viewport::Arm Viewport::_gizmoPick(const V2I& pos) const
         {
-            const auto arms = _gizmoArms();
             const V2F p(pos.x, pos.y);
             Arm out = Arm::None;
             float best = static_cast<float>(_size.grab);
+            if (GizmoMode::Rotate == _gizmoMode)
+            {
+                // Nearest wins rather than first, as with the arms: three
+                // great circles of one radius cross each other four times
+                // over, and at every crossing the one in front should be the
+                // one that grabs.
+                for (int i = 0; i < 3; ++i)
+                {
+                    const Arm arm = static_cast<Arm>(i + 1);
+                    for (const auto& segment : _gizmoRing(arm))
+                    {
+                        const float d = distanceToSegment(
+                            p, segment.first, segment.second);
+                        if (d <= best)
+                        {
+                            best = d;
+                            out = arm;
+                        }
+                    }
+                }
+                return out;
+            }
+            const auto arms = _gizmoArms();
             for (size_t i = 0; i < arms.size(); ++i)
             {
                 if (!arms[i].valid)
@@ -799,6 +927,44 @@ namespace fx
             // there is nothing on screen saying so once the pointer is past
             // the end of a ninety pixel arm. It reads as the manipulator
             // falling behind rather than as the pointer having left the rail.
+            if (GizmoMode::Rotate == _gizmoMode)
+            {
+                for (int i = 0; i < 3; ++i)
+                {
+                    const Arm arm = static_cast<Arm>(i + 1);
+                    const bool lit = arm == _gizmoDrag ||
+                        (Arm::None == _gizmoDrag && arm == _gizmoHover);
+                    const Color4F color = lit ?
+                        Color4F(1.F, 1.F, 1.F) : colors[i];
+                    for (const auto& segment : _gizmoRing(arm))
+                    {
+                        event.render->drawLine(
+                            segment.first, segment.second, color, lineOptions);
+                    }
+                }
+                // The arm of the protractor: the line the pointer's bearing is
+                // being read off. Without it there is nothing saying the turn
+                // is measured from the middle rather than from where the ring
+                // was grabbed.
+                if (Arm::None != _gizmoDrag)
+                {
+                    const size_t i = static_cast<size_t>(_gizmoDrag) - 1;
+                    Color4F spoke = colors[i];
+                    spoke.a = .25F;
+                    const float reach = static_cast<float>(g.w() + g.h());
+                    const V2F d(
+                        std::cos(_gizmoAnglePrev), std::sin(_gizmoAnglePrev));
+                    event.render->drawLine(
+                        _gizmoScreen,
+                        V2F(
+                            _gizmoScreen.x + d.x * reach,
+                            _gizmoScreen.y + d.y * reach),
+                        spoke,
+                        lineOptions);
+                }
+                return;
+            }
+
             if (Arm::None != _gizmoDrag)
             {
                 // From the line recorded at the press rather than from the
@@ -835,13 +1001,29 @@ namespace fx
                     colors[i];
                 event.render->drawLine(
                     arms[i].origin, arms[i].tip, color, lineOptions);
-                event.render->drawMesh(
-                    circle(
-                        V2I(
-                            static_cast<int>(arms[i].tip.x),
-                            static_cast<int>(arms[i].tip.y)),
-                        _size.dot),
-                    color);
+                // A box on the end for scale and a dot for translate. The two
+                // modes draw the same three arms and do different things with
+                // them, so the ends are where the difference has to show.
+                if (GizmoMode::Scale == _gizmoMode)
+                {
+                    event.render->drawRect(
+                        Box2I(
+                            static_cast<int>(arms[i].tip.x) - _size.dot,
+                            static_cast<int>(arms[i].tip.y) - _size.dot,
+                            _size.dot * 2,
+                            _size.dot * 2),
+                        color);
+                }
+                else
+                {
+                    event.render->drawMesh(
+                        circle(
+                            V2I(
+                                static_cast<int>(arms[i].tip.x),
+                                static_cast<int>(arms[i].tip.y)),
+                            _size.dot),
+                        color);
+                }
             }
         }
 
@@ -1138,6 +1320,76 @@ namespace fx
             // is the point that stays under the pointer -- rather than the
             // emitter's own origin jumping to the cursor on the first move.
             const size_t index = static_cast<size_t>(arm) - 1;
+
+            auto model = _model.lock();
+            if (!model)
+                return;
+            // What the drag starts from. Read once here so that every move is
+            // measured against the press, which is what keeps a drag from
+            // compounding its own answer.
+            const auto& transform = model->getSystem().getEmitter().transform;
+            const double frame = _currentFrame;
+            _gizmoStartRotate = V3F(
+                transform.rotate.x.getValue(frame),
+                transform.rotate.y.getValue(frame),
+                transform.rotate.z.getValue(frame));
+            _gizmoStartScale = V3F(
+                transform.scale.x.getValue(frame),
+                transform.scale.y.getValue(frame),
+                transform.scale.z.getValue(frame));
+
+            if (GizmoMode::Rotate == _gizmoMode)
+            {
+                V2F centre;
+                if (!_project(origin, centre))
+                    return;
+                _gizmoDrag = arm;
+                _gizmoHover = arm;
+                _gizmoStart = origin;
+                _gizmoScreen = centre;
+                _gizmoAnglePrev = std::atan2(
+                    event.pos.y - centre.y, event.pos.x - centre.x);
+                _gizmoAngleTotal = 0.F;
+
+                // Which way a turn on screen turns the axis in the scene,
+                // taken by walking a point a little way round the ring and
+                // seeing which way its bearing went. The alternative is to
+                // work it out from the camera, the handedness and the
+                // direction of the screen's y axis, and to be wrong about one
+                // of the three; this asks the projection, which is the thing
+                // that decides it.
+                const V3F ringAxis = _gizmoAxis(arm);
+                const V3F u = V3F(ringAxis.y, ringAxis.z, ringAxis.x);
+                const V3F v = cross(ringAxis, u);
+                const float radius = _gizmoRadius();
+                V2F a, b;
+                if (radius <= 0.F ||
+                    !_project(origin + u * radius, a) ||
+                    !_project(
+                        origin + u * (std::cos(.1F) * radius) +
+                        v * (std::sin(.1F) * radius), b))
+                {
+                    _gizmoDrag = Arm::None;
+                    return;
+                }
+                float step =
+                    std::atan2(b.y - centre.y, b.x - centre.x) -
+                    std::atan2(a.y - centre.y, a.x - centre.x);
+                while (step > pi) step -= 2.F * pi;
+                while (step < -pi) step += 2.F * pi;
+                // Edge on, a tenth of a turn round the ring barely moves on
+                // screen and its direction is noise. Refused rather than
+                // guessed: a sign taken from noise is a manipulator that
+                // turns the wrong way.
+                if (std::abs(step) < .001F)
+                {
+                    _gizmoDrag = Arm::None;
+                    return;
+                }
+                _gizmoAngleSign = step > 0.F ? 1.F : -1.F;
+                return;
+            }
+
             const auto arms = _gizmoArms();
             if (!arms[index].valid)
                 return;
@@ -1152,6 +1404,13 @@ namespace fx
             _gizmoU = (event.pos.x - _gizmoScreen.x) * _gizmoDir.x +
                 (event.pos.y - _gizmoScreen.y) * _gizmoDir.y;
             _gizmoUseX = std::abs(_gizmoDir.x) >= std::abs(_gizmoDir.y);
+            if (GizmoMode::Scale == _gizmoMode)
+            {
+                // Scale rides the arm's line and never asks the scene where a
+                // pixel is, so the vanishing point it would be solved against
+                // does not come into it.
+                return;
+            }
             float denom = 0.F;
             float distance = 0.F;
             if (!_axisDistance(
@@ -1196,8 +1455,21 @@ namespace fx
 
         void Viewport::_gizmoMove(const V2I& pos)
         {
+            if (Arm::None == _gizmoDrag)
+                return;
+            switch (_gizmoMode)
+            {
+            case GizmoMode::Translate: _gizmoTranslate(pos); break;
+            case GizmoMode::Rotate: _gizmoRotate(pos); break;
+            case GizmoMode::Scale: _gizmoScale(pos); break;
+            default: break;
+            }
+        }
+
+        void Viewport::_gizmoTranslate(const V2I& pos)
+        {
             auto model = _model.lock();
-            if (!model || Arm::None == _gizmoDrag)
+            if (!model)
                 return;
 
             // Against the axis the drag started on, which stays where it was
@@ -1252,6 +1524,94 @@ namespace fx
             default: break;
             }
             model->systemChanged("Move System", before);
+        }
+
+        void Viewport::_gizmoRotate(const V2I& pos)
+        {
+            auto model = _model.lock();
+            if (!model)
+                return;
+
+            // The pointer's bearing from the middle of the rings. Near the
+            // middle there is no bearing to take -- a pixel of movement swings
+            // it right round -- so the drag holds what it had rather than
+            // spinning on noise.
+            const V2F d(pos.x - _gizmoScreen.x, pos.y - _gizmoScreen.y);
+            if (std::sqrt(d.x * d.x + d.y * d.y) < static_cast<float>(_size.grab))
+                return;
+            const float angle = std::atan2(d.y, d.x);
+
+            // Added up move by move, each step brought back into half a turn
+            // either side of the last. Taken as the difference from the press
+            // instead, a drag past the far side of the ring would come back as
+            // most of a turn the other way; this way it carries on, and a
+            // gesture round and round keeps winding.
+            float step = angle - _gizmoAnglePrev;
+            while (step > pi) step -= 2.F * pi;
+            while (step < -pi) step += 2.F * pi;
+            _gizmoAnglePrev = angle;
+            _gizmoAngleTotal += step;
+
+            const float degrees = _gizmoAngleTotal * _gizmoAngleSign * 180.F / pi;
+            V3F value = _gizmoStartRotate;
+            switch (_gizmoDrag)
+            {
+            case Arm::X: value.x = _gizmoStartRotate.x + degrees; break;
+            case Arm::Y: value.y = _gizmoStartRotate.y + degrees; break;
+            case Arm::Z: value.z = _gizmoStartRotate.z + degrees; break;
+            default: break;
+            }
+
+            const sim::System before = model->getSystem();
+            auto& rotate = model->getSystem().getEmitter().transform.rotate;
+            const double frame = _currentFrame;
+            switch (_gizmoDrag)
+            {
+            case Arm::X: setValue(rotate.x, frame, value.x); break;
+            case Arm::Y: setValue(rotate.y, frame, value.y); break;
+            case Arm::Z: setValue(rotate.z, frame, value.z); break;
+            default: break;
+            }
+            model->systemChanged("Rotate System", before);
+        }
+
+        void Viewport::_gizmoScale(const V2I& pos)
+        {
+            auto model = _model.lock();
+            if (!model)
+                return;
+
+            // How far the pointer has run along the arm, as with translate,
+            // and then a doubling per arm's length of it. Growing and
+            // shrinking are the same gesture in opposite directions that way,
+            // rather than one of them running out of room, and a factor built
+            // by doubling never reaches zero however far the drag goes back.
+            const float u =
+                (pos.x - _gizmoScreen.x) * _gizmoDir.x +
+                (pos.y - _gizmoScreen.y) * _gizmoDir.y;
+            const float factor = std::pow(
+                2.F, (u - _gizmoU) / static_cast<float>(_size.gizmo));
+
+            V3F value = _gizmoStartScale;
+            switch (_gizmoDrag)
+            {
+            case Arm::X: value.x = _gizmoStartScale.x * factor; break;
+            case Arm::Y: value.y = _gizmoStartScale.y * factor; break;
+            case Arm::Z: value.z = _gizmoStartScale.z * factor; break;
+            default: break;
+            }
+
+            const sim::System before = model->getSystem();
+            auto& scale = model->getSystem().getEmitter().transform.scale;
+            const double frame = _currentFrame;
+            switch (_gizmoDrag)
+            {
+            case Arm::X: setValue(scale.x, frame, value.x); break;
+            case Arm::Y: setValue(scale.y, frame, value.y); break;
+            case Arm::Z: setValue(scale.z, frame, value.z); break;
+            default: break;
+            }
+            model->systemChanged("Scale System", before);
         }
 
         void Viewport::scrollEvent(ScrollEvent& event)

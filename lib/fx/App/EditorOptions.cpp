@@ -123,6 +123,21 @@ namespace fx
             return enumToLabel(getEditorLayoutLabels(), value);
         }
 
+        std::vector<std::string> getGizmoModeLabels()
+        {
+            return { "Translate", "Rotate", "Scale" };
+        }
+
+        std::string getLabel(GizmoMode value)
+        {
+            return enumToLabel(getGizmoModeLabels(), value);
+        }
+
+        bool fromString(const std::string& name, GizmoMode& out)
+        {
+            return labelToEnum(getGizmoModeLabels(), name, out);
+        }
+
         int getEditorCount(EditorLayout value)
         {
             switch (value)

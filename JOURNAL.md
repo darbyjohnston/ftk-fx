@@ -7,6 +7,117 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — Rotate and scale, and a sign nobody should reason about
+
+§15 said "rotate and scale next", and the journal added a condition: once the
+drag had been used in anger. It has been, three bugs' worth, so here they are.
+
+One manipulator with three modes rather than three manipulators. They share an
+origin, a pick, a drag and a command, and differ only in what the drag means --
+which is also why the mode lives on the viewport and is switched with W, E and
+R rather than from a menu: it belongs to the viewport the pointer is over, and
+a menu item would have to say which one it meant.
+
+### Scale is the translate drag with a different meaning
+
+The same three arms, the same run along the arm's line in pixels. What changes
+is the last step: a doubling per arm's length rather than a distance. Growing
+and shrinking become the same gesture in opposite directions, and a factor
+built by doubling never reaches zero however far the drag goes back, which a
+linear one does at exactly one arm's length in.
+
+Measured: one arm's length out gives 1.9973, the same back gives 0.4995, and
+out and back returns to exactly 1. The 0.13% is the press point being rounded
+to whole pixels.
+
+Square ends rather than round. Two modes draw the same three arms and do
+different things with them, so the ends are the only place the difference can
+show.
+
+### Rings, sampled rather than solved
+
+A circle seen at an angle is an ellipse, and a circle crossing behind the
+camera is neither. Rather than work out which, the ring is sampled in the scene
+at sixty-four points and each is projected: perspective comes out of the
+projection, and the pieces behind the camera drop out by leaving their segments
+unjoined. Picking is then the same distance-to-segment the arms already use, so
+three great circles crossing four times over resolve the way two arms crossing
+do -- nearest wins.
+
+One radius for all three, taken from the arms' own pixels-per-unit. That is
+what makes them read as one ball rather than three unrelated ovals.
+
+### The sign, which is the whole entry
+
+A turn on screen has to become a turn in the scene, and the direction depends
+on the projection, the handedness, and which way the screen's y axis points.
+Three chances to be wrong, and the failure is not subtle: the manipulator turns
+the opposite way to the hand.
+
+So it is not reasoned about. At the press, a point is walked a tenth of a turn
+around the ring, projected, and the direction its bearing moved is the sign.
+The projection is the thing that decides it, so the projection is what gets
+asked. Edge on, where a tenth of a turn barely moves and its direction is
+noise, the drag is refused rather than guessed.
+
+That still left one link done on paper: that the ring's parameter is the same
+angle as the Euler value it writes. So that got measured too, against
+feather-tk's actual matrices:
+
+| press | swept | result | what it does | agrees? |
+|---|---|---|---|---|
+| six o'clock, X ring | clockwise | `rotate.x` +24.8 | `Rx` tips +Y toward +Z, and +Z is down-right on screen, so the top goes right | yes |
+| three o'clock, Z ring | clockwise | `rotate.z` -24.8 | `Rz` at a negative angle tips +X toward -Y, and +X sits at one o'clock, so it falls to three | yes |
+
+Both follow the hand. Worth the twenty minutes: this is the third time on this
+manipulator that something I could have argued for turned out to need checking,
+and the first time it got checked before shipping rather than after a report.
+
+The angle is added up move by move rather than taken from the press, each step
+folded back into half a turn either side of the last. A drag past the far side
+of the ring carries on turning instead of coming back as most of a turn the
+other way, and a gesture round and round keeps winding: a full circle reads
+360.00, and out and back returns to exactly zero.
+
+### What these do not do yet
+
+The rings are world axes, and they write Euler angles. Dragging the Y ring
+writes `rotate.y`, which is a rotation about world Y only while the other two
+are zero. That is what three Euler sliders in a panel already do, so the
+manipulator is not lying about anything the rest of the interface is not -- but
+a ring labelled with a world axis that turns about a local one once its
+neighbours are non-zero is a thing to fix, either with local-axis rings or with
+a real orientation.
+
+No uniform scale: three axes, no centre handle. No screen-space ring either,
+the outer one that turns about the view.
+
+And still no gizmo toggle, which the four-up wants more than ever now that
+there are rings in it.
+
+---
+
+## 2026-08-12 — Icons that can be opened in something that draws
+
+They were string literals assembled at run time out of a wrapper function, a
+handful of named rects and a concatenation per icon. Legible as code, and no
+way to edit one as a drawing.
+
+They are files now, compiled in by ftk-resource the way feather-tk and tlRender
+carry theirs, so an installed ftk-fx is still one file. The reasoning that was
+in the C++ comments went into the SVGs as XML comments, because it is what
+somebody changing one of them wants to know and the file is where they will be.
+
+The check worth keeping is the one the change invited: a faithful extraction
+changes nothing on screen, so all thirty-nine shots were compared against the
+run from before it. Thirty-eight identical to the byte. The thirty-ninth was
+panel-diagnostics, and rather than wave that away it was captured twice in a
+row -- two different hashes, because it draws live timing graphs. It differs
+from itself, which is worth knowing about a shot that has been in the manifest
+for a week.
+
+---
+
 ## 2026-08-11 — Catching the branch up before it got expensive
 
 `widget-api` had been running alongside feather-tk's and tlRender's mains for

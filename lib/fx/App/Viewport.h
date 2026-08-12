@@ -75,6 +75,9 @@ namespace fx
             DrawType getDrawType() const;
             void setDrawType(DrawType);
 
+            GizmoMode getGizmoMode() const;
+            void setGizmoMode(GizmoMode);
+
             //! Set the callback for the viewport being clicked in, which is how
             //! its editor becomes the current one.
             void setPressCallback(const std::function<void(void)>&);
@@ -86,6 +89,7 @@ namespace fx
             void sizeHintEvent(const ftk::SizeHintEvent&) override;
             void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
             void mouseMoveEvent(ftk::MouseMoveEvent&) override;
+            void keyPressEvent(ftk::KeyEvent&) override;
             void mousePressEvent(ftk::MouseClickEvent&) override;
             void mouseReleaseEvent(ftk::MouseClickEvent&) override;
             void mouseLeaveEvent() override;
@@ -179,11 +183,30 @@ namespace fx
             //! at the camera and has nowhere to go.
             std::array<ArmScreen, 3> _gizmoArms() const;
 
-            //! The arm under the pointer, or None.
+            //! How far a ring stands from the origin, in the scene, so that
+            //! it lands at about the arms' length on screen. One radius for
+            //! all three, which is what makes them read as one ball rather
+            //! than three unrelated ovals.
+            float _gizmoRadius() const;
+
+            //! A ring about an axis, as the screen segments that can be
+            //! drawn. Sampled in the scene and projected point by point: a
+            //! circle seen at an angle is an ellipse, and a circle crossing
+            //! behind the camera is neither -- projecting the samples gets
+            //! both without a special case for either, and drops the pieces
+            //! that are behind the camera by leaving their segments out.
+            std::vector<std::pair<ftk::V2F, ftk::V2F> > _gizmoRing(Arm) const;
+
+            //! The arm or ring under the pointer, or None. Which of the two
+            //! it looks at is the mode's only say in picking.
             Arm _gizmoPick(const ftk::V2I&) const;
 
-            //! Move the current system to where the drag has taken the arm.
+            //! Take the current system to where the drag has taken it.
             void _gizmoMove(const ftk::V2I& pos);
+
+            void _gizmoTranslate(const ftk::V2I& pos);
+            void _gizmoRotate(const ftk::V2I& pos);
+            void _gizmoScale(const ftk::V2I& pos);
 
             //! The manipulator, drawn over the buffer like the tripod.
             void _gizmoDraw(
@@ -216,6 +239,30 @@ namespace fx
             //! side of the vanishing point the drag began on.
             bool _gizmoUseX = true;
             float _gizmoDenom = 0.F;
+
+            GizmoMode _gizmoMode = GizmoMode::Translate;
+
+            //! The transform the drag started from. Rotate and scale are
+            //! measured against these the way translate is measured against
+            //! the origin: from the press, never from the last move.
+            ftk::V3F _gizmoStartRotate;
+            ftk::V3F _gizmoStartScale = ftk::V3F(1.F, 1.F, 1.F);
+
+            //! Where the pointer was around the ring at the last move, and
+            //! how far it has been around in total. Kept as a running total
+            //! rather than as the difference from the press so that passing
+            //! the far side of the ring carries on turning instead of
+            //! snapping back the other way.
+            float _gizmoAnglePrev = 0.F;
+            float _gizmoAngleTotal = 0.F;
+
+            //! Which way a turn on screen turns the axis in the scene.
+            //! Measured at the press by moving a point around the ring and
+            //! watching which way it goes, rather than worked out from the
+            //! camera: the answer depends on the projection, the handedness
+            //! and which way the screen's y axis points, and any of the three
+            //! is easy to get backwards.
+            float _gizmoAngleSign = 1.F;
 
             float _particleSize = 3.F;
             DrawType _drawType = DrawType::Point;

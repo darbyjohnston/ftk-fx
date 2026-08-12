@@ -22,6 +22,8 @@ Setup steps a shot may use:
 * {"panel": {"name": "Diagnostics", "open": true}}   open or close a panel
 * {"panelStyle": "Tabs"}                     stack the panels or tab them
 * {"particleSize": 12}                       how big the particles draw
+* {"gizmo": "Rotate"}                        the current editor's manipulator:
+                                             Translate, Rotate or Scale
 * {"draw": "Sphere"}                         discs or shaded spheres
 * {"curveValueMode": "Normalized"}           how the curve plot scales its
                                              vertical axis
