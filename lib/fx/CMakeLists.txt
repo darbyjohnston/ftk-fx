@@ -1,3 +1,4 @@
+add_subdirectory(Resource)
 add_subdirectory(Core)
 add_subdirectory(Sim)
 add_subdirectory(App)

@@ -51,6 +51,6 @@ target_include_directories(fxApp
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(fxApp PUBLIC fxSim ftkUI ftkGL)
+target_link_libraries(fxApp PUBLIC fxSim fxResource ftkUI ftkGL)
 
 set_target_properties(fxApp PROPERTIES FOLDER lib)

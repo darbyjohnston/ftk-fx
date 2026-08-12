@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- One of the editor arrangements, drawn as the arrangement itself so the
+     button shows what it does. Twenty across, like the icons feather-tk ships. -->
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <g style="fill:#f0f0f0;fill-opacity:1;stroke:none">
+    <rect x="2" y="2" width="7" height="7"/>
+    <rect x="11" y="2" width="7" height="7"/>
+    <rect x="2" y="11" width="16" height="7"/>
+  </g>
+</svg>

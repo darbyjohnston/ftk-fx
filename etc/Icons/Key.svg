@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Drawn at the size the reset button uses, since they sit in the same row
+     as each other -- smaller than the tool bar icons because it belongs to a
+     row of sliders rather than to a tool bar. -->
+<svg width="11" height="11" viewBox="0 0 11 11" xmlns="http://www.w3.org/2000/svg">
+  <path style="fill:#f0f0f0;fill-opacity:1;stroke:none" d="M 5.5,0.7 10.3,5.5 5.5,10.3 0.7,5.5 Z" />
+</svg>

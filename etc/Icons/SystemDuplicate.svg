@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- One sheet in front of another, drawn as outlines so it does not read as a
+     solid block at twenty pixels. Not feather-tk's Copy, which is a clipboard:
+     this makes another system rather than putting one somewhere to be pasted,
+     and the day systems can be copied and pasted that icon should still mean
+     that. -->
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <g style="fill:#f0f0f0;fill-opacity:1;stroke:none">
+    <rect x="3" y="3" width="9" height="2"/>
+    <rect x="3" y="3" width="2" height="9"/>
+    <rect x="7" y="7" width="10" height="2"/>
+    <rect x="7" y="15" width="10" height="2"/>
+    <rect x="7" y="7" width="2" height="10"/>
+    <rect x="15" y="7" width="2" height="10"/>
+  </g>
+</svg>

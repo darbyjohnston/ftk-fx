@@ -19,6 +19,9 @@ namespace fx
         //! Kept here rather than pushed into the toolkit: a keyframe diamond
         //! means something to an animation tool and nothing to a file browser,
         //! and the icon system takes application icons for exactly this.
+        //!
+        //! The drawings live in etc/Icons as ordinary SVG files, so that
+        //! changing one is a matter of opening it in something that draws.
         void registerIcons(const std::shared_ptr<ftk::Context>&);
     }
 }
