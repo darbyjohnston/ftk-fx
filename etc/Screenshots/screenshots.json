@@ -1485,6 +1485,44 @@
       ]
     },
     {
+      "id": "manipulator-scale-centre",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "gizmo": "Scale"
+        },
+        {
+          "dragHold": [
+            [
+              590,
+              811
+            ],
+            [
+              658,
+              743
+            ]
+          ]
+        }
+      ],
+      "expect": {
+        "Parameters.Scale X": "2.00",
+        "Parameters.Scale Y": "2.00",
+        "Parameters.Scale Z": "2.00"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "The handle in the middle takes all three at once. It belongs to no axis, so it is drawn in a colour none of the three uses, and grown by the same doubling they are"
+        }
+      ]
+    },
+    {
       "id": "manipulator-rotate",
       "window": {
         "w": 900,
@@ -1564,6 +1602,50 @@
         {
           "id": "MainWindow.Editor0",
           "caption": "Already turned a quarter about z, then the y ring dragged a quarter round. A turn about world y, read back as three angles: writing the y angle alone would have turned it about world -x instead"
+        }
+      ]
+    },
+    {
+      "id": "manipulator-rotate-view",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "frame": 40
+        },
+        {
+          "view": {
+            "index": 0,
+            "type": "Front"
+          }
+        },
+        {
+          "gizmo": "Rotate"
+        },
+        {
+          "dragHold": [
+            [
+              720,
+              799
+            ],
+            [
+              590,
+              670
+            ]
+          ]
+        }
+      ],
+      "expect": {
+        "Parameters.Rotate X": "0.00",
+        "Parameters.Rotate Y": "0.00",
+        "Parameters.Rotate Z": "89.8"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "The outer ring turns about the axis the viewer is looking along, which no axis ring can reach. Front on, that axis is z, which is what makes this one checkable"
         }
       ]
     }

@@ -121,13 +121,25 @@ namespace fx
             void scrollEvent(ftk::ScrollEvent&) override;
 
         private:
-            //! Which arm of the manipulator something is on.
+            //! Which part of the manipulator something is on.
+            //!
+            //! X, Y and Z are first and in order, so that subtracting one
+            //! indexes the arms and their colours. The two that are not axes
+            //! come after, and the places that index have to say so.
             enum class Arm
             {
                 None,
                 X,
                 Y,
-                Z
+                Z,
+
+                //! The ring lying flat against the screen, which turns about
+                //! the axis the viewer is looking along. Rotate only.
+                View,
+
+                //! The handle at the middle, which scales all three axes at
+                //! once. Scale only.
+                Centre
             };
 
             void _setOrbit(const ftk::V2F&);
@@ -204,17 +216,53 @@ namespace fx
             //! than three unrelated ovals.
             float _gizmoRadius() const;
 
+            //! The colour a part of the manipulator is drawn in when it is
+            //! neither hovered nor held. The two that are not axes share one
+            //! that belongs to no axis.
+            static ftk::Color4F _gizmoColor(
+                Arm,
+                const std::array<ftk::Color4F, 3>& axisColors);
+
+            //! Which way the camera is looking, in the scene. This is the
+            //! axis the view ring turns about, and what tells the far half of
+            //! a ring from the near half.
+            ftk::V3F _cameraForward() const;
+
+            //! A piece of a ring, as it can be drawn.
+            struct RingSegment
+            {
+                ftk::V2F a;
+                ftk::V2F b;
+
+                //! Whether this piece is on the near side of the ring, the
+                //! half that would be in front if the ring were solid.
+                bool near = true;
+            };
+
             //! A ring about an axis, as the screen segments that can be
             //! drawn. Sampled in the scene and projected point by point: a
             //! circle seen at an angle is an ellipse, and a circle crossing
             //! behind the camera is neither -- projecting the samples gets
             //! both without a special case for either, and drops the pieces
             //! that are behind the camera by leaving their segments out.
-            std::vector<std::pair<ftk::V2F, ftk::V2F> > _gizmoRing(Arm) const;
+            //!
+            //! Arm::View gives the ring lying flat against the screen, drawn
+            //! wider than the other three so it reads as going round them.
+            std::vector<RingSegment> _gizmoRing(Arm) const;
 
             //! The arm or ring under the pointer, or None. Which of the two
             //! it looks at is the mode's only say in picking.
             Arm _gizmoPick(const ftk::V2I&) const;
+
+            //! Take a manipulator handle under the given point, if there is
+            //! one there and it can be dragged. False leaves nothing to
+            //! clean up but _gizmoDrag, which the caller clears.
+            //!
+            //! Separate from the press so that opening the edit happens in
+            //! one place. Written at each handle instead, two of the four
+            //! did not open one at all and their drags left an undo entry
+            //! per mouse move.
+            bool _gizmoPress(const ftk::V2I& pos);
 
             //! What the drag will be called on the undo stack.
             std::string _gizmoCommand() const;
@@ -265,6 +313,11 @@ namespace fx
             //! the origin: from the press, never from the last move.
             ftk::V3F _gizmoStartRotate;
             ftk::V3F _gizmoStartScale = ftk::V3F(1.F, 1.F, 1.F);
+
+            //! The axis the view ring was turning about when it was
+            //! grabbed. Held for the drag so that the turn is measured
+            //! against the axis it started on.
+            ftk::V3F _gizmoViewAxis;
 
             //! The angles the last move of a rotate wrote. Any rotation can
             //! be described by more than one set of them, and this is what
@@ -334,6 +387,12 @@ namespace fx
                 //! the tripod is read, and this is aimed at.
                 int gizmo = 0;
                 int grab = 0;
+
+                //! Half the width of the handle in the middle of the scale
+                //! manipulator. Bigger than the boxes on the ends of the
+                //! arms: it is what a press near the middle gets, so it has
+                //! to be big enough to be aimed at on purpose.
+                int centre = 0;
             };
             SizeData _size;
             std::shared_ptr<ftk::gl::OffscreenBuffer> _buffer;

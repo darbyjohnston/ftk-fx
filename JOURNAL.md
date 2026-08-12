@@ -7,6 +7,75 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — Three things from a picture of Maya, and a bug underneath them
+
+A reference image of Maya's three manipulators, offered as "just for reference",
+which turned out to name three gaps this one had:
+
+**A handle in the middle of the scale manipulator**, which takes all three axes
+at once. Three arms and no centre meant uniform scale had to be typed. It grows
+by the same doubling the arms use, so the gesture is the one already learnt, and
+it multiplies rather than assigns -- a scale that has been shaped into 3, 1, 1
+stays that shape. Assigning one number to all three would be a different
+operation wearing the same handle.
+
+There is no arm for it to run along and no direction the scene can offer, so it
+takes a fixed one: up and to the right grows. That is the one pair of directions
+an artist will guess right without being told.
+
+**A ring lying flat against the screen**, turning about the axis the viewer is
+looking along -- which is the one turn the three axis rings cannot do, and
+exactly the turn wanted when the emitter is being lined up against what is on
+screen. Drawn a third again wider than the others so it reads as going round
+them rather than as a fourth of the same kind.
+
+**The far half of each ring faded.** A ring is a loop of one colour, and there
+is nothing in it saying which way round it goes; a drag begun on the back of one
+turns the opposite way to the hand and looks like a bug. Faded to a third rather
+than dropped, because the back of a ring is still worth grabbing and a gap reads
+as the ring being broken. It moves 3357 pixels, which is how it was checked.
+
+Both new handles are drawn in a colour none of the three axes uses. Neither
+belongs to an axis, and giving either one of the three colours would say it did.
+
+### The dashes that were not dashes
+
+The view ring first drew as alternating bright and faint dashes. The fade asks
+whether a point is nearer the camera than the middle of its ring is -- and every
+point of this ring is exactly as far away as the middle, so the measurement is
+zero all the way round and its sign was whatever the last bit of arithmetic
+happened to be.
+
+It is now *said* to be near rather than measured. Worth writing down because the
+first instinct was to widen the tolerance, which would have been a number chosen
+to hide a question that has an exact answer.
+
+### What it found on the way
+
+Adding a fourth handle meant reading the press, and the press was opening the
+undo edit at each handle that needed one -- so two of the four did not open one
+at all. A rotate or scale drag left an undo entry per mouse move. Measured
+before touching it: drag the scale arm to 2.0, press undo once, and the panel
+reads **1.82**. It should read 1.00, and the translate drag next to it did.
+
+This is the third bug of one shape on this manipulator. The undo entry said
+"Move System" in every mode because the name was written at each place that
+edits; the emitter grew along the wrong axis because the axis was decided at
+each place that drew. Every one of them is the same sentence: something true of
+the whole gesture was written down once per branch, and a branch was missed.
+
+So the press is now `_gizmoPress`, which only answers whether it took the drag,
+and the caller opens the edit. One place, and a fifth handle cannot forget.
+
+`Arm` has two members that are not axes now. X, Y and Z stay first and in order
+so that subtracting one still indexes the arms and their colours, and the places
+that index say so instead of assuming it.
+
+feather-tk gained rotation about an arbitrary axis, which the entry below said
+would be wanted when this ring arrived. It was.
+
+---
+
 ## 2026-08-12 — A ring that says world has to turn about world
 
 The rings were drawn on the world's axes and each one wrote a single Euler
@@ -226,7 +295,8 @@ neighbours are non-zero is a thing to fix, either with local-axis rings or with
 a real orientation. *(Fixed the same day: see the entry above.)*
 
 No uniform scale: three axes, no centre handle. No screen-space ring either,
-the outer one that turns about the view.
+the outer one that turns about the view. *(Both added the same day, along with
+fading the far half of each ring: see the entry above.)*
 
 And still no gizmo toggle, which the four-up wants more than ever now that
 there are rings in it.
