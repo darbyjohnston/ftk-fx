@@ -7,6 +7,46 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — Driving a window without a person at it
+
+Asked what feather-tk could add to make testing easier. The answer came out of
+counting what had gone wrong that day rather than from taste, and it is four
+things, of which one matters much more than the rest.
+
+**A window that has not been laid out is a trap.** Until `_setSize` runs, every
+widget's geometry is `0 0 -1 -1` and nothing is under the cursor. A test that
+reads a geometry then reads nothing, and a test that aims at one hits nothing --
+and neither *fails*. They pass, having checked nothing. That is exactly how a
+splitter test of mine passed against code I had deliberately broken, and the
+reason it is worth a named public method rather than a comment is that the
+failure is silent. `layout(size)`.
+
+**Everyone who needed to click grew their own window.** `ContextMenuTest`
+subclassed `Window` to reach `_cursorPos` and `_mouseButton`; the shuttle test
+did the same; ftk-fx's `MainWindow` did the same for its screenshot harness.
+Three copies, slightly different. Now `click()`, `drag()` and `keyPress()` on
+`IWindow`, and all three copies are gone.
+
+Public rather than test-only, which was the right call for a reason I did not
+anticipate: the third caller is not a test. An application that captures its own
+screenshots needs to work its own interface, and hiding this behind a test
+library would have left ftk-fx subclassing to get at it forever.
+
+**Reaching inside a compound widget.** Aiming at a numeric editor is useless;
+what has to be aimed at is the shuttle inside it. Both the test and the harness
+had written their own recursive search. `findChild<T>()`.
+
+**A box in a sidecar is not a thing on screen.** This is the one that cost the
+most time: a widget scrolled past the bottom of a panel has a perfectly good
+geometry, and reads exactly like a visible one. Four wrong guesses at drag
+coordinates came from that.
+
+It needed nothing new in feather-tk -- `IWidget::isClipped()` has been there all
+along. The gap was that nothing *surfaced* it, so the sidecar now records
+`"clipped": true`. The lesson is worth separating from the fix: the missing
+thing was not a capability, it was the capability being visible at the moment
+somebody needed it.
+
 ## 2026-08-11 — A dot instead of a border, and a shuttle that listens to the keyboard
 
 **Third go at the current-editor mark.** A border round the whole editor, then

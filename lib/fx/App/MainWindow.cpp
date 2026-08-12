@@ -101,50 +101,6 @@ namespace fx
             _splitter->setSplit(value);
         }
 
-        void MainWindow::click(const V2I& pos, int modifiers)
-        {
-            _cursorEnter(true);
-            _cursorPos(pos);
-            _mouseButton(MouseButton::Left, true, modifiers);
-            _mouseButton(MouseButton::Left, false, modifiers);
-        }
-
-        void MainWindow::drag(
-            const std::vector<V2I>& path,
-            int modifiers,
-            bool release)
-        {
-            if (path.size() < 2)
-                return;
-            _cursorEnter(true);
-            _cursorPos(path[0]);
-            _mouseButton(MouseButton::Left, true, modifiers);
-            // Moved in steps rather than jumped. A widget that treats a drag
-            // as one gesture and a widget that treats every move as a separate
-            // edit look the same from one event, and the difference is the
-            // whole question for undo.
-            //
-            // More than two points because a drag that goes somewhere and
-            // comes back is a different question from one that goes: a value
-            // that follows the pointer out and a value that runs away look
-            // alike until the pointer turns round.
-            const int steps = 8;
-            for (size_t leg = 1; leg < path.size(); ++leg)
-            {
-                const V2I& from = path[leg - 1];
-                const V2I& to = path[leg];
-                for (int i = 1; i <= steps; ++i)
-                {
-                    _cursorPos(V2I(
-                        from.x + (to.x - from.x) * i / steps,
-                        from.y + (to.y - from.y) * i / steps));
-                }
-            }
-            if (release)
-            {
-                _mouseButton(MouseButton::Left, false, modifiers);
-            }
-        }
 
         namespace
         {

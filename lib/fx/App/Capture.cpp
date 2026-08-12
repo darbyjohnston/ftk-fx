@@ -457,6 +457,7 @@ namespace fx
                 }
                 app->getMainWindow()->click(
                     ftk::V2I(v[0].get<int>(), v[1].get<int>()),
+                    ftk::MouseButton::Left,
                     modifiers);
             }
             if (step.contains("drag") || step.contains("dragHold"))
@@ -800,6 +801,15 @@ namespace fx
                 if (!text.empty())
                 {
                     widget["text"] = text;
+                }
+                // A box is not a thing on screen. A widget scrolled past the
+                // bottom of its panel, or clipped by one, still has a
+                // perfectly good geometry -- and a shot aimed at it hits
+                // nothing. Recorded so that reading the coordinates out of
+                // here says which of the two it is.
+                if (w->isClipped())
+                {
+                    widget["clipped"] = true;
                 }
                 widgets.push_back(widget);
             }

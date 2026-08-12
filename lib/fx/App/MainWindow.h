@@ -65,17 +65,6 @@ namespace fx
             //! For the screenshot harness. Everything else it can do drives the
             //! models directly, which is how a crash in the interface -- a
             //! callback that took apart the widget calling it -- passed every
-            //! shot while the application fell over on the first click.
-            void click(const ftk::V2I& pos, int modifiers = 0);
-
-            //! Drag from one position to another, the way a person would.
-            //! Press, move along the path, release. `release` false leaves
-            //! the button down, which is how a shot catches what a gesture
-            //! looks like while it is happening rather than after it.
-            void drag(
-                const std::vector<ftk::V2I>& path,
-                int modifiers = 0,
-                bool release = true);
 
             void keyPressEvent(ftk::KeyEvent&) override;
 

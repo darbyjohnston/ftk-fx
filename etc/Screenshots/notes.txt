@@ -73,7 +73,9 @@ item from it, which is the path that once crashed by rebuilding the menu from
 inside its own callback. Clicks are applied after the window has been laid out,
 one per settle, so a click on what a previous click opened finds it on screen.
 Their coordinates are in the same pixels as the boxes in a sidecar, which is
-where to read them from.
+where to read them from. A box is not a thing on screen: a widget scrolled past
+the bottom of its panel still has one, and a shot aimed there hits nothing. The
+sidecar marks those "clipped": true.
 
 A shot may set "expect", which is how a shot that clicks or drags says what it
 was supposed to change:
