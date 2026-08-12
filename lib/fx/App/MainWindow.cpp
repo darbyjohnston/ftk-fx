@@ -14,6 +14,7 @@
 #include <ftk/UI/ActionGroup.h>
 #include <ftk/UI/DialogSystem.h>
 #include <ftk/UI/Divider.h>
+#include <ftk/UI/Spacer.h>
 #include <ftk/UI/FileBrowser.h>
 #include <ftk/UI/Menu.h>
 #include <ftk/UI/MenuBar.h>
@@ -471,10 +472,19 @@ namespace fx
             // addWidget rather than parenting to the tool bar: it is a
             // container that manages one widget, and anything else parented to
             // it is never given a geometry.
+            // A divider with room either side of it. On its own it reads as
+            // one more thing in the row rather than as a gap between groups:
+            // the eye needs the space more than it needs the line.
             const auto divide = [context, toolBar]
             {
+                auto before = Spacer::create(context, Orientation::Horizontal);
+                before->setSpacingRole(SizeRole::Spacing);
+                toolBar->addWidget(before);
                 toolBar->addWidget(
                     Divider::create(context, Orientation::Horizontal));
+                auto after = Spacer::create(context, Orientation::Horizontal);
+                after->setSpacingRole(SizeRole::Spacing);
+                toolBar->addWidget(after);
             };
             toolBar->addAction(_newAction);
             toolBar->addAction(_openAction);

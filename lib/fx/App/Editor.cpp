@@ -291,8 +291,14 @@ namespace fx
             // border drawn there survived only where the header did not reach.
             if (_current)
             {
-                event.render->drawMesh(
-                    border(getGeometry(), _border),
+                // A bar along the top rather than a box round the whole
+                // editor. Four editors each outlined in an accent colour is a
+                // lot of colour for one bit of information, and the top edge
+                // is where the header already is -- the eye is looking there
+                // to read what the editor is showing.
+                const Box2I& g = getGeometry();
+                event.render->drawRect(
+                    Box2I(g.min.x, g.min.y, g.w(), _border),
                     event.style->getColorRole(ColorRole::KeyFocus));
             }
         }

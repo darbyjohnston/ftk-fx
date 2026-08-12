@@ -37,6 +37,10 @@ namespace fx
             row.info = info;
 
             row.slider = FloatEditSlider::create(context);
+            // Otherwise a row is as wide as the widest thing in its own group,
+            // so Transform's sliders stop short of Emitter's and the column
+            // reads as two panels that failed to line up.
+            row.slider->setHStretch(Stretch::Expanding);
             row.slider->setRange(info.min, info.max);
             row.slider->setValue(info.parameter->getConstant());
             row.slider->setDefault(info.defaultValue);
@@ -95,6 +99,7 @@ namespace fx
             // that have no key button still line up.
             auto hLayout = HorizontalLayout::create(context);
             hLayout->setSpacingRole(SizeRole::SpacingTool);
+            hLayout->setHStretch(Stretch::Expanding);
             row.slider->setParent(hLayout);
             row.keyButton->setParent(hLayout);
             layout->addRow(info.name + ":", hLayout);

@@ -7,6 +7,30 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-11 — Three small ones, and what the first was really about
+
+**The transform sliders stopped short of the emitter's.** They were not set to
+expand, so each row was as wide as the widest thing in its own group -- and the
+groups are separate `FormLayout`s, so Transform sized itself against Transform
+and Emitter against Emitter. Two columns of controls that almost line up read
+as a bug in the layout, which is what it was. Expanding, they all reach the
+same edge.
+
+Worth noting the shape of it: nothing was wrong inside either group. The defect
+only existed *between* them, and only became visible once the window was wide
+enough for the two answers to differ. A narrow window hides it completely.
+
+**The tool bar groups needed air.** A divider with buttons hard against it on
+both sides is one more thing in the row rather than a gap between groups. A
+spacer either side, and the eye does the grouping without being told.
+
+**The current editor was shouting.** A whole border in the accent colour, times
+four editors, is a great deal of colour spent on one bit of information -- and
+the information is not "here is a region", it is "this one". A bar along the
+top edge says the same thing at a quarter of the volume, and it lands where the
+header already is, which is where the eye goes to read what the editor is
+showing.
+
 ## 2026-08-11 — The manipulator answers to the mouse, not to the scene
 
 Reported again, in a different dress: from an emitter at X = 118, dragging the
