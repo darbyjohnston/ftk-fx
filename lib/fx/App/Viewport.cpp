@@ -800,8 +800,8 @@ namespace fx
                     t = ((p.x - a.x) * ab.x + (p.y - a.y) * ab.y) / lengthSquared;
                     t = clamp(t, 0.F, 1.F);
                 }
-                const V2F near(a.x + ab.x * t, a.y + ab.y * t);
-                const V2F d(p.x - near.x, p.y - near.y);
+                const V2F nearest(a.x + ab.x * t, a.y + ab.y * t);
+                const V2F d(p.x - nearest.x, p.y - nearest.y);
                 return std::sqrt(d.x * d.x + d.y * d.y);
             }
         }
@@ -1620,11 +1620,8 @@ namespace fx
             case Arm::Z: turn = rotateZ(degrees); break;
             default: break;
             }
-            const M44F start =
-                rotateZ(_gizmoStartRotate.z) *
-                rotateY(_gizmoStartRotate.y) *
-                rotateX(_gizmoStartRotate.x);
-            const V3F value = sim::eulerZYX(turn * start, _gizmoRotatePrev);
+            const V3F value = getRotateXYZ(
+                turn * rotateXYZ(_gizmoStartRotate), _gizmoRotatePrev);
             _gizmoRotatePrev = value;
 
             const sim::System before = model->getSystem();

@@ -40,19 +40,5 @@ namespace fx
             bool operator == (const Transform&) const;
             bool operator != (const Transform&) const;
         };
-
-        //! The angles getRotation() would need to build the given rotation,
-        //! in degrees.
-        //!
-        //! Two sets of angles describe any rotation, and every set has more
-        //! versions of itself whole turns apart, so which one to return has
-        //! to be asked rather than derived: the answer is whichever is
-        //! nearest \a near.
-        //!
-        //! A manipulator passes the angles its last move wrote. That way a
-        //! gesture round and round goes on winding rather than starting again
-        //! at zero, and a drag crossing the pose where the y angle folds back
-        //! does not take the long way round to describe it.
-        ftk::V3F eulerZYX(const ftk::M44F&, const ftk::V3F& near);
     }
 }

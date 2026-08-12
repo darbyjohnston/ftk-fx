@@ -24,9 +24,6 @@ namespace fx
 
         private:
             void _matrix();
-            void _euler();
-            void _eulerWinding();
-            void _eulerLock();
         };
     }
 }

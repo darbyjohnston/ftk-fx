@@ -66,9 +66,26 @@ checks, which is the useful part -- they are guarding different things.
 `rotateX/Y/Z` and nothing else: no rotation about an arbitrary axis, and no way
 back from a matrix to angles. The first did not bite here because the rings are
 on world axes, so the three that exist are exactly the three needed -- it will
-bite when the view-aligned ring arrives. The second is now written here and
-could be a `Matrix.h` free function; the "near" argument is the part that makes
-it worth sharing, since that is the bit everyone gets wrong.
+bite when the view-aligned ring arrives.
+
+The second went to feather-tk as `getRotateXYZ`, with `rotateXYZ` alongside it
+so that the order the angles are applied in is stated once rather than assumed
+at both ends. The `nearAngles` argument is what makes it worth sharing: reading
+angles back is not a derivation, and an interface that hides that behind a
+single return value is one everybody has to work around. `Transform` keeps only
+the two lines that are actually about a transform, and its test keeps only the
+check that is about *this* project -- that scale is applied inside the rotation.
+
+Every screenshot came back byte identical afterwards except the diagnostics
+panel, which prints timings and has never matched itself between two runs. That
+is the whole point of moving a thing that already worked: nothing should look
+different, and if something does, the move was not a move.
+
+Naming, which cost nothing here but would have cost a Windows build: the
+argument is `nearAngles`, not `near`. `windows.h` still defines `near` and `far`
+as macros, which is why `ortho()` next door says `nearClip`. There was a local
+called `near` in the viewport's own distance-to-segment, from before anyone was
+thinking about this; it is `nearest` now.
 
 ---
 
