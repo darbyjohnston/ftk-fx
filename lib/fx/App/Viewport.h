@@ -400,6 +400,11 @@ namespace fx
                 //! arms: it is what a press near the middle gets, so it has
                 //! to be big enough to be aimed at on purpose.
                 int centre = 0;
+
+                //! How long the arrow head on a translate arm is. A fifth of
+                //! the arm, so it stays a head rather than becoming a dart
+                //! or a speck when the display scale changes.
+                int arrow = 0;
             };
             SizeData _size;
             std::shared_ptr<ftk::gl::OffscreenBuffer> _buffer;

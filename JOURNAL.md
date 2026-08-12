@@ -7,6 +7,44 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — Two reports, and a triangle facing the wrong way
+
+Both from actually using it, and neither would have come from reading the code.
+
+**The middle handle drew a rail.** The rail exists because an arm drag can only
+travel along one line, and it is drawn for any drag at all -- so the middle
+handle, which slides freely in the plane of the screen, got one too, pointing
+down whatever direction the previous arm drag had left in the member. It said
+the drag was constrained when it was not, which is the one thing that drawing
+was there to say.
+
+**The arrow heads were not drawing at all.** Wound `1, 2, 3`, where `circle()`
+and `rect()` next door wind theirs `1, 3, 2`. The opposite sense faces away and
+is culled, so the head drew nothing.
+
+### Nothing is the worst thing for a triangle to draw
+
+A culled triangle is not a triangle in the wrong place or the wrong colour --
+it is absent, and absent looks exactly like *too small to see*. So the first
+theory was that the head needed to be bigger, and it was: it was sized from
+`_size.dot`, which is two borders wide, giving a head about as big as the dot it
+replaced. That was a real fault and worth fixing -- a head should be a
+proportion of the arm it is on the end of, and it is a fifth of one now.
+
+But fixing it changed **zero pixels**, and that is the number that found the
+real fault. One measurement, and a plausible fix that would otherwise have been
+committed as the answer.
+
+Before that measurement I had said the heads were drawing, on the strength of a
+red wedge in a screenshot taken at four times the display scale. That wedge was
+the arm's own line, which is drawn from the border width and so is thick at 4x.
+A magnified picture answered a question about whether something exists, and it
+was the wrong instrument: at that scale everything is bigger, including the
+thing being mistaken for it. The pixel count was the right one, and it took a
+second.
+
+---
+
 ## 2026-08-12 — The rest of the Maya picture, and a drag plane that is fine
 
 The two remaining things the reference named, both on translate.

@@ -804,7 +804,12 @@ namespace fx
                 out.v.emplace_back(tip.x, tip.y);
                 out.v.emplace_back(back.x + side.x, back.y + side.y);
                 out.v.emplace_back(back.x - side.x, back.y - side.y);
-                out.triangles.emplace_back(1, 2, 3);
+                // Wound the way circle() and rect() wind theirs. The other
+                // way round the triangle faces away and is culled, which
+                // draws nothing at all rather than something wrong -- and
+                // nothing at all is easy to mistake for a head too small to
+                // see.
+                out.triangles.emplace_back(1, 3, 2);
                 return out;
             }
 
@@ -1124,7 +1129,11 @@ namespace fx
                 return;
             }
 
-            if (Arm::None != _gizmoDrag)
+            // Not for the middle handle, which has no line: it slides in the
+            // plane of the screen and is not held to anything. It was drawing
+            // one anyway, down whatever direction the last arm drag had left
+            // behind, which said the drag was constrained when it was not.
+            if (Arm::None != _gizmoDrag && Arm::Centre != _gizmoDrag)
             {
                 // From the line recorded at the press rather than from the
                 // arms as they stand. The axis does not move while it is
@@ -1181,8 +1190,8 @@ namespace fx
                         arrowHead(
                             arms[i].tip,
                             arms[i].dir,
-                            static_cast<float>(_size.dot) * 3.F,
-                            static_cast<float>(_size.dot) * 1.4F),
+                            static_cast<float>(_size.arrow),
+                            static_cast<float>(_size.arrow) * .36F),
                         color);
                 }
             }
@@ -1323,6 +1332,11 @@ namespace fx
                 _size.grab = event.style->getSizeRole(
                     SizeRole::Handle, event.displayScale);
                 _size.centre = _size.dot * 2;
+                // From the arm rather than from the dot it replaced. A head
+                // is a proportion of the thing it is on the end of, and the
+                // dot is two borders wide -- which made an arrow the size of
+                // a dot, and read as the line going slightly pointy.
+                _size.arrow = _size.gizmo / 5;
             }
         }
 
