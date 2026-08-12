@@ -425,6 +425,11 @@ namespace fx
             // an enabled state is written once: undo greys out in both places
             // because there is only one place.
             auto toolBar = ToolBar::create(context);
+            // Off the edges. Without it the first and last buttons sit hard
+            // against the window frame and the divider above the editors,
+            // which reads as the toolbar having been cropped rather than
+            // laid out.
+            toolBar->setMarginRole(SizeRole::MarginInside);
             // addWidget rather than parenting to the tool bar: it is a
             // container that manages one widget, and anything else parented to
             // it is never given a geometry.

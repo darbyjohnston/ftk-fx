@@ -138,7 +138,10 @@ namespace fx
 
             auto headerLayout = HorizontalLayout::create(context, _layout);
             headerLayout->setSpacingRole(SizeRole::None);
-            headerLayout->setBackgroundRole(ColorRole::Button);
+            // The same role the panel titles and the bellows use. All
+            // three are the bar that names the thing under it, and there is
+            // no reason for this one to be the odd shade out.
+            headerLayout->setBackgroundRole(ColorRole::Header);
             _currentDot = CurrentDot::create(context, headerLayout);
             _menuBar = MenuBar::create(context, headerLayout);
             _menuBar->setHStretch(Stretch::Expanding);
