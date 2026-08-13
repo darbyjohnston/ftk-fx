@@ -74,6 +74,7 @@ namespace fx
                 const std::shared_ptr<App>&);
             void _createEditMenu(const std::shared_ptr<ftk::Context>&);
             void _createLayoutMenu(const std::shared_ptr<ftk::Context>&);
+            void _createTransformMenu(const std::shared_ptr<ftk::Context>&);
             void _createCameraMenu(const std::shared_ptr<ftk::Context>&);
             void _createToolBar(const std::shared_ptr<ftk::Context>&);
 
@@ -112,6 +113,9 @@ namespace fx
 
             std::map<EditorLayout, std::shared_ptr<ftk::Action> > _layoutActions;
             std::shared_ptr<ftk::ActionGroup> _layoutGroup;
+            std::map<GizmoMode, std::shared_ptr<ftk::Action> > _gizmoActions;
+            std::shared_ptr<ftk::ActionGroup> _gizmoGroup;
+            std::shared_ptr<ftk::Observer<GizmoMode> > _gizmoModeObserver;
             std::shared_ptr<ftk::Observer<EditorLayout> > _layoutObserver;
 
             std::map<std::string, std::shared_ptr<ftk::Action> > _panelActions;

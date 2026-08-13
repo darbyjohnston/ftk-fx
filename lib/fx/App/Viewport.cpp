@@ -180,6 +180,10 @@ namespace fx
             // by the panel while the viewport is only watching. All three move
             // it, and none of them change the particles on their own, so they
             // ask for a draw rather than a render.
+            _gizmoModeObserver = Observer<GizmoMode>::create(
+                model->observeGizmoMode(),
+                [this](GizmoMode value) { _setGizmoMode(value); });
+
             _currentFrameObserver = Observer<int>::create(
                 model->observeCurrentFrame(),
                 [this](int value)
@@ -349,13 +353,13 @@ namespace fx
             return _gizmoMode;
         }
 
-        void Viewport::setGizmoMode(GizmoMode value)
+        void Viewport::_setGizmoMode(GizmoMode value)
         {
             if (value == _gizmoMode)
                 return;
             _gizmoMode = value;
-            // A mode changed mid-drag would carry the press of one manipulator
-            // into the arithmetic of another.
+            // A mode changed mid-drag would carry the press of one
+            // manipulator into the arithmetic of another.
             _gizmoDrag = Arm::None;
             _gizmoHover = Arm::None;
             setDrawUpdate();
@@ -363,28 +367,6 @@ namespace fx
 
         void Viewport::keyPressEvent(KeyEvent& event)
         {
-            // Where a DCC user's hand already is. Not put on the menus: the
-            // mode belongs to the viewport the pointer is over, and a menu
-            // item would have to say which viewport it meant.
-            if (0 == event.modifiers)
-            {
-                switch (event.key)
-                {
-                case Key::W:
-                    event.accept = true;
-                    setGizmoMode(GizmoMode::Translate);
-                    return;
-                case Key::E:
-                    event.accept = true;
-                    setGizmoMode(GizmoMode::Rotate);
-                    return;
-                case Key::R:
-                    event.accept = true;
-                    setGizmoMode(GizmoMode::Scale);
-                    return;
-                default: break;
-                }
-            }
             IWidget::keyPressEvent(event);
         }
 

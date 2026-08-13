@@ -75,8 +75,9 @@ namespace fx
             DrawType getDrawType() const;
             void setDrawType(DrawType);
 
+            //! Which manipulator is shown. Set on the model, which owns it
+            //! for the whole application; this follows.
             GizmoMode getGizmoMode() const;
-            void setGizmoMode(GizmoMode);
 
             //! Set the callback for the viewport being clicked in, which is how
             //! its editor becomes the current one.
@@ -142,6 +143,7 @@ namespace fx
                 Centre
             };
 
+            void _setGizmoMode(GizmoMode);
             void _setOrbit(const ftk::V2F&);
             void _setZoom(float);
             void _pan(const ftk::V2I& delta);
@@ -411,6 +413,7 @@ namespace fx
 
             std::shared_ptr<ftk::Observer<std::shared_ptr<const core::Frame> > >
                 _frameObserver;
+            std::shared_ptr<ftk::Observer<GizmoMode> > _gizmoModeObserver;
             std::shared_ptr<ftk::Observer<int> > _currentFrameObserver;
             std::shared_ptr<ftk::Observer<size_t> > _currentSystemObserver;
             std::shared_ptr<ftk::Observer<int> > _parameterObserver;

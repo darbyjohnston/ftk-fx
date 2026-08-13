@@ -216,6 +216,17 @@ namespace fx
             std::shared_ptr<ftk::IObservable<DrawType> > observeDrawType() const;
             void setDrawType(DrawType);
 
+            //! Which manipulator the viewports show.
+            //!
+            //! One for the application rather than one per viewport. A
+            //! viewport is a place to look from, not a mode to be in, and
+            //! four of them in four modes is four answers to a question that
+            //! has one -- the artist is moving a thing, or turning it, and
+            //! which window they happen to be over does not change that.
+            GizmoMode getGizmoMode() const;
+            std::shared_ptr<ftk::IObservable<GizmoMode> > observeGizmoMode() const;
+            void setGizmoMode(GizmoMode);
+
             ///@}
 
             //! \name Time
@@ -330,6 +341,7 @@ namespace fx
             std::shared_ptr<ftk::Observable<int> > _parameterChanged;
             std::shared_ptr<ftk::Observable<float> > _particleSize;
             std::shared_ptr<ftk::Observable<DrawType> > _drawType;
+            std::shared_ptr<ftk::Observable<GizmoMode> > _gizmoMode;
             std::shared_ptr<ftk::Observable<size_t> > _currentSystem;
             std::shared_ptr<ftk::CommandStack> _commands;
 

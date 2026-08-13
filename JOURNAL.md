@@ -7,6 +7,35 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — The manipulator mode is the application's, not a viewport's
+
+It was put on the viewport, with W, E and R rather than a menu, and the reason
+written down at the time was that "a menu item would have to say which viewport
+it meant". That is true of a menu item and beside the point about the mode.
+
+A viewport is a place to look *from*. The manipulator mode is what the artist is
+*doing* -- moving a thing, or turning it, or resizing it -- and that does not
+change when the pointer crosses a splitter. Four viewports in four modes are
+four answers to a question that has one, and the four-up made it plain: press W
+over one window and the other three carry on showing rings.
+
+The supporting argument was that a shot showing two viewports in different modes
+was worth being able to take. That is a screenshot deciding an interface, which
+is the tail wagging the dog, and the shot was never taken.
+
+So it lives on the model now, next to the draw type, and the viewports follow it
+the way they already follow the current frame. There is a Transform menu beside
+Camera -- one moves the thing, the other moves the eye -- and the keys hang off
+its actions, which is also the only way they can appear on a menu at all: the
+window dispatches shortcuts through its own menu bar and nowhere else.
+
+Plain W, E and R with no modifier are safe next to a text field. Key events go
+to the focused widget first and a line edit accepts printable characters, so the
+menu never sees them -- the same route Space and the arrow keys already take for
+the transport.
+
+---
+
 ## 2026-08-12 — Drags that are aimed at the manipulator, not at the window
 
 A two and a half pixel margin on the toolbar re-aimed every manipulator shot,

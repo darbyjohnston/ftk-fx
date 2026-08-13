@@ -91,6 +91,7 @@ namespace fx
             _parameterChanged = Observable<int>::create(0);
             _particleSize = Observable<float>::create(3.F);
             _drawType = Observable<DrawType>::create(DrawType::Point);
+            _gizmoMode = Observable<GizmoMode>::create(GizmoMode::Translate);
             _currentSystem = Observable<size_t>::create(0);
             _commands = CommandStack::create();
             _setSystems(sim::Scene().systems);
@@ -547,6 +548,21 @@ namespace fx
         void SceneModel::setDrawType(DrawType value)
         {
             _drawType->setIfChanged(value);
+        }
+
+        GizmoMode SceneModel::getGizmoMode() const
+        {
+            return _gizmoMode->get();
+        }
+
+        std::shared_ptr<IObservable<GizmoMode> > SceneModel::observeGizmoMode() const
+        {
+            return _gizmoMode;
+        }
+
+        void SceneModel::setGizmoMode(GizmoMode value)
+        {
+            _gizmoMode->setIfChanged(value);
         }
 
         const RangeI& SceneModel::getRange() const

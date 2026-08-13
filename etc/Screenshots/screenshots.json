@@ -1711,6 +1711,36 @@
           "caption": "The outer ring turns about the axis the viewer is looking along, which no axis ring can reach. Front on, that axis is z, which is what makes this one checkable"
         }
       ]
+    },
+    {
+      "id": "manipulator-global",
+      "window": {
+        "w": 900,
+        "h": 700
+      },
+      "setup": [
+        {
+          "rate": 0
+        },
+        {
+          "layout": 4
+        },
+        {
+          "frame": 20
+        },
+        {
+          "gizmo": "Rotate"
+        }
+      ],
+      "expect": {
+        "MainWindow.Editor0": "Persp"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.ToolBar",
+          "caption": "The manipulator mode belongs to the application, not to a viewport: four windows in four modes would be four answers to a question that has one"
+        }
+      ]
     }
   ]
 }

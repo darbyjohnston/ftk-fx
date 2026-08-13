@@ -62,6 +62,7 @@ namespace fx
             _createLayoutMenu(context);
             _createCameraMenu(context);
             _createPanelsMenu(context);
+            _createTransformMenu(context);
             _createToolBar(context);
 
             _pathObserver = Observer<std::filesystem::path>::create(
@@ -324,6 +325,65 @@ namespace fx
             _hasRedoObserver = Observer<bool>::create(
                 model->observeHasRedo(),
                 [this](bool value) { _redoAction->setEnabled(value); });
+        }
+
+        void MainWindow::_createTransformMenu(const std::shared_ptr<Context>& context)
+        {
+            // Its own menu, next to Camera: one moves the thing and the other
+            // moves the eye, which is the distinction an artist already has.
+            //
+            // On the menu bar rather than in the viewports, even though the
+            // keys are where a DCC user's hand already is. The mode is one
+            // for the application, so there is no viewport for a menu item to
+            // have to name -- and the window only dispatches shortcuts
+            // through its own menu bar, so a key needs an action here to hang
+            // off.
+            auto menu = Menu::create(context);
+            getMenuBar()->insertMenu(4, "Transform", menu);
+
+            std::weak_ptr<SceneModel> weak(_model);
+            const std::vector<KeyShortcut> shortcuts =
+            {
+                KeyShortcut(Key::W),
+                KeyShortcut(Key::E),
+                KeyShortcut(Key::R)
+            };
+            const std::vector<std::string> tooltips =
+            {
+                "Move the current system",
+                "Turn the current system",
+                "Resize the current system"
+            };
+            _gizmoGroup = ActionGroup::create(ActionGroupType::Radio);
+            const auto labels = getGizmoModeLabels();
+            for (size_t i = 0; i < labels.size(); ++i)
+            {
+                const GizmoMode mode = static_cast<GizmoMode>(i);
+                auto action = Action::create(
+                    labels[i],
+                    shortcuts[i],
+                    [weak, mode]
+                    {
+                        if (auto model = weak.lock())
+                        {
+                            model->setGizmoMode(mode);
+                        }
+                    });
+                action->setTooltip(tooltips[i]);
+                _gizmoActions[mode] = action;
+                _gizmoGroup->addAction(action);
+                menu->addAction(action);
+            }
+
+            auto model = _model.lock();
+            if (!model)
+                return;
+            _gizmoModeObserver = Observer<GizmoMode>::create(
+                model->observeGizmoMode(),
+                [this](GizmoMode value)
+                {
+                    _gizmoGroup->setChecked(static_cast<int>(value));
+                });
         }
 
         void MainWindow::_createCameraMenu(const std::shared_ptr<Context>& context)

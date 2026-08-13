@@ -637,21 +637,12 @@ namespace fx
             }
             if (step.contains("gizmo"))
             {
-                // On the current editor rather than on the model: the mode
-                // belongs to a viewport, and a shot showing two of them in
-                // different modes is a shot worth being able to take.
                 const std::string name = step.at("gizmo").get<std::string>();
                 GizmoMode mode = GizmoMode::First;
                 if (!fromString(name, mode))
                     throw std::runtime_error(ftk::Format(
                         "unknown manipulator mode \"{0}\"").arg(name));
-                auto editor = app->getMainWindow()->getEditors()->getCurrent();
-                if (!editor)
-                    throw std::runtime_error("no current editor");
-                auto viewport = editor->getViewport();
-                if (!viewport)
-                    throw std::runtime_error("the current editor has no viewport");
-                viewport->setGizmoMode(mode);
+                model->setGizmoMode(mode);
             }
             if (step.contains("particleSize"))
             {
