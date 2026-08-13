@@ -407,8 +407,24 @@ namespace fx
                 //! the arm, so it stays a head rather than becoming a dart
                 //! or a speck when the display scale changes.
                 int arrow = 0;
+
+                //! Room for the letter on the end of a tripod arm, and what
+                //! it takes to draw one.
+                int axisLabel = 0;
+                ftk::FontInfo fontInfo;
+                ftk::FontMetrics fontMetrics;
+                std::array<ftk::Size2I, 3> axisTextSize;
             };
             SizeData _size;
+
+            //! The tripod's letters, which cost a shaping pass to make and
+            //! never change.
+            struct DrawData
+            {
+                std::array<std::vector<std::shared_ptr<ftk::Glyph> >, 3>
+                    axisGlyphs;
+            };
+            DrawData _draw;
             std::shared_ptr<ftk::gl::OffscreenBuffer> _buffer;
 
             std::shared_ptr<ftk::Observer<std::shared_ptr<const core::Frame> > >

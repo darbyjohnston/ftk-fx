@@ -142,9 +142,13 @@ namespace fx
             // three are the bar that names the thing under it, and there is
             // no reason for this one to be the odd shade out.
             headerLayout->setBackgroundRole(ColorRole::Header);
-            _currentDot = CurrentDot::create(context, headerLayout);
             _menuBar = MenuBar::create(context, headerLayout);
             _menuBar->setHStretch(Stretch::Expanding);
+            // After the menus rather than before them. On the left it left a
+            // hole in every header that was not the current one, and a hole
+            // reads as something missing; on the right the headers end where
+            // they end and only the current one has a mark.
+            _currentDot = CurrentDot::create(context, headerLayout);
 
             // The actions outlive the menus they are put into, so the checked
             // state survives the rebuild that a content change causes.

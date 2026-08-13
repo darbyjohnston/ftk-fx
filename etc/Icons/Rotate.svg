@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- A minus, for removing a system. Not feather-tk's Decrement, which is the
+     spinner arrow a number edit uses. -->
+
+<svg
+   width="20"
+   height="20"
+   viewBox="0 0 20 20"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="Rotate.svg"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="31.041988"
+     inkscape:cx="10.872371"
+     inkscape:cy="7.6348203"
+     inkscape:window-width="1464"
+     inkscape:window-height="1027"
+     inkscape:window-x="502"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <path
+     id="path1"
+     style="fill:#f0f0f0;stroke-width:1.49999"
+     d="M 10 3.25 L 10 4.75 A 5.25 5.25 0 0 1 15.25 10 L 16.75 10 A 6.75 6.75 0 0 0 10 3.25 z " />
+  <path
+     style="fill:#f0f0f0;fill-opacity:1;stroke-width:12.0357"
+     d="M 5.828122,4.000038 10,1 v 6 z"
+     id="path4" />
+  <path
+     id="path2"
+     style="fill:#f0f0f0;stroke-width:1.49999"
+     d="m 10.828122,16.750038 v -1.5 a 5.25,5.25 0 0 1 -5.25,-5.25 h -1.5 a 6.75,6.75 0 0 0 6.75,6.75 z" />
+  <path
+     style="fill:#f0f0f0;fill-opacity:1;stroke-width:12.0357"
+     d="m 15,16 -4.171878,3.000038 v -6 z"
+     id="path3" />
+</svg>

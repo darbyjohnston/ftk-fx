@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- A minus, for removing a system. Not feather-tk's Decrement, which is the
+     spinner arrow a number edit uses. -->
+
+<svg
+   width="20"
+   height="20"
+   viewBox="0 0 20 20"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="Scale.svg"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="31.041988"
+     inkscape:cx="10.872371"
+     inkscape:cy="7.6348203"
+     inkscape:window-width="1464"
+     inkscape:window-height="1027"
+     inkscape:window-x="503"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <path
+     id="rect1"
+     style="fill:#f0f0f0;fill-opacity:1;stroke:none;stroke-width:1.00001"
+     d="M 13.005204,5.934136 9.9999999,8.9393398 7.1163301,6.0556699 6.0556699,7.1163301 8.9393397,10 5.9341359,13.005204 6.9947961,14.065864 9.9999999,11.06066 12.88367,13.94433 13.94433,12.88367 11.06066,10 14.065864,6.9947961 Z" />
+  <path
+     style="fill:#f0f0f0;fill-opacity:1;stroke-width:12.0357"
+     d="M 3.6360389,3.6360389 8.7073488,4.4646544 4.4647081,8.7072951 Z"
+     id="path2" />
+  <path
+     style="fill:#f0f0f0;fill-opacity:1;stroke-width:12.0357"
+     d="m 16.363961,16.363961 -0.828615,-5.07131 -4.242641,4.242641 z"
+     id="path1" />
+  <path
+     style="fill:#f0f0f0;fill-opacity:1;stroke-width:12.0357"
+     d="M 16.48547,3.5144765 15.656854,8.5857864 11.414213,4.3431457 Z"
+     id="path4" />
+  <path
+     style="fill:#f0f0f0;fill-opacity:1;stroke-width:12.0357"
+     d="M 3.5144766,16.48547 8.5857863,15.656854 4.3431456,11.414214 Z"
+     id="path5" />
+</svg>

@@ -1220,12 +1220,12 @@ namespace fx
             // way the scene is facing, not where it is or how far away.
             const M44F rotation = rotateX(_orbit.y) * rotateY(_orbit.x);
             const float length = _size.length;
-            // Inset by a whole axis and a dot, not by the stub. Which way an
-            // axis points depends on the camera, so any of the six arms can be
-            // the one heading for the corner: in a top view it is the positive
-            // Z, and at a stub's inset it ran out of the editor and over the
+            // Inset by a whole axis and a letter. Which way an axis points
+            // depends on the camera, so any of the three can be the one
+            // heading for the corner: in a top view it is the positive Z, and
+            // at a shorter inset it ran out of the editor and over the
             // splitter below.
-            const float reach = length + _size.dot;
+            const float reach = length + _size.axisLabel;
             const V2F origin(
                 g.min.x + _size.margin + reach,
                 g.max.y - _size.margin - reach);
@@ -1263,19 +1263,24 @@ namespace fx
                 const V2F tip(
                     origin.x + dir[i].x * length,
                     origin.y - dir[i].y * length);
-                const V2F stub(
-                    origin.x - dir[i].x * length * axisStub,
-                    origin.y + dir[i].y * length * axisStub);
-                Color4F faint = axes[i].color;
-                faint.a = .35F;
-                event.render->drawLine(origin, stub, faint, lineOptions);
                 event.render->drawLine(origin, tip, axes[i].color, lineOptions);
-                event.render->drawMesh(
-                    circle(
-                        V2I(
-                            static_cast<int>(tip.x),
-                            static_cast<int>(tip.y)),
-                        _size.dot),
+                // Its letter on the end rather than a dot. The manipulator
+                // has dots and boxes and arrows on the ends of three coloured
+                // arms, and at a glance across a viewport the tripod was
+                // reading as another one of those. A letter cannot be
+                // mistaken for a handle, and it says which axis is which
+                // without the colours having to be learnt.
+                //
+                // The letter is placed by its own size so it sits centred on
+                // the end of the arm, and drawn with no depth sorting of its
+                // own -- it belongs to its arm and follows the arm's turn.
+                const Size2I& size = _size.axisTextSize[i];
+                event.render->drawText(
+                    _draw.axisGlyphs[i],
+                    _size.fontMetrics,
+                    V2I(
+                        static_cast<int>(tip.x) - size.w / 2,
+                        static_cast<int>(tip.y) - size.h / 2),
                     axes[i].color);
             }
         }
@@ -1314,6 +1319,23 @@ namespace fx
                 _size.grab = event.style->getSizeRole(
                     SizeRole::Handle, event.displayScale);
                 _size.centre = _size.dot * 2;
+                _size.axisLabel = event.style->getSizeRole(
+                    SizeRole::Margin, event.displayScale) * 2;
+                // The two argument overload: passing a size of zero asks
+                // for a font zero pixels tall, which shapes to no glyphs at
+                // all and draws nothing -- which looks exactly like text
+                // being drawn somewhere off screen.
+                _size.fontInfo = event.style->getFont(
+                    FontType::Bold, event.displayScale);
+                _size.fontMetrics = event.fontSystem->getMetrics(_size.fontInfo);
+                const std::array<std::string, 3> labels = { "X", "Y", "Z" };
+                for (size_t i = 0; i < labels.size(); ++i)
+                {
+                    _size.axisTextSize[i] = event.fontSystem->getSize(
+                        labels[i], _size.fontInfo);
+                    _draw.axisGlyphs[i] = event.fontSystem->getGlyphs(
+                        labels[i], _size.fontInfo);
+                }
                 // From the arm rather than from the dot it replaced. A head
                 // is a proportion of the thing it is on the end of, and the
                 // dot is two borders wide -- which made an arrow the size of

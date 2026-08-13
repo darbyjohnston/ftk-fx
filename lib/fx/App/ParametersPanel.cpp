@@ -15,6 +15,7 @@
 #include <ftk/UI/IntEditSlider.h>
 #include <ftk/UI/LineEdit.h>
 #include <ftk/UI/RowLayout.h>
+#include <ftk/UI/Spacer.h>
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/ToolButton.h>
 
@@ -69,7 +70,6 @@ namespace fx
             if (ParameterControl::Shuttle == info.control)
             {
                 row.shuttle = FloatEditShuttle::create(context);
-                row.shuttle->setHStretch(Stretch::Expanding);
                 row.shuttle->setRange(info.min, info.max);
                 row.shuttle->setStep(info.step);
                 row.shuttle->setValue(info.parameter->getConstant());
@@ -151,10 +151,23 @@ namespace fx
             hLayout->setHStretch(Stretch::Expanding);
             row.getWidget()->setParent(hLayout);
             row.keyButton->setParent(hLayout);
+            // A slider grows into the width the row is given and its button
+            // follows the end of it. A shuttle does not grow -- it is the
+            // size it is -- so the row's spare width has to go somewhere
+            // after the button rather than before it, or the button ends up
+            // against the far edge with the control it belongs to a hand's
+            // width away.
+            if (row.shuttle)
+            {
+                auto spacer = Spacer::create(
+                    context, Orientation::Horizontal, hLayout);
+                spacer->setHStretch(Stretch::Expanding);
+            }
             layout->addRow(info.name + ":", hLayout);
             // Tagged so a shot can find the control rather than guess where it
             // is; a drag on one is the only way to reach the press callbacks.
             setScreenshotTag(row.getWidget(), "Parameters." + info.name);
+            setScreenshotTag(row.keyButton, "Parameters." + info.name + ".Key");
 
             _rows.push_back(row);
         }

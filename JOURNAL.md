@@ -7,6 +7,55 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — Four tweaks, and a line copied from the widget next door
+
+**The key buttons sat at the far edge of the panel**, a hand's width from the
+control they key. The cause was in feather-tk: the shuttle widgets each set
+themselves horizontally expanding. The sliders beside them do the same and
+there it means something -- they *also* set their inner slider expanding, so
+the width goes to the one part that can use it. A shuttle has no such part, so
+it drew at its own size and left the rest of the row empty. The line was copied
+from the slider, where it has a second half. Fixed there rather than worked
+around here, and the row is `[control][key][spacer]` so the slack lands after
+the button rather than before it.
+
+**The current-editor dot moved to the right of the header.** On the left it left
+a hole in every header that was not the current one, and a hole reads as
+something missing rather than as something absent on purpose.
+
+**The tripod has letters on its arms now, and no negative stubs.** Three
+coloured arms with shapes on the ends is what the manipulator is, and across a
+viewport the tripod was reading as another one. A letter cannot be mistaken for
+a handle, and it says which axis is which without the colours having to be
+learnt first.
+
+### Text that draws nothing
+
+The letters did not appear at first. `getFont` has a two argument form and a
+three argument one, and the three argument one takes a size -- I passed zero,
+which asks for a font zero pixels tall. It shapes to no glyphs and draws
+nothing.
+
+Nothing again, and again it looked like a placement problem: text off the edge
+of the viewport, or behind something. The measurement that found it was the same
+one as the arrow heads -- change the thing and count the pixels that moved. Zero
+means the code never ran or drew nothing; it never means "slightly wrong".
+
+### Reading a picture instead of asking the program, again
+
+Between those two I spent three exchanges reading pixel positions off a
+screenshot to work out whether the key button had moved, and got a different
+answer each time. The sidecar records tagged widget boxes and the key buttons
+were not tagged. Tagging them took one line and answered it exactly: control
+ends at 1720, button at 1724, so the button was already adjacent and the slack
+was *inside* the control -- which is what pointed at feather-tk.
+
+That is the third time this week. The rule is not "measure more", it is: when a
+question is about where something is, tag it and read the number. A picture
+answers "does this look right", never "where is this".
+
+---
+
 ## 2026-08-12 — The manipulator mode is the application's, not a viewport's
 
 It was put on the viewport, with W, E and R rather than a menu, and the reason
