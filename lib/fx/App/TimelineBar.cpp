@@ -200,11 +200,9 @@ namespace fx
             return out;
         }
 
-
-
         void TimelineBar::_statusUpdate()
         {
-            _statusLabel->setText(Format("{0} particles   {1} MB cached").
+            _statusLabel->setText(Format("{0} particles, {1} MB cached").
                 arg(_particleCount).
                 arg(_cacheByteCount / (1024.0 * 1024.0), 1));
         }

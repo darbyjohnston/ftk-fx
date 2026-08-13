@@ -338,7 +338,11 @@ namespace fx
             _rows.clear();
 
             auto layout = VerticalLayout::create(context);
-            layout->setSpacingRole(SizeRole::None);
+            // A border's width between the bellows, which is enough for the
+            // panel behind them to show through as a hairline. Packed with
+            // no gap they read as one long list with headings in it rather
+            // than as the separate groups they are.
+            layout->setSpacingRole(SizeRole::Border);
 
             std::weak_ptr<SceneModel> weak(model);
 
