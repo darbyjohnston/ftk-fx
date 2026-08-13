@@ -351,8 +351,8 @@ namespace fx
             const std::vector<std::string> tooltips =
             {
                 "Move the current system",
-                "Turn the current system",
-                "Resize the current system"
+                "Rotate the current system",
+                "Scale the current system"
             };
             const std::vector<std::string> icons =
             {

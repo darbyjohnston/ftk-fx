@@ -57,15 +57,21 @@ namespace fx
             _setWidget(_layout);
 
             auto hLayout = HorizontalLayout::create(context, _layout);
-            hLayout->setSpacingRole(SizeRole::SpacingTool);
+            hLayout->setSpacingRole(SizeRole::SpacingSmall);
+
+            // The transport in a layout of its own, packed at tool spacing.
+            // Five buttons that are one control want to read as one, and the
+            // wider spacing between the groups is what says where it ends.
+            auto buttonLayout = HorizontalLayout::create(context, hLayout);
+            buttonLayout->setSpacingRole(SizeRole::SpacingTool);
 
             std::weak_ptr<SceneModel> weak(model);
-            button(context, hLayout, "FrameStart", "Go to the start",
+            button(context, buttonLayout, "FrameStart", "Go to the start",
                 [weak] { if (auto m = weak.lock()) m->frameStart(); });
-            button(context, hLayout, "FramePrev", "Go to the previous frame",
+            button(context, buttonLayout, "FramePrev", "Go to the previous frame",
                 [weak] { if (auto m = weak.lock()) m->framePrev(); });
 
-            _playButton = ToolButton::create(context, hLayout);
+            _playButton = ToolButton::create(context, buttonLayout);
             _playButton->setCheckable(true);
             _playButton->setIcon("PlaybackForward");
             _playButton->setCheckedIcon("PlaybackStop");
@@ -73,9 +79,9 @@ namespace fx
             _playButton->setCheckedCallback(
                 [weak](bool value) { if (auto m = weak.lock()) m->setPlaying(value); });
 
-            button(context, hLayout, "FrameNext", "Go to the next frame",
+            button(context, buttonLayout, "FrameNext", "Go to the next frame",
                 [weak] { if (auto m = weak.lock()) m->frameNext(); });
-            button(context, hLayout, "FrameEnd", "Go to the end",
+            button(context, buttonLayout, "FrameEnd", "Go to the end",
                 [weak] { if (auto m = weak.lock()) m->frameEnd(); });
 
             // tlRender's, so that a frame count, a timecode and seconds are
@@ -105,6 +111,14 @@ namespace fx
                 context, _timeUnitsModel, hLayout);
             _durationLabel->setTooltip("The length of the simulation");
 
+            // Beside the two read-outs it changes rather than across the bar
+            // from them. It is the units of these numbers, so it belongs
+            // where the numbers are.
+            _timeUnitsWidget = tl::ui::TimeUnitsWidget::create(
+                context, _timeUnitsModel, hLayout);
+            _timeUnitsWidget->setTooltip(
+                "Show the time as frames, seconds or timecode");
+
             _lockCheckBox = CheckBox::create(context, "Lock", hLayout);
             _lockCheckBox->setTooltip(
                 "Freeze this frame so that changing a parameter cannot "
@@ -113,12 +127,6 @@ namespace fx
                 [weak](bool value) { if (auto m = weak.lock()) m->setCurrentLocked(value); });
 
             hLayout->addSpacer(Stretch::Expanding);
-
-            // The units button at the far end, beside the read-outs it
-            // changes rather than beside the transport it does not.
-            _timeUnitsWidget = tl::ui::TimeUnitsWidget::create(
-                context, _timeUnitsModel, hLayout);
-            _timeUnitsWidget->setTooltip("Show the time as frames, seconds or timecode");
 
             _statusLabel = Label::create(context, hLayout);
             _statusLabel->setFont(FontType::Mono);
