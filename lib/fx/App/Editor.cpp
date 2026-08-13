@@ -55,12 +55,12 @@ namespace fx
 
                 Size2I getSizeHint() const override
                 {
-                    // More room on the left than the right: the dot is the
-                    // start of the header, and hard against the edge it reads
-                    // as something that fell off rather than the first thing
+                    // More room on the right than the left: the dot is the
+                    // end of the header, and hard against the edge it reads
+                    // as something that fell off rather than the last thing
                     // in a row.
                     return Size2I(
-                        _pad + _dot + _margin,
+                        _margin + _dot + _pad,
                         _dot + _margin * 2);
                 }
 
@@ -99,7 +99,7 @@ namespace fx
                     event.render->drawMesh(
                         circle(
                             V2I(
-                                g.min.x + _pad + _dot / 2,
+                                g.max.x - _pad - _dot / 2,
                                 g.min.y + g.h() / 2),
                             _dot / 2),
                         event.style->getColorRole(ColorRole::KeyFocus));

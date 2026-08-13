@@ -7,6 +7,30 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — tlRender's time widgets, and the first dependency on it
+
+The frame number was an `IntEdit`. It is tlRender's `TimeEdit` now, with a
+`TimeLabel` for the duration beside it and a `TimeUnitsWidget` at the far end
+to switch between frames, seconds and timecode -- all three reading one
+`TimeUnitsModel`, so the units an artist picks apply to every read-out at once.
+
+This is the first thing here to link tlRender rather than only feather-tk, and
+it brings `tlTimeline` and `tlIO` with it. Three widgets is a thin reason for
+that on its own; reading movies and image sequences is the real one, and this
+is the seam it arrives through.
+
+Frames as the default, not timecode. Timecode is right for a player, where the
+media has a time of its own that the player is merely visiting. Here a frame is
+the unit the simulation is stepped in -- the cache is per frame, the curve
+editor's keys are on frames, and the substep count divides one. Seconds and
+timecode are conversions of that, which is exactly what the button is for.
+
+The read-outs are the current time and the length. Not a start and an end: the
+range starts at one and always has, and a second number that never changes is a
+number an artist has to read before ignoring.
+
+---
+
 ## 2026-08-12 — Four tweaks, and a line copied from the widget next door
 
 **The key buttons sat at the far edge of the panel**, a hand's width from the

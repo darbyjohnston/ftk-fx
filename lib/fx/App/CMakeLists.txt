@@ -51,6 +51,9 @@ target_include_directories(fxApp
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(fxApp PUBLIC fxSim fxResource ftkUI ftkGL)
+# tlUI for the time widgets, which brings tlTimeline and tlIO with it. The
+# time display is the first thing to want them; reading movies and image
+# sequences is what they are really here for.
+target_link_libraries(fxApp PUBLIC fxSim fxResource ftkUI ftkGL tlUI)
 
 set_target_properties(fxApp PROPERTIES FOLDER lib)

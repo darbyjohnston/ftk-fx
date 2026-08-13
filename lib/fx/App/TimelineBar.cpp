@@ -8,7 +8,11 @@
 
 #include <ftk/UI/CheckBox.h>
 #include <ftk/UI/Divider.h>
-#include <ftk/UI/IntEdit.h>
+#include <tlRender/UI/TimeEdit.h>
+#include <tlRender/UI/TimeLabel.h>
+#include <tlRender/UI/TimeUnitsWidget.h>
+
+#include <tlRender/Timeline/TimeUnits.h>
 #include <ftk/UI/Label.h>
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/Spacer.h>
@@ -74,11 +78,32 @@ namespace fx
             button(context, hLayout, "FrameEnd", "Go to the end",
                 [weak] { if (auto m = weak.lock()) m->frameEnd(); });
 
-            _frameEdit = IntEdit::create(context, hLayout);
-            _frameEdit->setRange(model->getRange());
-            _frameEdit->setTooltip("The current frame");
-            _frameEdit->setCallback(
-                [weak](int value) { if (auto m = weak.lock()) m->setCurrentFrame(value); });
+            // tlRender's, so that a frame count, a timecode and seconds are
+            // all the same widget reading one model -- and so that the units
+            // an artist picks here are the units they will get everywhere
+            // else once this application reads media.
+            _frameRate = model->getFrameRate();
+            _timeUnitsModel = tl::TimeUnitsModel::create(context);
+            // Frames to start with. Timecode is the right default for a
+            // player, where the media has a time of its own; here a frame is
+            // the unit the simulation is actually stepped in, and the cache
+            // and the curve editor both count in them.
+            _timeUnitsModel->setTimeUnits(tl::TimeUnits::Frames);
+            _timeEdit = tl::ui::TimeEdit::create(
+                context, _timeUnitsModel, hLayout);
+            _timeEdit->setTooltip("The current frame");
+            _timeEdit->setCallback(
+                [weak](const OTIO_NS::RationalTime& value)
+                {
+                    if (auto m = weak.lock())
+                    {
+                        m->setCurrentFrame(static_cast<int>(value.value()));
+                    }
+                });
+
+            _durationLabel = tl::ui::TimeLabel::create(
+                context, _timeUnitsModel, hLayout);
+            _durationLabel->setTooltip("The length of the simulation");
 
             _lockCheckBox = CheckBox::create(context, "Lock", hLayout);
             _lockCheckBox->setTooltip(
@@ -88,6 +113,12 @@ namespace fx
                 [weak](bool value) { if (auto m = weak.lock()) m->setCurrentLocked(value); });
 
             hLayout->addSpacer(Stretch::Expanding);
+
+            // The units button at the far end, beside the read-outs it
+            // changes rather than beside the transport it does not.
+            _timeUnitsWidget = tl::ui::TimeUnitsWidget::create(
+                context, _timeUnitsModel, hLayout);
+            _timeUnitsWidget->setTooltip("Show the time as frames, seconds or timecode");
 
             _statusLabel = Label::create(context, hLayout);
             _statusLabel->setFont(FontType::Mono);
@@ -100,7 +131,10 @@ namespace fx
                 [this](const RangeI& value)
                 {
                     _range = value;
-                    _frameEdit->setRange(value);
+                    // The whole range as a duration, so the read-out beside
+                    // the current time says how much there is of it.
+                    _durationLabel->setValue(OTIO_NS::RationalTime(
+                        value.max() - value.min() + 1, _frameRate));
                 });
 
             _currentFrameObserver = Observer<int>::create(
@@ -108,7 +142,7 @@ namespace fx
                 [this](int value)
                 {
                     _currentFrame = value;
-                    _frameEdit->setValue(value);
+                    _timeEdit->setValue(OTIO_NS::RationalTime(value, _frameRate));
                     _lockUpdate();
                 });
 

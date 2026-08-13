@@ -1274,13 +1274,18 @@ namespace fx
                 // The letter is placed by its own size so it sits centred on
                 // the end of the arm, and drawn with no depth sorting of its
                 // own -- it belongs to its arm and follows the arm's turn.
+                // Set off past the end of the arm rather than centred on it,
+                // so the letter is beside the arm instead of sitting on it.
+                // Along the arm's own direction, so the gap is the same
+                // however the tripod is turned.
                 const Size2I& size = _size.axisTextSize[i];
+                const float gap = static_cast<float>(_size.axisGap);
                 event.render->drawText(
                     _draw.axisGlyphs[i],
                     _size.fontMetrics,
                     V2I(
-                        static_cast<int>(tip.x) - size.w / 2,
-                        static_cast<int>(tip.y) - size.h / 2),
+                        static_cast<int>(tip.x + dir[i].x * gap) - size.w / 2,
+                        static_cast<int>(tip.y - dir[i].y * gap) - size.h / 2),
                     axes[i].color);
             }
         }
@@ -1321,6 +1326,8 @@ namespace fx
                 _size.centre = _size.dot * 2;
                 _size.axisLabel = event.style->getSizeRole(
                     SizeRole::Margin, event.displayScale) * 2;
+                _size.axisGap = event.style->getSizeRole(
+                    SizeRole::MarginSmall, event.displayScale) * 2;
                 // The two argument overload: passing a size of zero asks
                 // for a font zero pixels tall, which shapes to no glyphs at
                 // all and draws nothing -- which looks exactly like text

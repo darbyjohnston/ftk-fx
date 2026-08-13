@@ -18,6 +18,18 @@ namespace ftk
     class ToolButton;
 }
 
+namespace tl
+{
+    class TimeUnitsModel;
+
+    namespace ui
+    {
+        class TimeEdit;
+        class TimeLabel;
+        class TimeUnitsWidget;
+    }
+}
+
 namespace fx
 {
     namespace app
@@ -58,7 +70,11 @@ namespace fx
 
             std::shared_ptr<ftk::VerticalLayout> _layout;
             std::shared_ptr<ftk::ToolButton> _playButton;
-            std::shared_ptr<ftk::IntEdit> _frameEdit;
+            double _frameRate = 24.0;
+            std::shared_ptr<tl::TimeUnitsModel> _timeUnitsModel;
+            std::shared_ptr<tl::ui::TimeEdit> _timeEdit;
+            std::shared_ptr<tl::ui::TimeLabel> _durationLabel;
+            std::shared_ptr<tl::ui::TimeUnitsWidget> _timeUnitsWidget;
             std::shared_ptr<ftk::CheckBox> _lockCheckBox;
             std::shared_ptr<ftk::Label> _statusLabel;
             std::shared_ptr<CacheBar> _cacheBar;

@@ -411,6 +411,7 @@ namespace fx
                 //! Room for the letter on the end of a tripod arm, and what
                 //! it takes to draw one.
                 int axisLabel = 0;
+                int axisGap = 0;
                 ftk::FontInfo fontInfo;
                 ftk::FontMetrics fontMetrics;
                 std::array<ftk::Size2I, 3> axisTextSize;
