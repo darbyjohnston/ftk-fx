@@ -45,14 +45,26 @@ which reads "Rotate [checked]" -- the button is the thing that was telling the
 truth about the action while the viewport was telling the truth about the model,
 and the shot now checks they agree.
 
-### Worth taking to feather-tk
+### Worth taking to feather-tk -- one of the two
 
-Two things here are the library's rather than ours. A radio action reached by
-its shortcut is *toggled* -- `setChecked(action, !action->isChecked())` -- so
-pressing E twice asks a radio button to uncheck itself. And more generally, an
-action doing something different depending on whether it was clicked or typed
-is a trap that anything with a radio group in a menu will fall into. Neither
-bit us once the work moved to the group, but both are worth a patch upstream.
+The callback asymmetry was the library's and it is fixed there: `Menu::shortcut`
+now runs both callbacks in the order `IButton::_click()` runs them, so an action
+does the same thing typed as clicked. Two checks in `MenuBarTest` fail without
+it.
+
+The other one I was wrong about. A shortcut toggles a radio action rather than
+selecting it, and there is no such thing as none of them, so that looked like a
+bug worth fixing. It is not: `ActionGroup::_checkedChanged` already handles it,
+with a comment saying so -- it turns the action straight back on and suppresses
+the callback, so nothing watching ever sees the unchecked state. Written as a
+test, the assertion passed with the old code and the new one alike.
+
+Which is the point of writing it as a test. I had a tidy argument from the
+enum's own documentation, and the argument was about a state that does not
+exist for anyone outside the two functions involved. Fixing it would have put a
+second answer next to an answer that was already there -- the same shape as the
+four bugs this manipulator has already produced, arrived at from the other
+direction.
 
 ---
 
