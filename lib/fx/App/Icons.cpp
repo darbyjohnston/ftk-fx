@@ -20,9 +20,12 @@ namespace fx_resource
     extern std::vector<uint8_t> LayoutSingle;
     extern std::vector<uint8_t> LayoutThree;
     extern std::vector<uint8_t> LayoutTwo;
+    extern std::vector<uint8_t> Rotate;
+    extern std::vector<uint8_t> Scale;
     extern std::vector<uint8_t> SystemAdd;
     extern std::vector<uint8_t> SystemDuplicate;
     extern std::vector<uint8_t> SystemRemove;
+    extern std::vector<uint8_t> Translate;
 }
 
 namespace fx
@@ -40,6 +43,9 @@ namespace fx
             iconSystem->add("SystemAdd", fx_resource::SystemAdd);
             iconSystem->add("SystemDuplicate", fx_resource::SystemDuplicate);
             iconSystem->add("SystemRemove", fx_resource::SystemRemove);
+            iconSystem->add("Translate", fx_resource::Translate);
+            iconSystem->add("Rotate", fx_resource::Rotate);
+            iconSystem->add("Scale", fx_resource::Scale);
         }
     }
 }

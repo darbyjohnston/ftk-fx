@@ -7,6 +7,32 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — The transform modes on the toolbar, and a letter with nothing to label
+
+The three modes have icons now and sit on the toolbar as well as in the menu,
+in their own group between the layouts and the camera. They are the same
+actions, so the toolbar, the menu and the keys cannot disagree about which mode
+is on -- the radio group ticks the menu item and lights the toolbar button from
+one observer.
+
+### Two letters, not three
+
+An ortho view looks straight down one axis, so that axis projects to nothing:
+its arm is a stub and its letter landed on the middle of the tripod, on top of
+the other two. A front view drew Y and X properly and then dropped Z on the
+origin.
+
+Skipped when the arm covers less than a fifth of its length on screen. Written
+as a test on the projected arm rather than as a test for "is this an ortho
+view", because the thing that makes the letter useless is the axis pointing at
+the viewer, and a perspective camera can be lined up with an axis too. The rule
+is about what is on screen, and it is measured from what is on screen.
+
+The arm itself stays. A stub at the origin reads as an axis seen end on, which
+is exactly what it is; it is the letter that had nothing to say.
+
+---
+
 ## 2026-08-12 — tlRender's time widgets, and the first dependency on it
 
 The frame number was an `IntEdit`. It is tlRender's `TimeEdit` now, with a

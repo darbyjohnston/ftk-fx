@@ -1274,6 +1274,16 @@ namespace fx
                 // The letter is placed by its own size so it sits centred on
                 // the end of the arm, and drawn with no depth sorting of its
                 // own -- it belongs to its arm and follows the arm's turn.
+                // Nothing to label on an axis pointing at the viewer. Its
+                // arm projects to almost no length, so the letter lands on
+                // the middle of the tripod and sits on top of the other two
+                // -- which is what a front view did with Z. The arm itself
+                // is left drawn: a stub at the origin reads as an axis seen
+                // end on, which is what it is.
+                const V2F flat(dir[i].x, dir[i].y);
+                if (std::sqrt(flat.x * flat.x + flat.y * flat.y) < .2F)
+                    continue;
+
                 // Set off past the end of the arm rather than centred on it,
                 // so the letter is beside the arm instead of sitting on it.
                 // Along the arm's own direction, so the gap is the same

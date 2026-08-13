@@ -354,6 +354,10 @@ namespace fx
                 "Turn the current system",
                 "Resize the current system"
             };
+            const std::vector<std::string> icons =
+            {
+                "Translate", "Rotate", "Scale"
+            };
             _gizmoGroup = ActionGroup::create(ActionGroupType::Radio);
             const auto labels = getGizmoModeLabels();
             for (size_t i = 0; i < labels.size(); ++i)
@@ -361,6 +365,7 @@ namespace fx
                 const GizmoMode mode = static_cast<GizmoMode>(i);
                 auto action = Action::create(
                     labels[i],
+                    icons[i],
                     shortcuts[i],
                     [weak, mode]
                     {
@@ -517,6 +522,12 @@ namespace fx
             for (size_t i = 0; i < static_cast<size_t>(EditorLayout::Count); ++i)
             {
                 toolBar->addAction(_layoutActions[static_cast<EditorLayout>(i)]);
+            }
+            divide();
+            for (size_t i = 0; i < static_cast<size_t>(GizmoMode::Count); ++i)
+            {
+                toolBar->addAction(
+                    _gizmoActions[static_cast<GizmoMode>(i)]);
             }
             divide();
             toolBar->addAction(_frameAction);

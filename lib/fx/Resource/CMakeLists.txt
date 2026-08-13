@@ -15,9 +15,12 @@ set(RESOURCES
     etc/Icons/LayoutSingle.svg
     etc/Icons/LayoutThree.svg
     etc/Icons/LayoutTwo.svg
+    etc/Icons/Rotate.svg
+    etc/Icons/Scale.svg
     etc/Icons/SystemAdd.svg
     etc/Icons/SystemDuplicate.svg
-    etc/Icons/SystemRemove.svg)
+    etc/Icons/SystemRemove.svg
+    etc/Icons/Translate.svg)
 foreach(RESOURCE ${RESOURCES})
     get_filename_component(RESOURCE_BASE ${RESOURCE} NAME_WE)
     add_custom_command(
