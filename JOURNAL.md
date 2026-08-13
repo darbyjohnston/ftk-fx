@@ -7,6 +7,39 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-13 — Three separators, and the third time I noticed it was one idea
+
+Three complaints in a row, all the same complaint, and I answered the first two
+without seeing it.
+
+The parameter groups were packed with no gap, so Transform, Emitter, Forces and
+Display read as one long list with headings in it. DJV's tools set
+`SizeRole::Border` as their layout spacing and let the background show through
+the gap; ftk-fx had `SizeRole::None`. One line.
+
+Then the panels: a collapsed bellows and a panel title are the same height, the
+same colour and the same shape, so Display sitting against Diagnostics read as
+two more rows of the same list. I built `Divider` widgets for this -- created
+between consecutive panels, held in a vector, detached and cleared on every
+rebuild -- and I put them in the column rather than on each panel's title,
+because a panel drawing its own upper edge would draw one at the top of the
+column where there is nothing above to separate from.
+
+That reasoning was right and it was reasoning about a problem I had made. The
+gap **is** the divider. A layout that spaces its children already lets the
+background through between them, and already leaves nothing before the first or
+after the last -- which was the entire reason my dividers needed to be told
+where in the column they were. The same `SizeRole::Border` as the bellows, one
+line, and the widgets and the vector and the teardown loop all went: seven
+lines added where twenty-five came out.
+
+I had written the answer two entries earlier and then walked past it, because
+"separate these" arrived as a request for a divider and a divider is a widget.
+Worth remembering as a question rather than a rule: is this a thing to draw, or
+a space to leave? The bellows had already voted.
+
+---
+
 ## 2026-08-12 — A shortcut and a click are not the same thing to an action
 
 Reported: pressing E lights the Rotate button on the tool bar, and the
