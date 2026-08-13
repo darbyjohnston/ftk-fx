@@ -6,6 +6,9 @@
 #include <fx/Sim/System.h>
 
 #include <ftk/Core/Format.h>
+#include <ftk/Core/Matrix.h>
+
+#include <cmath>
 
 using namespace fx::core;
 using namespace fx::sim;
@@ -68,8 +71,64 @@ namespace fx
             _emission();
             _gravity();
             _lifespan();
+            _rotation();
             _determinism();
             _resume();
+        }
+
+        void SystemTest::_rotation()
+        {
+            // The emitter's rotation has to reach the velocities, not just
+            // the birth positions. It used to reach them only through the
+            // spray axis, and a turn about that axis leaves it alone -- so
+            // turning about y, which is the way the spray already points,
+            // changed nothing at all.
+            const auto build = [](const ftk::V3F& rotate)
+            {
+                System out;
+                out.getEmitter().rate.setConstant(24.F);
+                out.getEmitter().spread.setConstant(30.F);
+                out.getEmitter().speed.setConstant(5.F);
+                out.getEmitter().speedVariance.setConstant(0.F);
+                out.getEmitter().lifespan.setConstant(1000.F);
+                out.getEmitter().lifespanVariance.setConstant(0.F);
+                out.getEmitter().transform.rotate.x.setConstant(rotate.x);
+                out.getEmitter().transform.rotate.y.setConstant(rotate.y);
+                out.getEmitter().transform.rotate.z.setConstant(rotate.z);
+                // Nothing to push the particles about after they are born, so
+                // what is compared is what came out of the emitter.
+                out.getForces().gravity.x.setConstant(0.F);
+                out.getForces().gravity.y.setConstant(0.F);
+                out.getForces().gravity.z.setConstant(0.F);
+                out.getForces().drag.setConstant(0.F);
+                return out;
+            };
+
+            const SystemFrame plain = runTo(build(ftk::V3F(0.F, 0.F, 0.F)), 3);
+            FTK_CHECK(plain.pool.size() > 0);
+
+            for (const auto& rotate : {
+                ftk::V3F(0.F, 90.F, 0.F),
+                ftk::V3F(0.F, -35.F, 0.F),
+                ftk::V3F(20.F, 40.F, 60.F) })
+            {
+                const SystemFrame turned = runTo(build(rotate), 3);
+                FTK_CHECK(turned.pool.size() == plain.pool.size());
+                const ftk::M44F m = ftk::rotateXYZ(rotate);
+                for (size_t i = 0; i < plain.pool.size(); ++i)
+                {
+                    // Every particle's velocity, turned by the same rotation
+                    // the emitter was given. Not merely "different from the
+                    // unturned one": the whole spray has to move as one
+                    // rigid thing, which is what says the frame was carried
+                    // through rather than rebuilt.
+                    const ftk::V3F want = m * plain.pool.velocity[i];
+                    const ftk::V3F got = turned.pool.velocity[i];
+                    FTK_CHECK(std::abs(want.x - got.x) < .001F);
+                    FTK_CHECK(std::abs(want.y - got.y) < .001F);
+                    FTK_CHECK(std::abs(want.z - got.z) < .001F);
+                }
+            }
         }
 
         bool SystemTest::_equal(const SystemFrame& a, const SystemFrame& b)

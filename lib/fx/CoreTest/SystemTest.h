@@ -31,6 +31,7 @@ namespace fx
             void _emission();
             void _gravity();
             void _lifespan();
+            void _rotation();
             void _determinism();
             void _resume();
 

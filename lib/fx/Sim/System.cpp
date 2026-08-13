@@ -274,9 +274,6 @@ namespace fx
             const V3F size = _emitter.size.getValue(subFrame);
             const EmitterShape shape = _emitter.shape;
             const bool surface = _emitter.surface;
-            // Up, turned by the emitter. An emitter with no rotation sprays
-            // the way it always did.
-            const V3F axis = normalize(rotation * V3F(0.F, 1.F, 0.F));
             const float spread = _emitter.spread.getValue(subFrame);
             const float speed = _emitter.speed.getValue(subFrame);
             const float speedVariance = _emitter.speedVariance.getValue(subFrame);
@@ -290,8 +287,17 @@ namespace fx
                 // the index moves when the pool is compacted and the id never
                 // does. This is what makes a re-simulation reproduce the run.
                 const uint64_t id = pool.id[i];
-                const V3F direction = coneDirection(
-                    axis,
+                // The cone is built straight up and then turned, rather than
+                // built about an axis that has been turned. Those are not the
+                // same: the cone needs two directions across the axis as well
+                // as the axis itself, and building it from the axis alone
+                // leaves those two to be picked arbitrarily -- so a rotation
+                // *about* the spray direction was thrown away. Turning the
+                // emitter about y did nothing at all to a point emitter, and
+                // to a shaped one it swung the birth positions round while
+                // leaving every velocity where it was.
+                const V3F direction = rotation * coneDirection(
+                    V3F(0.F, 1.F, 0.F),
                     spread,
                     core::randF(seed, id, channelCone),
                     core::randF(seed, id, channelPhi));

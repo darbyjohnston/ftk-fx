@@ -7,6 +7,50 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — The emitter's rotation was reaching the velocities through a straw
+
+Reported: turning an emitter about y does nothing to a point emitter, and to a
+sphere or box it looks like each particle is turning about some axis of its own.
+Both true, both the same fault, and the measurement is flat -- a point emitter at
+rotate y 0 and at rotate y 90 rendered **byte identical**.
+
+The spray is a cone, and a cone needs three directions: the axis it points along
+and two across it that say where round the axis a particular particle went.
+Only the axis was being turned. The other two were rebuilt from it afterwards by
+picking whichever world axis it was least parallel to -- a reasonable way to get
+*a* perpendicular, and no way at all to get *the* perpendicular the emitter
+means.
+
+So a rotation about the spray direction was thrown away entirely, and the spray
+direction is up. Turning about y is exactly the rotation the axis cannot record.
+A point emitter got nothing. A shaped one got its birth positions turned, since
+those go through the matrix, while every velocity stayed where it was: the cloud
+sheared instead of turning, which is what "each particle rotating about some
+arbitrary axis" looks like from the outside. Arbitrary is the right word --
+`perpendicular()` picks one.
+
+The cone is now built straight up and then turned, rather than built about an
+axis that has been turned. An emitter with no rotation is unaffected, which is
+most of them and every screenshot that had one.
+
+### The same sentence, a fourth time
+
+The undo entry named at each place that edits. The scale axis decided at each
+place that draws. The edit opened at each handle that needs one. And now a frame
+rebuilt from the one part of itself that survived being passed along.
+
+Every one of them: something whole was taken apart, and the piece that got
+carried was not enough to put it back. Worth watching for as a shape rather than
+as four separate bugs -- when a function takes a direction and needs a frame, it
+is going to invent the rest, and it will do it plausibly.
+
+The test asserts the whole spray turns as one rigid thing: every particle's
+velocity has to equal the same rotation applied to the unturned run's, not
+merely differ from it. "Different" would have passed on the day the frame was
+being invented at random. Twenty one checks fail with the old line put back.
+
+---
+
 ## 2026-08-12 — Two reports, and a triangle facing the wrong way
 
 Both from actually using it, and neither would have come from reading the code.
