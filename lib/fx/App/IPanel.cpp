@@ -3,7 +3,6 @@
 
 #include <fx/App/IPanel.h>
 
-#include <ftk/UI/Divider.h>
 #include <ftk/UI/Icon.h>
 #include <ftk/UI/Label.h>
 #include <ftk/UI/RowLayout.h>
@@ -24,7 +23,6 @@ namespace fx
             std::shared_ptr<Label> label;
             std::shared_ptr<ToolButton> closeButton;
             std::shared_ptr<IWidget> header;
-            std::shared_ptr<IWidget> divider;
             std::shared_ptr<VerticalLayout> panelLayout;
             std::shared_ptr<VerticalLayout> layout;
             std::shared_ptr<IWidget> content;
@@ -64,7 +62,13 @@ namespace fx
                 });
 
             p.layout = VerticalLayout::create(context);
-            p.layout->setSpacingRole(SizeRole::None);
+            // A border's width under the title, which is the same gap the
+            // bellows use between themselves and the column uses between the
+            // panels. It used to be a Divider set to Well, from when it was
+            // the only separator here; beside two seams made of background it
+            // was a third of a shade darker and read as a different kind of
+            // line. Three seams, one mechanism.
+            p.layout->setSpacingRole(SizeRole::Border);
             auto hLayout = HorizontalLayout::create(context, p.layout);
             hLayout->setSpacingRole(SizeRole::None);
             p.header = hLayout;
@@ -77,13 +81,6 @@ namespace fx
             }
             p.label->setParent(hLayout);
             p.closeButton->setParent(hLayout);
-            p.divider = Divider::create(context, Orientation::Vertical, p.layout);
-            // Border is what a divider draws by default and it is all but
-            // invisible here: it sits directly under the header's own lighter
-            // block, between two tones it is already between. A recessed one
-            // reads as the bottom edge of the title rather than as a line that
-            // happens to be there.
-            p.divider->setBackgroundRole(ColorRole::Well);
             p.panelLayout = VerticalLayout::create(context, p.layout);
             p.panelLayout->setSpacingRole(SizeRole::None);
             p.panelLayout->setHStretch(Stretch::Expanding);
@@ -106,7 +103,6 @@ namespace fx
         {
             FTK_P();
             p.header->setVisible(value);
-            p.divider->setVisible(value);
         }
 
         void IPanel::setCloseCallback(const std::function<void(void)>& value)

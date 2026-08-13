@@ -38,6 +38,23 @@ I had written the answer two entries earlier and then walked past it, because
 Worth remembering as a question rather than a rule: is this a thing to draw, or
 a space to leave? The bellows had already voted.
 
+### The fourth one, found by looking at the pixels
+
+Then: "is there a different background colour between the header and the
+bellows?" There was. Sampling a column of the panel and taking each row's most
+common value -- so glyphs cannot skew it -- the seam under a panel title came
+back grey 23 and the others came back background. Twenty three is
+`ColorRole::Well`, and it was a `Divider` widget, set explicitly, from when it
+was the only separator in the column.
+
+So it was the same question a fourth time, and this time the answer was already
+sitting two lines above the thing that needed it. That seam is layout spacing
+now like the other three, and no drawn line survives in the panel column.
+
+An eye caught a third of a shade across a two pixel line. Worth writing down:
+"is that a slightly different colour?" is a question with an exact answer, and
+the way to get it is to read the pixels rather than agree or disagree.
+
 ---
 
 ## 2026-08-12 — A shortcut and a click are not the same thing to an action
