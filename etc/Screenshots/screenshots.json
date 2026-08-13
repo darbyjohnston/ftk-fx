@@ -1768,6 +1768,68 @@
           "caption": "The mode reached by its key rather than its button. A radio action gets its checked callback from a shortcut and its plain one from a click, so the two paths have to meet at the checked state"
         }
       ]
+    },
+    {
+      "id": "pick-system",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "systemName": "left"
+        },
+        {
+          "transform": {
+            "translate": [
+              -4,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "addSystem": true
+        },
+        {
+          "systemName": "right"
+        },
+        {
+          "transform": {
+            "translate": [
+              4,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "view": {
+            "index": 0,
+            "type": "Front"
+          }
+        },
+        {
+          "frame": 30
+        },
+        {
+          "click": {
+            "units": [
+              -8,
+              0
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "Parameters.Name": "left"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Clicking a system's particles makes it the current one. The click is eight scene units left of the system that was current, which is where the other one is at any zoom"
+        }
+      ]
     }
   ]
 }

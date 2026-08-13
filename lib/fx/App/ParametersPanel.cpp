@@ -373,6 +373,7 @@ namespace fx
             // and the name is one of the things it has.
             auto nameEdit = LineEdit::create(context);
             nameEdit->setHStretch(Stretch::Expanding);
+            setScreenshotTag(nameEdit, "Parameters.Name");
             nameEdit->setText(model->getSystem().getName());
             nameEdit->setCallbackOnFocusLost(true);
             nameEdit->setTooltip("What this system is called");

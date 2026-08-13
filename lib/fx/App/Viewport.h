@@ -256,6 +256,10 @@ namespace fx
             //! it looks at is the mode's only say in picking.
             Arm _gizmoPick(const ftk::V2I&) const;
 
+            //! The system whose particles are nearest the given point, or
+            //! -1 when nothing is near enough to have been aimed at.
+            int _pick(const ftk::V2I&) const;
+
             //! Take a manipulator handle under the given point, if there is
             //! one there and it can be dragged. False leaves nothing to
             //! clean up but _gizmoDrag, which the caller clears.

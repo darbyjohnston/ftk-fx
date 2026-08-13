@@ -7,6 +7,44 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-13 — Clicking a system to select it
+
+The last thing Phase 2 owed. A press in the viewport that misses the
+manipulator is a press at the scene: whichever system has a particle nearest
+the pointer becomes the current one.
+
+Particles rather than the emitter. The emitter is a point and a system is a
+cloud, so aiming at the origin would mean aiming at a thing that is not what
+the artist is looking at -- and with the manipulator sitting on that origin,
+the one place the emitter is easy to hit is the one place the click is already
+spoken for.
+
+Nearest on screen, and depth is not consulted. The points are drawn additively
+with no depth test, so there is no "in front" to appeal to; what the artist
+aimed at is what looks nearest, and that is exactly what this measures. Every
+slot is walked, the same way the draw walks them, so what can be picked is what
+can be seen.
+
+A miss selects nothing rather than clearing. There is always a current system,
+and emptying the panels because someone clicked the background is not an edit
+anyone asked for.
+
+The matrix is built once rather than once a particle. `_project()` is right for
+the handful of points a manipulator needs and wrong for five thousand.
+
+### The check that could be written exactly
+
+Two systems eight units apart in a front view, and the click expressed as
+`{"units": [-8, 0]}` -- eight scene units left of the system that is current,
+which is where the other one is *at any zoom and any window size*. No pixel
+appears in the shot at all. The click step goes through the same resolver the
+drags use, so this came free.
+
+It reads "right" before and "left" after, and the manipulator lands on 462.8,
+which is where the arithmetic said the other emitter was.
+
+---
+
 ## 2026-08-13 — Three separators, and the third time I noticed it was one idea
 
 Three complaints in a row, all the same complaint, and I answered the first two

@@ -551,6 +551,54 @@ namespace fx
             _pointsVbo->copy(data, 0, data.size());
         }
 
+        int Viewport::_pick(const V2I& pos) const
+        {
+            const Box2I& g = getGeometry();
+            if (!g.isValid() || !_frame)
+                return -1;
+
+            // The matrix once rather than once a particle. _project() is fine
+            // for the handful of points a manipulator needs and this walks
+            // every particle on screen.
+            const M44F m = _getProjection() * _getView();
+            const float w2 = g.w() / 2.F;
+            const float h2 = g.h() / 2.F;
+            const float reach = static_cast<float>(_size.grab);
+
+            int out = -1;
+            float best = reach * reach;
+            for (size_t i = 0; i < _frame->systems.size(); ++i)
+            {
+                // Every slot, the same as the draw walks them, so what can be
+                // picked is what can be seen.
+                const core::Pool& pool = _frame->systems[i].pool;
+                for (size_t j = 0; j < pool.size(); ++j)
+                {
+                    const V3F& p = pool.position[j];
+                    const V4F clip = m * V4F(p.x, p.y, p.z, 1.F);
+                    if (clip.w <= .0001F)
+                        continue;
+                    const float x =
+                        g.min.x + (clip.x / clip.w * .5F + .5F) * g.w();
+                    const float y =
+                        g.min.y + (.5F - clip.y / clip.w * .5F) * g.h();
+                    const float dx = x - pos.x;
+                    const float dy = y - pos.y;
+                    const float d = dx * dx + dy * dy;
+                    // Nearest on screen wins, and depth is not consulted.
+                    // The points are drawn additively with no depth test, so
+                    // there is no "in front" to appeal to -- what the artist
+                    // aimed at is what looks nearest, which is this.
+                    if (d < best)
+                    {
+                        best = d;
+                        out = static_cast<int>(i);
+                    }
+                }
+            }
+            return out;
+        }
+
         bool Viewport::_project(const V3F& world, V2F& out) const
         {
             const Box2I& g = getGeometry();
@@ -1536,6 +1584,20 @@ namespace fx
                 // Nothing taken. Anything the press did to the members is
                 // dead, and _gizmoDrag stays None, so nothing reads it.
                 _gizmoDrag = Arm::None;
+                // A press that missed the manipulator is a press at the
+                // scene. Whatever is under it becomes the current system.
+                // A miss selects nothing rather than clearing: there is
+                // always a current system, and emptying the panels because
+                // an artist clicked the background is not an edit anyone
+                // asked for.
+                const int index = _pick(event.pos);
+                if (index >= 0)
+                {
+                    if (auto model = _model.lock())
+                    {
+                        model->setCurrentSystem(static_cast<size_t>(index));
+                    }
+                }
                 return;
             }
             // One place, whichever handle was taken. The name written at each

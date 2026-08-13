@@ -442,9 +442,9 @@ namespace fx
             }
             if (step.contains("click"))
             {
-                const auto& v = step.at("click");
-                if (!v.is_array() || v.size() < 2)
-                    throw std::runtime_error("click needs an x and a y");
+                // Through the same resolver a drag point uses, so a click
+                // can be aimed at the manipulator rather than at the window.
+                const ftk::V2I pos = _dragPoint(step.at("click"));
                 int modifiers = 0;
                 if (step.contains("modifier"))
                 {
@@ -457,9 +457,7 @@ namespace fx
                     modifiers = static_cast<int>(modifier);
                 }
                 app->getMainWindow()->click(
-                    ftk::V2I(v[0].get<int>(), v[1].get<int>()),
-                    ftk::MouseButton::Left,
-                    modifiers);
+                    pos, ftk::MouseButton::Left, modifiers);
             }
             if (step.contains("drag") || step.contains("dragHold"))
             {
