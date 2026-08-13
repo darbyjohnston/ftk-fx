@@ -4,6 +4,7 @@
 #pragma once
 
 #include <ftk/Core/Util.h>
+#include <ftk/Core/Vector.h>
 
 #include <nlohmann/json.hpp>
 
@@ -83,6 +84,13 @@ namespace fx
             //! perfectly good picture of a scene nobody edited. This is how a
             //! shot says what it was supposed to change.
             std::string _expectFailure() const;
+
+            //! Where a drag point in the manifest lands, in window pixels.
+            //!
+            //! A plain [x, y] is that pixel. An object is measured from the
+            //! manipulator instead, which is what keeps a shot aimed at a
+            //! gizmo from being re-aimed by a change to a toolbar.
+            ftk::V2I _dragPoint(const nlohmann::json&) const;
 
             void _writeMetadata(const std::filesystem::path&) const;
 

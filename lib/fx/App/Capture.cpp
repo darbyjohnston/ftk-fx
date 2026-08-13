@@ -472,10 +472,7 @@ namespace fx
                 std::vector<ftk::V2I> path;
                 for (const auto& p : v)
                 {
-                    if (!p.is_array() || p.size() != 2)
-                        throw std::runtime_error("a drag point is [x, y]");
-                    path.push_back(
-                        ftk::V2I(p[0].get<int>(), p[1].get<int>()));
+                    path.push_back(_dragPoint(p));
                 }
                 app->getMainWindow()->drag(path, 0, release);
             }
@@ -795,6 +792,129 @@ namespace fx
                     return ftk::Format("nothing tagged {0}").arg(i.key());
             }
             return std::string();
+        }
+
+        ftk::V2I Capture::_dragPoint(const nlohmann::json& value) const
+        {
+            FTK_P();
+            if (value.is_array() && value.size() == 2)
+            {
+                return ftk::V2I(value[0].get<int>(), value[1].get<int>());
+            }
+            // Anchored on the manipulator instead. A window pixel is a
+            // coordinate in the chrome as much as in the scene, so anything
+            // that changes the size of a toolbar moves every drag that was
+            // aiming at a gizmo -- and moves it just far enough to grab the
+            // ring next to the one that was meant.
+            if (!value.is_object())
+            {
+                throw std::runtime_error(
+                    "a drag point is [x, y], or one of "
+                    "{\"axis\": \"x\", \"at\": 1.5}, {\"arm\": [x, y]}, "
+                    "{\"ring\": [radius, degrees]}, {\"units\": [x, y]}");
+            }
+            auto app = p.app.lock();
+            auto editor = app ?
+                app->getMainWindow()->getEditors()->getCurrent() : nullptr;
+            auto viewport = editor ? editor->getViewport() : nullptr;
+            if (!viewport)
+                throw std::runtime_error("no viewport to place a drag against");
+            const auto arms = viewport->getGizmoArms();
+            ftk::V2F origin;
+            float armLength = 0.F;
+            float pixelsPerUnit = 0.F;
+            for (const auto& arm : arms)
+            {
+                if (!arm.valid)
+                    continue;
+                origin = arm.origin;
+                const ftk::V2F d(
+                    arm.tip.x - arm.origin.x, arm.tip.y - arm.origin.y);
+                armLength = std::sqrt(d.x * d.x + d.y * d.y);
+                pixelsPerUnit = arm.pixelsPerUnit;
+                break;
+            }
+            if (armLength <= 0.F)
+                throw std::runtime_error("the manipulator has no arms to measure");
+
+            if (value.contains("axis"))
+            {
+                // A distance along one named arm, in arm lengths. This is
+                // what an arm drag is actually described as, and unlike an
+                // offset it stays right when the camera moves and the arm
+                // points somewhere else on screen.
+                const std::string name = value.at("axis").get<std::string>();
+                const size_t i = std::string("xyz").find(name);
+                if (name.size() != 1 || i == std::string::npos)
+                    throw std::runtime_error(ftk::Format(
+                        "\"axis\" is x, y or z, not \"{0}\"").arg(name));
+                if (!arms[i].valid)
+                    throw std::runtime_error(ftk::Format(
+                        "the {0} arm has nowhere to point").arg(name));
+                // Either in arm lengths, or in scene units for the drags
+                // whose point is the number the panel ends up showing --
+                // those move with the zoom, and the arm does not.
+                const float at = value.contains("units") ?
+                    value.at("units").get<float>() * arms[i].pixelsPerUnit /
+                        armLength :
+                    value.at("at").get<float>();
+                return ftk::V2I(
+                    static_cast<int>(std::round(
+                        arms[i].origin.x + arms[i].dir.x * at * armLength)),
+                    static_cast<int>(std::round(
+                        arms[i].origin.y + arms[i].dir.y * at * armLength)));
+            }
+
+            const auto pair = [&value](const char* key, float& a, float& b)
+            {
+                const auto& v = value.at(key);
+                if (!v.is_array() || v.size() != 2)
+                    throw std::runtime_error(ftk::Format(
+                        "\"{0}\" takes two numbers").arg(key));
+                a = v[0].get<float>();
+                b = v[1].get<float>();
+            };
+            float x = 0.F;
+            float y = 0.F;
+            if (value.contains("arm"))
+            {
+                // In arm lengths, which is the manipulator's own unit: it is
+                // drawn a fixed number of pixels long, so this survives the
+                // display scale as well as the chrome.
+                pair("arm", x, y);
+                x *= armLength;
+                y *= armLength;
+            }
+            else if (value.contains("ring"))
+            {
+                // Radius in arm lengths, angle in degrees clockwise from the
+                // right. Rings are the reason this exists, and a bearing is
+                // how a turn round one is actually described.
+                float radius = 0.F;
+                float degrees = 0.F;
+                pair("ring", radius, degrees);
+                const float a = ftk::deg2rad(degrees);
+                x = std::cos(a) * radius * armLength;
+                y = std::sin(a) * radius * armLength;
+            }
+            else if (value.contains("units"))
+            {
+                // Scene units per screen axis, y up. For the drags whose
+                // point is the number the panel ends up showing: those move
+                // with the zoom, which the chrome also changes.
+                pair("units", x, y);
+                x *= pixelsPerUnit;
+                y *= -pixelsPerUnit;
+            }
+            else
+            {
+                throw std::runtime_error(
+                    "a drag point needs \"axis\", \"arm\", \"ring\" "
+                    "or \"units\"");
+            }
+            return ftk::V2I(
+                static_cast<int>(std::round(origin.x + x)),
+                static_cast<int>(std::round(origin.y + y)));
         }
 
         void Capture::_writeMetadata(const std::filesystem::path& path) const

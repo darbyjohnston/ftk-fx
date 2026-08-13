@@ -7,6 +7,57 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — Drags that are aimed at the manipulator, not at the window
+
+A two and a half pixel margin on the toolbar re-aimed every manipulator shot,
+and two of them had been pressing within a pixel of where two rings cross, so
+the shift handed them the other ring. That is the second time chrome has
+invalidated a drag, and the failure mode is the bad one: the shot still runs,
+still writes a picture, and still asserts *something*.
+
+A drag point in the manifest can now be given relative to the manipulator
+instead of to the window:
+
+| | |
+|---|---|
+| `{"axis": "x", "at": 1.5}` | along one arm, in arm lengths |
+| `{"axis": "x", "units": 6.4}` | along one arm, in scene units |
+| `{"ring": [1.22, 3.4]}` | radius in arm lengths, bearing in degrees |
+| `{"arm": [0.7, -0.7]}` | offset from the middle, in arm lengths |
+| `{"units": [2, 2]}` | offset from the middle, in scene units per screen axis |
+
+Arm lengths rather than pixels because the arm is drawn a fixed number of
+pixels long, so it carries the display scale as well as the chrome. And rings
+as a bearing because that is what a turn round one *is* -- the shot now says
+"press at three o'clock and sweep a quarter turn", which is both what it means
+and unambiguous about which ring it wants.
+
+Tested by making the fault worse on purpose: with the toolbar margin swapped
+from MarginInside to MarginLarge, 43 of 46 shots still pass. Before this they
+would all have needed re-authoring.
+
+### What it cannot fix, which is worth knowing
+
+The three that still fail under that margin say exactly where the limit is.
+
+One is a slider drag in a panel, which has nothing to do with the manipulator
+and would need the same treatment for widgets.
+
+The other is `manipulator-drag`, and it is not a coordinate problem at all: the
+drag lands on the arm perfectly, but *how far along the axis it carries* depends
+on how many pixels a scene unit covers, and a smaller viewport means fewer.
+Pixels map to distance through the projection, which is the whole reason
+`_axisDistance` exists -- so a translate drag in perspective has no chrome-proof
+answer, and `"units"` is exact only in an orthographic view.
+
+So that shot now asserts the thing that *is* invariant: the other two axes did
+not move. An arm drag goes along its arm and nowhere else, and that is true at
+any viewport size. The x value is still checked, at one decimal, and will need
+re-measuring if the chrome changes again -- which is now a known, written-down
+cost on one shot rather than a surprise across thirteen.
+
+---
+
 ## 2026-08-12 — The emitter's rotation was reaching the velocities through a straw
 
 Reported: turning an emitter about y does nothing to a point emitter, and to a
