@@ -131,6 +131,7 @@ namespace fx
             std::shared_ptr<ftk::Observable<PanelStyle> > _style;
 
             std::shared_ptr<ftk::VerticalLayout> _columnLayout;
+            std::vector<std::shared_ptr<ftk::IWidget> > _columnDividers;
             std::shared_ptr<ftk::ScrollWidget> _columnScroll;
             std::shared_ptr<ftk::TabWidget> _tabWidget;
         };
