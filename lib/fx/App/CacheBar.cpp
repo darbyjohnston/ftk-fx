@@ -132,8 +132,12 @@ namespace fx
                 default: break;
                 }
             }
-            event.render->drawRects(simulated, Color4F(.22F, .42F, .27F));
-            event.render->drawRects(locked, Color4F(.24F, .38F, .58F));
+            // The colours tlRender's timeline gives its two caches, so an
+            // artist coming from DJV reads this strip without being told.
+            // Ours are simulated and locked rather than video and audio, but
+            // they are the same shape of thing: two states of the same bar.
+            event.render->drawRects(simulated, Color4F(.2F, .4F, .4F));
+            event.render->drawRects(locked, Color4F(.3F, .25F, .4F));
 
             // The whole strip lights up rather than a handle, because a handle
             // wide enough to take hold of is wide enough to hide the frame it
@@ -162,7 +166,7 @@ namespace fx
                     g.min.y,
                     w,
                     g.h()),
-                event.style->getColorRole(ColorRole::Text));
+                event.style->getColorRole(ColorRole::Red));
 
             // Bordered like the other controls, so it reads as something to
             // take hold of rather than as a strip of colour along the bottom.

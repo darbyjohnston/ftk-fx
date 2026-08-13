@@ -7,6 +7,30 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-13 — The same colours DJV uses for time
+
+The curve editor's playhead was drawn in Border, which was the grid's colour
+before the grid had lines of its own. Once the axes went in there was nothing
+to tell the current frame from a tick.
+
+Rather than pick something, the values came from tlRender, which is what DJV
+draws its timeline with: the current time is `ColorRole::Red` -- vermillion,
+.835/.369/0 -- and the two caches are .2/.4/.4 teal and .3/.25/.4 purple,
+literals in `TimelineItem`. The cache bar here had invented its own green and
+blue, and its marker was `Text`.
+
+So all three moved. Ours are simulated and locked rather than video and audio,
+which is a different pair of meanings on the same shape of thing: two states of
+one strip. Both playheads sample (213, 94, 0) now, which is what the style
+computes for Red -- the plot and the timeline say "now" in the same colour
+because they are the same colour, not because they look similar.
+
+Worth the ten minutes of reading rather than eyedropping the screenshot. An
+eyedropper gives a number that is close; the source gives the number, and the
+number is shared with the application an artist just came from.
+
+---
+
 ## 2026-08-13 — Axis labels, and a curve shot that had stopped asking
 
 Frames along the bottom and values up the left, on steps of one, two or five

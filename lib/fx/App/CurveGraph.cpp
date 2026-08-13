@@ -492,12 +492,10 @@ namespace fx
                     event.style->getColorRole(ColorRole::Border));
             }
 
-            // The playhead, so the plot and the timeline agree about where
-            // "now" is. In the colour this application uses for the current
-            // one of several -- the current tab's accent, the current
-            // system's row -- because that is what it is. Drawn in Border it
-            // was the grid's own colour, and once the grid had lines of its
-            // own there was nothing to tell them apart.
+            // The playhead, in the colour tlRender's timeline uses for the
+            // current time, which the cache bar below now uses too. Drawn in
+            // Border it was the grid's own colour, and once the grid had
+            // lines of its own there was nothing to tell them apart.
             const V2F playhead = _toPos(0, _currentFrame, v.min());
             event.render->drawRect(
                 Box2I(
@@ -505,7 +503,7 @@ namespace fx
                     g.min.y,
                     _size.border * 2,
                     g.h()),
-                event.style->getColorRole(ColorRole::Checked));
+                event.style->getColorRole(ColorRole::Red));
 
             _axesDraw(event);
 
