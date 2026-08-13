@@ -8,7 +8,6 @@
 #include <fx/App/ParametersPanel.h>
 #include <fx/App/SystemsPanel.h>
 
-#include <ftk/UI/Divider.h>
 #include <ftk/UI/RowLayout.h>
 #include <ftk/UI/ScreenshotTag.h>
 #include <ftk/UI/ScrollWidget.h>
@@ -49,7 +48,13 @@ namespace fx
 
             _columnLayout = VerticalLayout::create(context);
             _columnLayout->setMarginRole(SizeRole::None);
-            _columnLayout->setSpacingRole(SizeRole::None);
+            // A border's width between the panels, which is the divider:
+            // the background shows through the gap, and a layout already
+            // leaves nothing before the first child or after the last. A
+            // collapsed bellows and a panel title are the same height,
+            // colour and shape, so without it the seam between two panels
+            // read as one more row of the list above it.
+            _columnLayout->setSpacingRole(SizeRole::Border);
 
             // Both, so that a column narrower than the widest panel in it can
             // be scrolled across rather than quietly cutting off whatever is
@@ -199,16 +204,6 @@ namespace fx
             {
                 i.second->setParent(nullptr);
             }
-            // Between the panels rather than on top of each one. Whether
-            // anything is above it is the column's business, not the panel's:
-            // a panel asked to draw its own upper edge would draw one at the
-            // top of the column too, where there is nothing to be separated
-            // from.
-            for (const auto& divider : _columnDividers)
-            {
-                divider->setParent(nullptr);
-            }
-            _columnDividers.clear();
 
             for (const auto& name : _names)
             {
@@ -229,18 +224,6 @@ namespace fx
                 }
                 else
                 {
-                    if (!_columnLayout->getChildren().empty())
-                    {
-                        auto divider = Divider::create(
-                            getContext(), Orientation::Vertical, _columnLayout);
-                        // Recessed, like the one under a panel's title. A
-                        // collapsed bellows and a panel title are the same
-                        // height, colour and shape, so without this the seam
-                        // between two panels read as one more row of the
-                        // list above it.
-                        divider->setBackgroundRole(ColorRole::Well);
-                        _columnDividers.push_back(divider);
-                    }
                     panel->setParent(_columnLayout);
                 }
             }
