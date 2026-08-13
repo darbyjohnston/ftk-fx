@@ -1741,6 +1741,33 @@
           "caption": "The manipulator mode belongs to the application, not to a viewport: four windows in four modes would be four answers to a question that has one"
         }
       ]
+    },
+    {
+      "id": "manipulator-shortcut",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "rate": 0
+        },
+        {
+          "frame": 20
+        },
+        {
+          "keyPress": "E"
+        }
+      ],
+      "expect": {
+        "MainWindow.ToolBar": "Rotate [checked]"
+      },
+      "annotate": [
+        {
+          "id": "MainWindow.ToolBar",
+          "caption": "The mode reached by its key rather than its button. A radio action gets its checked callback from a shortcut and its plain one from a click, so the two paths have to meet at the checked state"
+        }
+      ]
     }
   ]
 }

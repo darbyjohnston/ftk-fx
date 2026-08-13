@@ -7,6 +7,55 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-12 — A shortcut and a click are not the same thing to an action
+
+Reported: pressing E lights the Rotate button on the tool bar, and the
+manipulator carries on being a translate manipulator. Clicking the same button
+works.
+
+That symptom is the whole diagnosis. The key reaches the action -- the tool bar
+proves it -- so nothing is wrong with the shortcut dispatch. What is wrong is
+which callback the action then runs.
+
+`Menu::shortcut` asks whether the action is checkable. An action in a radio
+group is, because the group sets its check type. So the shortcut path calls
+`doCheckedCallback()`, and the click path calls `doCallback()` -- and these
+read two different members. Ours had a plain callback and no checked one, so
+from the keyboard it set the check state and called nothing.
+
+The fix is not to add the second callback. `ActionGroup` already says what to
+do: it *watches* each action's checked state rather than intercepting its
+callbacks, with a comment saying an action's callbacks belong to whoever made
+it. The checked state is the one thing both paths go through, so the work
+belongs on the group's callback and the actions get none of their own.
+
+The layout actions had the same fault and nobody had noticed: command-1 to
+command-4 changed the tick on the menu and left the layout alone. Same shape,
+same fix.
+
+### The harness had no way to press a key
+
+There was a `key` step, and it means a keyframe. Adding `keyPress` took ten
+minutes and turned this from a report into a measurement: with the bug, E leaves
+the mode on Translate while the button gives Rotate; with the fix both give
+Rotate, and W and R and command-2 are checkable in the same breath.
+
+`manipulator-shortcut` keeps it honest. It asserts on the tool bar's own text,
+which reads "Rotate [checked]" -- the button is the thing that was telling the
+truth about the action while the viewport was telling the truth about the model,
+and the shot now checks they agree.
+
+### Worth taking to feather-tk
+
+Two things here are the library's rather than ours. A radio action reached by
+its shortcut is *toggled* -- `setChecked(action, !action->isChecked())` -- so
+pressing E twice asks a radio button to uncheck itself. And more generally, an
+action doing something different depending on whether it was clicked or typed
+is a trap that anything with a radio group in a menu will fall into. Neither
+bit us once the work moved to the group, but both are worth a patch upstream.
+
+---
+
 ## 2026-08-12 — The transform modes on the toolbar, and a letter with nothing to label
 
 The three modes have icons now and sit on the toolbar as well as in the menu,

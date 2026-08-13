@@ -363,22 +363,33 @@ namespace fx
             for (size_t i = 0; i < labels.size(); ++i)
             {
                 const GizmoMode mode = static_cast<GizmoMode>(i);
+                // No callback of its own. An action in a radio group is
+                // checkable, and a checkable action reached by its shortcut
+                // gets its *checked* callback, while one reached by a click
+                // gets its plain one -- so a plain callback here worked from
+                // the tool bar and did nothing from the keyboard. The group
+                // watches the checked state, which both paths go through.
                 auto action = Action::create(
                     labels[i],
                     icons[i],
                     shortcuts[i],
-                    [weak, mode]
-                    {
-                        if (auto model = weak.lock())
-                        {
-                            model->setGizmoMode(mode);
-                        }
-                    });
+                    std::function<void(void)>());
                 action->setTooltip(tooltips[i]);
                 _gizmoActions[mode] = action;
                 _gizmoGroup->addAction(action);
                 menu->addAction(action);
             }
+
+            _gizmoGroup->setCheckedCallback(
+                [weak](int index, bool value)
+                {
+                    if (!value)
+                        return;
+                    if (auto model = weak.lock())
+                    {
+                        model->setGizmoMode(static_cast<GizmoMode>(index));
+                    }
+                });
 
             auto model = _model.lock();
             if (!model)
@@ -572,22 +583,30 @@ namespace fx
                 };
                 // One of four. The group keeps them exclusive, draws the tick
                 // and stops the current one being un-picked.
+                // As with the transform modes: a radio action reached by
+                // its shortcut runs its checked callback, not this one, so
+                // the group's callback below is what does the work.
                 auto action = Action::create(
                     labels[i],
                     icons[i],
                     shortcuts[i],
-                    [editorsWeak, layout]
-                    {
-                        if (auto editors = editorsWeak.lock())
-                        {
-                            editors->setLayout(layout);
-                        }
-                    });
+                    std::function<void(void)>());
                 action->setTooltip(labels[i] + " viewport layout");
                 _layoutActions[layout] = action;
                 _layoutGroup->addAction(action);
                 menu->addAction(action);
             }
+
+            _layoutGroup->setCheckedCallback(
+                [editorsWeak](int index, bool value)
+                {
+                    if (!value)
+                        return;
+                    if (auto editors = editorsWeak.lock())
+                    {
+                        editors->setLayout(static_cast<EditorLayout>(index));
+                    }
+                });
 
             _layoutObserver = Observer<EditorLayout>::create(
                 _editors->observeLayout(),

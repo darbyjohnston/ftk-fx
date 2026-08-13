@@ -302,7 +302,8 @@ namespace fx
                     late = late ||
                         step.contains("click") ||
                         step.contains("drag") ||
-                        step.contains("dragHold");
+                        step.contains("dragHold") ||
+                        step.contains("keyPress");
                     if (late)
                     {
                         p.lateSteps.push_back(step);
@@ -475,6 +476,35 @@ namespace fx
                     path.push_back(_dragPoint(p));
                 }
                 app->getMainWindow()->drag(path, 0, release);
+            }
+            if (step.contains("keyPress"))
+            {
+                // A key sent to the window, which is where shortcuts are
+                // dispatched from. Named keyPress rather than key because a
+                // "key" here has always meant a keyframe.
+                const std::string name = step.at("keyPress").get<std::string>();
+                ftk::Key key = ftk::Key::Unknown;
+                if (!ftk::from_string(name, key))
+                    throw std::runtime_error(ftk::Format(
+                        "unknown key \"{0}\"").arg(name));
+                int modifiers = 0;
+                if (step.contains("modifier"))
+                {
+                    const std::string m =
+                        step.at("modifier").get<std::string>();
+                    if ("Shift" == m)
+                        modifiers = static_cast<int>(ftk::KeyModifier::Shift);
+                    else if ("Control" == m)
+                        modifiers = static_cast<int>(ftk::KeyModifier::Control);
+                    else if ("Alt" == m)
+                        modifiers = static_cast<int>(ftk::KeyModifier::Alt);
+                    else if ("Super" == m)
+                        modifiers = static_cast<int>(ftk::KeyModifier::Super);
+                    else
+                        throw std::runtime_error(ftk::Format(
+                            "unknown modifier \"{0}\"").arg(m));
+                }
+                app->getMainWindow()->keyPress(key, modifiers);
             }
             if (step.contains("panelStyle"))
             {
