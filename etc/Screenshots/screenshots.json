@@ -505,6 +505,125 @@
       ]
     },
     {
+      "id": "curves-axes",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 10,
+            "value": 200
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 90,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 20,
+            "value": -30
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 100,
+            "value": -2
+          }
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "editor": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "frame": 45
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Frames along the bottom and values up the left, on round steps. Absolute: one range for every channel, so a gravity curve between -30 and -2 really is a flat line under one that reaches 1800"
+        }
+      ]
+    },
+    {
+      "id": "curves-axes-normalized",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 10,
+            "value": 200
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 90,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 20,
+            "value": -30
+          }
+        },
+        {
+          "key": {
+            "path": "Forces/Gravity",
+            "frame": 100,
+            "value": -2
+          }
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "editor": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "curveValueMode": "Normalized"
+        },
+        {
+          "frame": 45
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Normalized: each channel to its own range, and no value labels -- one column of numbers cannot be true of two curves that do not share a range. The frames still can be, so they stay"
+        }
+      ]
+    },
+    {
       "id": "curves-drag",
       "window": {
         "w": 620,
@@ -553,14 +672,18 @@
         },
         {
           "drag": [
-            [
-              664,
-              216
-            ],
-            [
-              664,
-              618
-            ]
+            {
+              "curve": [
+                40,
+                1800
+              ]
+            },
+            {
+              "curve": [
+                40,
+                200
+              ]
+            }
           ]
         },
         {
@@ -576,6 +699,77 @@
       "expect": {
         "MainWindow.Editor0": "Curves"
       }
+    },
+    {
+      "id": "curves-drag-value",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 1,
+            "value": 50
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 40,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 80,
+            "value": 200
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 120,
+            "value": 900
+          }
+        },
+        {
+          "editor": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "drag": [
+            {
+              "curve": [
+                40,
+                1800
+              ]
+            },
+            {
+              "curve": [
+                40,
+                200
+              ]
+            }
+          ]
+        },
+        {
+          "frame": 40
+        }
+      ],
+      "expect": {
+        "Parameters.Rate": "199"
+      },
+      "annotate": [
+        {
+          "id": "Parameters.Rate",
+          "caption": "The same drag with the panel open, so the value it produced is on the record rather than only in the picture"
+        }
+      ]
     },
     {
       "id": "readme",
@@ -651,14 +845,18 @@
         },
         {
           "drag": [
-            [
-              664,
-              216
-            ],
-            [
-              664,
-              618
-            ]
+            {
+              "curve": [
+                40,
+                1800
+              ]
+            },
+            {
+              "curve": [
+                40,
+                200
+              ]
+            }
           ]
         },
         {

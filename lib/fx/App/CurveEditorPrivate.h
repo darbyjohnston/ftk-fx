@@ -40,6 +40,14 @@ namespace fx
 
             void setValueMode(CurveValueMode);
 
+            //! Where a frame and a value land in the plot, in window pixels.
+            //!
+            //! Public so a capture can aim a drag at a key. A curve shot
+            //! authored in pixels is one the next change to the plot's own
+            //! geometry re-aims silently: it goes on passing while dragging
+            //! whatever is now under the coordinate.
+            ftk::V2I getPos(size_t channel, double frame, float value) const;
+
             ftk::Size2I getSizeHint() const override;
             void styleEvent(const ftk::StyleEvent&) override;
             void sizeHintEvent(const ftk::SizeHintEvent&) override;
@@ -60,6 +68,12 @@ namespace fx
             //! under the pointer, which moves the key, which re-scales the
             //! axis: the key chases the cursor and settles somewhere neither
             //! of them chose.
+            //! Where the curves are drawn: the widget less its margin and
+            //! the two label gutters.
+            ftk::Box2I _plotBox() const;
+
+            void _axesDraw(const ftk::DrawEvent&);
+
             void _valueRangeUpdate();
 
             //! The range a channel is drawn against: its own when normalized,
@@ -101,6 +115,11 @@ namespace fx
                 int margin = 0;
                 int border = 0;
                 int handle = 0;
+
+                //! Room set aside for the axis labels, down the left for
+                //! values and along the bottom for frames.
+                int valueGutter = 0;
+                int frameGutter = 0;
                 ftk::FontInfo fontInfo;
                 ftk::FontMetrics fontMetrics;
             };

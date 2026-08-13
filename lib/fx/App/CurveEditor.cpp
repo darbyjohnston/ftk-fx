@@ -130,6 +130,11 @@ namespace fx
             return out;
         }
 
+        const std::shared_ptr<CurveGraph>& CurveEditor::getGraph() const
+        {
+            return _graph;
+        }
+
         void CurveEditor::setValueMode(CurveValueMode value)
         {
             _valueModeComboBox->setCurrentIndex(static_cast<int>(value));

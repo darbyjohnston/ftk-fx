@@ -15,6 +15,7 @@
 #include <fx/App/Editor.h>
 #include <fx/App/Editors.h>
 #include <fx/App/CurveEditor.h>
+#include <fx/App/CurveEditorPrivate.h>
 #include <fx/App/Viewport.h>
 
 #include <ftk/UI/ComboBox.h>
@@ -830,12 +831,33 @@ namespace fx
                 throw std::runtime_error(
                     "a drag point is [x, y], or one of "
                     "{\"axis\": \"x\", \"at\": 1.5}, {\"arm\": [x, y]}, "
-                    "{\"ring\": [radius, degrees]}, {\"units\": [x, y]}");
+                    "{\"ring\": [radius, degrees]}, {\"units\": [x, y]}, "
+                    "{\"curve\": [frame, value]}");
             }
             auto app = p.app.lock();
             auto editor = app ?
                 app->getMainWindow()->getEditors()->getCurrent() : nullptr;
-            auto viewport = editor ? editor->getViewport() : nullptr;
+            if (!editor)
+                throw std::runtime_error("no editor to place a drag against");
+            if (value.contains("curve"))
+            {
+                // A frame and a value in the plot, which is what a curve
+                // drag is actually aimed at. In pixels it survives only
+                // until the plot's own geometry changes -- and then it goes
+                // on passing while dragging whatever moved under it.
+                auto curveEditor = editor->getCurveEditor();
+                if (!curveEditor)
+                    throw std::runtime_error("no curve editor to place a drag against");
+                const auto& v = value.at("curve");
+                if (!v.is_array() || v.size() != 2)
+                    throw std::runtime_error("\"curve\" takes a frame and a value");
+                const size_t channel = value.contains("channel") ?
+                    value.at("channel").get<size_t>() : 0;
+                return curveEditor->getGraph()->getPos(
+                    channel, v[0].get<double>(), v[1].get<float>());
+            }
+
+            auto viewport = editor->getViewport();
             if (!viewport)
                 throw std::runtime_error("no viewport to place a drag against");
             const auto arms = viewport->getGizmoArms();

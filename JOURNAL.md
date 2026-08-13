@@ -7,6 +7,54 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-13 — Axis labels, and a curve shot that had stopped asking
+
+Frames along the bottom and values up the left, on steps of one, two or five
+times a power of ten so the numbers read as ones a person would have picked.
+Both axes get a grid line at each tick; the label for the last frame is held
+inside the widget, because centred on its own tick it ran half its width past
+the end of the plot and came back reading "12" where it meant "120".
+
+Values only in absolute mode. Each channel has its own range when normalised,
+so one column of numbers beside two curves would be true of at most one of
+them -- the mode exists to compare shapes, and it says so in its own
+documentation. The frames are still shared, so those stay. The gutter stays
+reserved either way: switching modes should not make the plot jump sideways.
+
+I had this chunk wrong when I proposed it. The journal entry I was working from
+says the editor has one value range for every channel, and that has not been
+true since normalised mode was built -- I read my own note as current and told
+Darby the shared range was the thing to fix. What was actually missing was the
+labels.
+
+### The check that had stopped asking
+
+Four places computed the plot's box independently, so reserving the gutters
+meant changing all four. The curves moved a few pixels left and up, which is
+fine, and `curves-drag` went on passing while dragging a different key.
+
+Its own caption says "the key at frame 40 dragged down". Its `expect` says the
+editor is showing Curves. Those are not the same claim, and only the second one
+was being checked. Reading the value at frame 40 with and without the drag: 1800
+both ways. The drag had been landing on empty plot since the gutters went in,
+and nothing said so.
+
+So a drag point can now be `{"curve": [frame, value]}`, resolved through the
+graph itself, and the shot names the key it means. Same fix as the manipulator
+drags two days ago, arrived at the same way: a pixel is a coordinate in the
+chrome as much as in the thing being aimed at.
+
+And `curves-drag-value` exists so the claim is checked. Both picture shots close
+the parameters panel to give the plot room, which is exactly why neither could
+assert what the drag did -- the number was only ever in the picture. This one
+keeps the panel open and reads 199.69 where an undragged run reads 1800.
+
+That is the second shot on this project to pass for years without testing its
+own caption, and both were found the same way: by changing geometry underneath
+them and asking what they had actually been measuring.
+
+---
+
 ## 2026-08-13 — Clicking a system to select it
 
 The last thing Phase 2 owed. A press in the viewport that misses the

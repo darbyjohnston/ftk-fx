@@ -10,6 +10,8 @@
 #include <ftk/Core/Math.h>
 
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
 #include <cmath>
 
 using namespace ftk;
@@ -130,6 +132,62 @@ namespace fx
             }
         }
 
+        namespace
+        {
+            //! A round step that puts about the wanted number of ticks across
+            //! a span: one of 1, 2 or 5 times a power of ten, so the labels
+            //! read as numbers a person would have chosen.
+            double niceStep(double span, int wanted)
+            {
+                if (span <= 0.0 || wanted < 1)
+                    return 1.0;
+                const double rough = span / wanted;
+                const double power = std::pow(10.0, std::floor(std::log10(rough)));
+                const double n = rough / power;
+                double step = 10.0;
+                if (n < 1.5) step = 1.0;
+                else if (n < 3.0) step = 2.0;
+                else if (n < 7.0) step = 5.0;
+                return step * power;
+            }
+
+            //! A tick's value, with only as many decimals as its step needs.
+            //! A step of 10 wants no point at all, and one of 0.05 wants two.
+            std::string tickLabel(double value, double step)
+            {
+                int decimals = 0;
+                if (step < 1.0)
+                {
+                    decimals = static_cast<int>(
+                        std::ceil(-std::log10(step)));
+                    decimals = std::min(decimals, 4);
+                }
+                // Negative zero reads as a mistake rather than as zero.
+                if (std::abs(value) < step * .0001)
+                {
+                    value = 0.0;
+                }
+                std::stringstream ss;
+                ss << std::fixed << std::setprecision(decimals) << value;
+                return ss.str();
+            }
+        }
+
+        Box2I CurveGraph::_plotBox() const
+        {
+            // The margin, and then room for the labels: a gutter down the
+            // left for values and one along the bottom for frames. Worked
+            // out here rather than at each of the four places that used to
+            // do it, because a gutter reserved in three of them is a plot
+            // that draws its curves over its own axis.
+            return margin(
+                getGeometry(),
+                -(_size.margin + _size.valueGutter),
+                -_size.margin,
+                -_size.margin,
+                -(_size.margin + _size.frameGutter));
+        }
+
         void CurveGraph::_valueRangeUpdate()
         {
             _channelRanges.assign(_channels.size(), RangeF(0.F, 1.F));
@@ -178,9 +236,17 @@ namespace fx
             setDrawUpdate();
         }
 
+        V2I CurveGraph::getPos(size_t channel, double frame, float value) const
+        {
+            const V2F p = _toPos(channel, frame, value);
+            return V2I(
+                static_cast<int>(std::round(p.x)),
+                static_cast<int>(std::round(p.y)));
+        }
+
         V2F CurveGraph::_toPos(size_t channel, double frame, float value) const
         {
-            const Box2I g = margin(getGeometry(), -_size.margin);
+            const Box2I g = _plotBox();
             const RangeI& r = _range;
             const double frames = std::max(1, r.max() - r.min());
             const RangeF& v = _getValueRange(channel);
@@ -193,7 +259,7 @@ namespace fx
 
         double CurveGraph::_toFrame(int x) const
         {
-            const Box2I g = margin(getGeometry(), -_size.margin);
+            const Box2I g = _plotBox();
             if (g.w() <= 0)
                 return _range.min();
             const double frames = _range.max() - _range.min();
@@ -202,7 +268,7 @@ namespace fx
 
         float CurveGraph::_toValue(size_t channel, int y) const
         {
-            const Box2I g = margin(getGeometry(), -_size.margin);
+            const Box2I g = _plotBox();
             if (g.h() <= 0)
                 return 0.F;
             const RangeF& v = _getValueRange(channel);
@@ -306,6 +372,75 @@ namespace fx
             }
         }
 
+        void CurveGraph::_axesDraw(const DrawEvent& event)
+        {
+            const Box2I plot = _plotBox();
+            if (plot.w() <= 0 || plot.h() <= 0)
+                return;
+            const Color4F grid =
+                event.style->getColorRole(ColorRole::Border);
+            const Color4F text =
+                event.style->getColorRole(ColorRole::TextDisabled);
+
+            // Frames along the bottom. Always meaningful: every channel is
+            // plotted against the same frames whatever the value mode is.
+            const double frameSpan = _range.max() - _range.min();
+            const double frameStep = niceStep(frameSpan, 6);
+            const double frameFirst =
+                std::ceil(_range.min() / frameStep) * frameStep;
+            for (double f = frameFirst; f <= _range.max(); f += frameStep)
+            {
+                const int x = static_cast<int>(_toPos(0, f, 0.F).x);
+                event.render->drawRect(
+                    Box2I(x, plot.min.y, _size.border, plot.h()), grid);
+                const std::string label = tickLabel(f, frameStep);
+                const Size2I size =
+                    event.fontSystem->getSize(label, _size.fontInfo);
+                // Held inside the widget. Centred on its tick, the label
+                // for the last frame runs half its width past the end of the
+                // plot and comes back as "12" where it should say "120".
+                const Box2I& all = getGeometry();
+                event.render->drawText(
+                    event.fontSystem->getGlyphs(label, _size.fontInfo),
+                    _size.fontMetrics,
+                    V2I(
+                        clamp(
+                            x - size.w / 2,
+                            all.min.x,
+                            all.max.x - size.w),
+                        plot.max.y + _size.margin),
+                    text);
+            }
+
+            // Values up the left, and only when they mean something. Each
+            // channel has its own range in normalized mode, so one column of
+            // numbers beside three curves would be true of at most one of
+            // them -- the mode is for comparing shapes, and it says so.
+            if (CurveValueMode::Absolute != _valueMode)
+                return;
+            const double valueSpan = _valueRange.max() - _valueRange.min();
+            const double valueStep = niceStep(valueSpan, 5);
+            const double valueFirst =
+                std::ceil(_valueRange.min() / valueStep) * valueStep;
+            for (double v = valueFirst; v <= _valueRange.max(); v += valueStep)
+            {
+                const int y = static_cast<int>(
+                    _toPos(0, _range.min(), static_cast<float>(v)).y);
+                event.render->drawRect(
+                    Box2I(plot.min.x, y, plot.w(), _size.border), grid);
+                const std::string label = tickLabel(v, valueStep);
+                const Size2I size =
+                    event.fontSystem->getSize(label, _size.fontInfo);
+                event.render->drawText(
+                    event.fontSystem->getGlyphs(label, _size.fontInfo),
+                    _size.fontMetrics,
+                    V2I(
+                        plot.min.x - _size.margin - size.w,
+                        y - size.h / 2),
+                    text);
+            }
+        }
+
         void CurveGraph::sizeHintEvent(const SizeHintEvent& event)
         {
             IMouseWidget::sizeHintEvent(event);
@@ -321,6 +456,14 @@ namespace fx
                 _size.fontInfo = event.style->getFont(
                     FontType::Mono, event.displayScale);
                 _size.fontMetrics = event.fontSystem->getMetrics(_size.fontInfo);
+                // Room for the widest label either axis is likely to want,
+                // measured rather than guessed: a gutter sized to "0" is a
+                // gutter that clips every number that is not zero.
+                _size.valueGutter = event.fontSystem->getSize(
+                    "-0000.00", _size.fontInfo).w + _size.margin;
+                _size.frameGutter =
+                    event.fontSystem->getSize("0", _size.fontInfo).h +
+                    _size.margin;
             }
         }
 
@@ -360,6 +503,8 @@ namespace fx
                     g.h()),
                 event.style->getColorRole(ColorRole::Border));
 
+            _axesDraw(event);
+
             LineOptions lineOptions;
             lineOptions.width = _size.border * 2;
             for (size_t c = 0; c < _channels.size(); ++c)
@@ -373,7 +518,7 @@ namespace fx
                 // Sampled a pixel at a time rather than drawn as segments
                 // between keys: a smooth or Bezier key is a cubic, and this
                 // way the plot shows whatever the solver will actually see.
-                const Box2I inside = margin(g, -_size.margin);
+                const Box2I inside = _plotBox();
                 std::vector<std::pair<V2F, V2F> > lines;
                 V2F prev;
                 for (int x = 0; x <= inside.w(); ++x)

@@ -67,6 +67,10 @@ namespace fx
             //! Set how the plot scales its vertical axis.
             void setValueMode(CurveValueMode);
 
+            //! The plot, for a capture that wants to aim at a key rather
+            //! than at a pixel.
+            const std::shared_ptr<CurveGraph>& getGraph() const;
+
         private:
             //! Rebuild the channel list, which changes as parameters become
             //! animated and stop being animated.
