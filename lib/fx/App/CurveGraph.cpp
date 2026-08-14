@@ -5,6 +5,7 @@
 
 #include <fx/App/SceneModel.h>
 
+#include <ftk/Core/RenderUtil.h>
 #include <ftk/UI/DrawUtil.h>
 
 #include <ftk/Core/Math.h>
@@ -576,6 +577,18 @@ namespace fx
         {
             IMouseWidget::drawEvent(drawRect, event);
             const Box2I& g = getGeometry();
+
+            // Held inside the widget. A curve is sampled across the plot and
+            // plotted at whatever value it has, and during a drag the value
+            // range is frozen -- so a key pulled above the top of the plot
+            // takes its curve with it, out of this widget and across the
+            // editor's own header. Nothing else here needs to draw outside
+            // itself, so the clip is on for the whole of it.
+            const ClipRectEnabledState clipRectEnabledState(event.render);
+            const ClipRectState clipRectState(event.render);
+            event.render->setClipRectEnabled(true);
+            event.render->setClipRect(intersect(g, drawRect));
+
             event.render->drawRect(
                 g, event.style->getColorRole(ColorRole::Base));
 

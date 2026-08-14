@@ -904,6 +904,69 @@
       ]
     },
     {
+      "id": "curves-clip",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 40,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 80,
+            "value": 200
+          }
+        },
+        {
+          "panel": {
+            "name": "Systems",
+            "open": false
+          }
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "editor": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "dragHold": [
+            {
+              "curve": [
+                40,
+                1800
+              ]
+            },
+            {
+              "curve": [
+                40,
+                9000
+              ]
+            }
+          ]
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "A key dragged above the top of the plot. The value range is frozen while a drag is under way, so the curve goes where the key goes -- and stops at the edge of the widget rather than crossing the header"
+        }
+      ]
+    },
+    {
       "id": "readme",
       "window": {
         "w": 1400,

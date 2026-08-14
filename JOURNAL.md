@@ -7,6 +7,32 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-13 — The plot drawing outside itself
+
+Reported: dragging a key can draw the curve outside the widget. It can. The
+value range is deliberately frozen while a drag is under way -- otherwise the
+plot would rescale under the hand doing the dragging -- so a key pulled above
+the top takes its curve with it, out of the graph and across the editor's own
+header.
+
+The suggestion was `setClipChildren`, which is the right instinct and the wrong
+switch: it clips *child widgets*, and the graph has none. Everything it draws it
+draws itself, so the clip belongs on its own render, the way the viewport
+already sets one round the manipulator.
+
+Measured by dragging a key to a value five times the top of the range and
+counting curve-coloured pixels above the plot: 205 before, 8 after -- and the
+eight are at y=166 and 167, which is the graph's own top two rows. It stops
+exactly where it should.
+
+Worth noting the first measurement said zero. I had counted against the
+*editor's* box, and the curve was escaping the graph into the editor rather than
+out of the window -- so the pixels were there and my line was in the wrong
+place. The picture is what showed it, which is the one thing pictures are
+actually good for: not "where is this" but "what is happening".
+
+---
+
 ## 2026-08-13 — Box selection, and a group that moves together
 
 Shift drags a box out and selects every key inside it; dragging any selected
