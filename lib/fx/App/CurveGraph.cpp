@@ -492,19 +492,6 @@ namespace fx
                     event.style->getColorRole(ColorRole::Border));
             }
 
-            // The playhead, in the colour tlRender's timeline uses for the
-            // current time, which the cache bar below now uses too. Drawn in
-            // Border it was the grid's own colour, and once the grid had
-            // lines of its own there was nothing to tell them apart.
-            const V2F playhead = _toPos(0, _currentFrame, v.min());
-            event.render->drawRect(
-                Box2I(
-                    static_cast<int>(playhead.x),
-                    g.min.y,
-                    _size.border * 2,
-                    g.h()),
-                event.style->getColorRole(ColorRole::Red));
-
             _axesDraw(event);
 
             LineOptions lineOptions;
@@ -549,6 +536,19 @@ namespace fx
                         color);
                 }
             }
+
+            // The playhead last, over the grid and the curves. Drawn under
+            // them it was hidden at exactly the frames worth looking at: a
+            // curve crosses its own playhead wherever it is doing something,
+            // and the two pixels saying where "now" is went under it.
+            const V2F playhead = _toPos(0, _currentFrame, v.min());
+            event.render->drawRect(
+                Box2I(
+                    static_cast<int>(playhead.x),
+                    g.min.y,
+                    _size.border * 2,
+                    g.h()),
+                event.style->getColorRole(ColorRole::Red));
         }
 
         void CurveGraph::mousePressEvent(MouseClickEvent& event)
