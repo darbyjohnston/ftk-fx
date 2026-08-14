@@ -88,8 +88,18 @@ namespace fx
             //! The key nearest the position, within grabbing distance.
             bool _hit(const ftk::V2I&, size_t& channel, size_t& key) const;
 
-            //! Write a key back through the parameter, and tell the model.
-            void _moveKey(size_t channel, size_t key, double frame, float value);
+            //! Whether a key is in the selection.
+            bool _isSelected(size_t channel, double frame) const;
+
+            //! Select every key inside the box, replacing what was selected.
+            void _selectBox(const ftk::Box2I&);
+
+            //! Move every selected key by the given offset in pixels, from
+            //! where they were when the drag began.
+            void _moveSelection(const ftk::V2I& offset);
+
+            //! Take out every selected key.
+            void _deleteSelection();
 
             std::weak_ptr<SceneModel> _model;
             std::vector<ParameterInfo> _channels;
@@ -101,13 +111,32 @@ namespace fx
             std::vector<ftk::RangeF> _channelRanges;
             int _currentFrame = 1;
 
-            //! Which key is selected, and which is being dragged. The same key
-            //! most of the time; selection outlives the drag so that Delete
-            //! has something to act on.
-            size_t _selectedChannel = 0;
-            size_t _selectedKey = 0;
-            bool _hasSelection = false;
+            //! A selected key, named by the frame it sits on rather than by
+            //! its place in the list. Moving one key re-sorts the list and
+            //! shifts the index of every key after it, so an index is a name
+            //! that stops being true the moment a group move begins.
+            struct KeySel
+            {
+                size_t channel = 0;
+                double frame = 0.0;
+            };
+
+            //! Selection outlives the drag, so Delete has something to act on.
+            std::vector<KeySel> _selection;
+
+            //! Where each selected key was on screen when the drag began, and
+            //! where the pointer was. A group move is measured in pixels and
+            //! converted back per channel: normalized gives every channel its
+            //! own value range, so one offset in values would move them by
+            //! different amounts on screen.
+            std::vector<ftk::V2F> _dragFrom;
+            ftk::V2I _dragOrigin;
             bool _dragging = false;
+
+            //! The box being dragged out, when one is.
+            bool _boxing = false;
+            ftk::V2I _boxFrom;
+            ftk::V2I _boxTo;
 
             struct SizeData
             {

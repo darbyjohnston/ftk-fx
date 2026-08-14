@@ -7,6 +7,52 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-13 — Box selection, and a group that moves together
+
+Shift drags a box out and selects every key inside it; dragging any selected
+key moves the whole selection; Delete takes all of them. Plain drag on the
+background still scrubs, which is what that space has always been for and is
+worth keeping -- dragging through time while watching the viewport is a reason
+to have the curve editor open at all. So the box went on shift rather than
+taking the plain drag the convention would give it.
+
+### A selected key cannot be named by its index
+
+The old selection was a channel and a position in the key list, which is fine
+while one key moves and wrong the moment two do: `setKeys` sorts, so moving the
+first key past the second renumbers the second while it is still waiting its
+turn. A selection is a set of *frames* now. Frames are unique within a curve --
+dropping a key onto another replaces it -- so a frame names a key exactly, and
+it keeps naming it while the list is rearranged underneath.
+
+The move rewrites a whole curve at once for the same reason. Taking one key out
+and putting it back re-sorts the rest, so a loop that did them one at a time
+would be reading positions that its own previous step had invalidated.
+
+Each key moves from where it was when the drag *began*, by the pointer's offset
+in pixels, rather than from where it is now. Measured from where it is, a move
+that rounds to the same frame twice would creep. And in pixels rather than in
+values, because normalized gives every channel its own range: one offset in
+values would move two channels by different amounts on screen, which is not
+what a hand dragging a group means.
+
+### The check
+
+Two keys, at frame 40 and frame 80. Box-select both, drag the first twenty
+frames on, then read the value at frame 80.
+
+| | value at frame 80 |
+|---|---|
+| one key moved | 200 -- the key at 80 is still sitting there |
+| both moved | 1001 -- 80 now falls between keys at 60 and 100 |
+
+Chosen because the obvious check does not discriminate: reading frame 100 gives
+200 either way, since a curve holds its last value past its last key. The
+question "what would this read if the feature did not work" is worth asking
+before writing the assertion rather than after.
+
+---
+
 ## 2026-08-13 — Two small ones about the playhead, and a line that was half redundant
 
 The playhead was drawn third, before the axes and before the curves, so both

@@ -469,12 +469,23 @@ namespace fx
                 if (!v.is_array() || v.size() < 2)
                     throw std::runtime_error(
                         "drag needs a from and a to, and takes more");
+                int modifiers = 0;
+                if (step.contains("modifier"))
+                {
+                    ftk::KeyModifier modifier = ftk::KeyModifier::None;
+                    const std::string name =
+                        step.at("modifier").get<std::string>();
+                    if (!ftk::from_string(name, modifier))
+                        throw std::runtime_error(ftk::Format(
+                            "unknown modifier \"{0}\"").arg(name));
+                    modifiers = static_cast<int>(modifier);
+                }
                 std::vector<ftk::V2I> path;
                 for (const auto& p : v)
                 {
                     path.push_back(_dragPoint(p));
                 }
-                app->getMainWindow()->drag(path, 0, release);
+                app->getMainWindow()->drag(path, modifiers, release);
             }
             if (step.contains("keyPress"))
             {

@@ -89,7 +89,7 @@ namespace fx
                 [this](int)
                 {
                     // The keys the selection referred to are gone.
-                    _hasSelection = false;
+                    _selection.clear();
                     _dragging = false;
                     setDrawUpdate();
                 });
@@ -111,7 +111,7 @@ namespace fx
         void CurveGraph::setChannels(const std::vector<ParameterInfo>& value)
         {
             _channels = value;
-            _hasSelection = false;
+            _selection.clear();
             _dragging = false;
             _valueRangeUpdate();
             setDrawUpdate();
@@ -305,57 +305,162 @@ namespace fx
             return found;
         }
 
-        void CurveGraph::_moveKey(
-            size_t channel,
-            size_t key,
-            double frame,
-            float value)
+        bool CurveGraph::_isSelected(size_t channel, double frame) const
         {
-            if (channel >= _channels.size())
-                return;
+            for (const auto& i : _selection)
+            {
+                if (i.channel == channel && i.frame == frame)
+                    return true;
+            }
+            return false;
+        }
+
+        void CurveGraph::_selectBox(const Box2I& box)
+        {
+            _selection.clear();
+            for (size_t c = 0; c < _channels.size(); ++c)
+            {
+                const auto* parameter = _channels[c].parameter;
+                if (core::Parameter::Type::Curve != parameter->getType())
+                    continue;
+                for (const auto& key : parameter->getCurve().getKeys())
+                {
+                    const V2F p = _toPos(c, key.frame, key.value);
+                    if (contains(box, V2I(
+                        static_cast<int>(p.x), static_cast<int>(p.y))))
+                    {
+                        _selection.push_back(KeySel{ c, key.frame });
+                    }
+                }
+            }
+        }
+
+        void CurveGraph::_moveSelection(const V2I& offset)
+        {
             auto model = _model.lock();
-            if (!model)
-                return;
-            auto* parameter = _channels[channel].parameter;
-            if (core::Parameter::Type::Curve != parameter->getType())
+            if (!model || _selection.size() != _dragFrom.size())
                 return;
             const sim::System before = model->getSystem();
-            core::Curve curve = parameter->getCurve();
-            auto keys = curve.getKeys();
-            if (key >= keys.size())
-                return;
 
-            // Keys land on whole frames. Sub-frame keys are allowed by the
-            // curve, but nothing in this editor can author one deliberately
-            // yet, and an accidental one at 41.9973 is only ever a nuisance.
-            const double f = clamp(
-                std::round(frame),
-                static_cast<double>(_range.min()),
-                static_cast<double>(_range.max()));
-
-            core::Key moved = keys[key];
-            moved.frame = f;
-            moved.value = value;
-            keys.erase(keys.begin() + key);
-            // Dropping a key onto another one replaces it, which is what
-            // setKeys does; the selection then has to follow where it landed.
-            keys.push_back(moved);
-            curve.setKeys(keys);
-            parameter->setCurve(curve);
-
-            const auto& sorted = curve.getKeys();
-            for (size_t i = 0; i < sorted.size(); ++i)
+            // A whole curve rewritten at once rather than a key at a time:
+            // taking one key out and putting it back re-sorts the rest, so
+            // the next one's place in the list is already stale.
+            std::vector<KeySel> landedAll;
+            for (size_t c = 0; c < _channels.size(); ++c)
             {
-                if (sorted[i].frame == f)
+                auto* parameter = _channels[c].parameter;
+                if (core::Parameter::Type::Curve != parameter->getType())
+                    continue;
+                bool any = false;
+                for (const auto& i : _selection)
                 {
-                    _selectedKey = i;
-                    break;
+                    any = any || i.channel == c;
+                }
+                if (!any)
+                    continue;
+
+                core::Curve curve = parameter->getCurve();
+                std::vector<core::Key> out;
+                std::vector<core::Key> landed;
+                for (const auto& key : curve.getKeys())
+                {
+                    if (!_isSelected(c, key.frame))
+                    {
+                        out.push_back(key);
+                        continue;
+                    }
+                    // From where the key was when the drag began, not from
+                    // where it is now: measured from where it is, a move
+                    // that rounds to the same frame twice would creep.
+                    size_t which = 0;
+                    for (size_t j = 0; j < _selection.size(); ++j)
+                    {
+                        if (_selection[j].channel == c &&
+                            _selection[j].frame == key.frame)
+                        {
+                            which = j;
+                            break;
+                        }
+                    }
+                    const V2F from = _dragFrom[which];
+                    core::Key k = key;
+                    // Keys land on whole frames. Sub-frame keys are allowed
+                    // by the curve, but nothing here can author one on
+                    // purpose and an accidental one at 41.9973 is a nuisance.
+                    k.frame = clamp(
+                        std::round(_toFrame(
+                            static_cast<int>(from.x) + offset.x)),
+                        static_cast<double>(_range.min()),
+                        static_cast<double>(_range.max()));
+                    k.value = _toValue(
+                        c, static_cast<int>(from.y) + offset.y);
+                    landed.push_back(k);
+                }
+                // The moved ones last, so one dropped onto a key that is
+                // staying put replaces it rather than being replaced.
+                for (const auto& k : landed)
+                {
+                    out.push_back(k);
+                    landedAll.push_back(KeySel{ c, k.frame });
+                }
+                curve.setKeys(out);
+                parameter->setCurve(curve);
+            }
+
+            // The selection follows the keys to where they landed. Two of
+            // them dropped on one frame become one key, and the selection
+            // has to lose the duplicate with them.
+            _selection.clear();
+            for (const auto& m : landedAll)
+            {
+                if (!_isSelected(m.channel, m.frame))
+                {
+                    _selection.push_back(m);
                 }
             }
 
             // One name for the whole drag, so the moves merge into a single
             // undo step.
-            model->systemChanged("Move Key", before);
+            model->systemChanged("Move Keys", before);
+        }
+
+        void CurveGraph::_deleteSelection()
+        {
+            auto model = _model.lock();
+            if (!model || _selection.empty())
+                return;
+            const sim::System before = model->getSystem();
+            for (size_t c = 0; c < _channels.size(); ++c)
+            {
+                auto* parameter = _channels[c].parameter;
+                if (core::Parameter::Type::Curve != parameter->getType())
+                    continue;
+                core::Curve curve = parameter->getCurve();
+                const size_t was = curve.getKeys().size();
+                std::vector<core::Key> out;
+                for (const auto& key : curve.getKeys())
+                {
+                    if (!_isSelected(c, key.frame))
+                    {
+                        out.push_back(key);
+                    }
+                }
+                if (out.size() == was)
+                    continue;
+                // The last key gone leaves the parameter constant again,
+                // holding the value it was holding before it was animated.
+                if (out.empty())
+                {
+                    parameter->setConstant(parameter->getConstant());
+                }
+                else
+                {
+                    curve.setKeys(out);
+                    parameter->setCurve(curve);
+                }
+            }
+            _selection.clear();
+            model->systemChanged("Delete Keys", before);
         }
 
         Size2I CurveGraph::getSizeHint() const
@@ -514,8 +619,7 @@ namespace fx
                 for (size_t k = 0; k < keys.size(); ++k)
                 {
                     const V2F p = _toPos(c, keys[k].frame, keys[k].value);
-                    const bool selected =
-                        _hasSelection && c == _selectedChannel && k == _selectedKey;
+                    const bool selected = _isSelected(c, keys[k].frame);
                     const int radius = _size.handle / (selected ? 2 : 3);
                     event.render->drawMesh(
                         circle(V2I(static_cast<int>(p.x), static_cast<int>(p.y)), radius),
@@ -523,6 +627,21 @@ namespace fx
                         event.style->getColorRole(ColorRole::Text) :
                         color);
                 }
+            }
+
+            // The box being dragged out, over the curves and under the
+            // playhead: it is a thing being done rather than a thing on the
+            // plot, so nothing it covers should be lost behind it.
+            if (_boxing)
+            {
+                const Box2I box(
+                    V2I(std::min(_boxFrom.x, _boxTo.x),
+                        std::min(_boxFrom.y, _boxTo.y)),
+                    V2I(std::max(_boxFrom.x, _boxTo.x),
+                        std::max(_boxFrom.y, _boxTo.y)));
+                event.render->drawMesh(
+                    border(box, _size.border),
+                    event.style->getColorRole(ColorRole::KeyFocus));
             }
 
             // The playhead last, over the grid and the curves. Drawn under
@@ -543,24 +662,65 @@ namespace fx
         {
             IMouseWidget::mousePressEvent(event);
             takeKeyFocus();
+            const bool shift =
+                event.modifiers & static_cast<int>(KeyModifier::Shift);
             size_t channel = 0;
             size_t key = 0;
             if (_hit(event.pos, channel, key))
             {
-                _selectedChannel = channel;
-                _selectedKey = key;
-                _hasSelection = true;
+                const auto& keys =
+                    _channels[channel].parameter->getCurve().getKeys();
+                const double frame = keys[key].frame;
+                // A key already in the selection keeps it, so a group can be
+                // taken hold of by any of its members. Anything else starts
+                // a new one, unless shift is held to add to it.
+                if (!_isSelected(channel, frame))
+                {
+                    if (!shift)
+                    {
+                        _selection.clear();
+                    }
+                    _selection.push_back(KeySel{ channel, frame });
+                }
                 _dragging = true;
+                _dragOrigin = event.pos;
+                // Where each one is now, so the whole group moves by the
+                // same offset from where it started rather than each key
+                // chasing the pointer.
+                _dragFrom.clear();
+                for (const auto& i : _selection)
+                {
+                    const auto& ks =
+                        _channels[i.channel].parameter->getCurve().getKeys();
+                    for (const auto& k : ks)
+                    {
+                        if (k.frame == i.frame)
+                        {
+                            _dragFrom.push_back(
+                                _toPos(i.channel, k.frame, k.value));
+                            break;
+                        }
+                    }
+                }
                 if (auto model = _model.lock())
                 {
                     model->beginEdit();
                 }
             }
+            else if (shift)
+            {
+                // Shift drags a box out. Plain drag stays a scrub, which is
+                // what the space has always been for and is worth keeping:
+                // dragging through time while watching the viewport is the
+                // reason to have a curve editor open at all.
+                _boxing = true;
+                _boxFrom = event.pos;
+                _boxTo = event.pos;
+                _selection.clear();
+            }
             else
             {
-                // Clicking the background scrubs, which is what the space is
-                // for when there is no key under the pointer.
-                _hasSelection = false;
+                _selection.clear();
                 if (auto model = _model.lock())
                 {
                     model->setCurrentFrame(static_cast<int>(
@@ -577,10 +737,19 @@ namespace fx
             {
                 if (auto model = _model.lock())
                 {
-                    model->endEdit("Move Key");
+                    model->endEdit("Move Keys");
                 }
             }
+            if (_boxing)
+            {
+                _selectBox(Box2I(
+                    V2I(std::min(_boxFrom.x, _boxTo.x),
+                        std::min(_boxFrom.y, _boxTo.y)),
+                    V2I(std::max(_boxFrom.x, _boxTo.x),
+                        std::max(_boxFrom.y, _boxTo.y))));
+            }
             _dragging = false;
+            _boxing = false;
             // The keys have moved, so the plot can find its scale again.
             _valueRangeUpdate();
             setDrawUpdate();
@@ -591,13 +760,16 @@ namespace fx
             IMouseWidget::mouseMoveEvent(event);
             if (!_isMousePressed())
                 return;
-            if (_dragging && _hasSelection)
+            if (_dragging && !_selection.empty())
             {
-                _moveKey(
-                    _selectedChannel,
-                    _selectedKey,
-                    _toFrame(event.pos.x),
-                    _toValue(_selectedChannel, event.pos.y));
+                _moveSelection(V2I(
+                    event.pos.x - _dragOrigin.x,
+                    event.pos.y - _dragOrigin.y));
+                setDrawUpdate();
+            }
+            else if (_boxing)
+            {
+                _boxTo = event.pos;
                 setDrawUpdate();
             }
             else if (auto model = _model.lock())
@@ -609,30 +781,11 @@ namespace fx
 
         void CurveGraph::keyPressEvent(KeyEvent& event)
         {
-            if (_hasSelection && 0 == event.modifiers &&
+            if (!_selection.empty() && 0 == event.modifiers &&
                 (Key::Delete == event.key || Key::Backspace == event.key))
             {
                 event.accept = true;
-                auto model = _model.lock();
-                auto* parameter = _channels[_selectedChannel].parameter;
-                if (model && core::Parameter::Type::Curve == parameter->getType())
-                {
-                    const sim::System before = model->getSystem();
-                    core::Curve curve = parameter->getCurve();
-                    curve.removeKey(_selectedKey);
-                    // The last key gone leaves the parameter constant again,
-                    // holding the value it was holding before it was animated.
-                    if (curve.getKeys().empty())
-                    {
-                        parameter->setConstant(parameter->getConstant());
-                    }
-                    else
-                    {
-                        parameter->setCurve(curve);
-                    }
-                    model->systemChanged("Delete Key", before);
-                }
-                _hasSelection = false;
+                _deleteSelection();
                 setDrawUpdate();
                 return;
             }

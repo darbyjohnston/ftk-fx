@@ -772,6 +772,138 @@
       ]
     },
     {
+      "id": "curves-box-select",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 40,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 80,
+            "value": 200
+          }
+        },
+        {
+          "editor": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "panel": {
+            "name": "Parameters",
+            "open": false
+          }
+        },
+        {
+          "dragHold": [
+            {
+              "curve": [
+                25,
+                1900
+              ]
+            },
+            {
+              "curve": [
+                95,
+                100
+              ]
+            }
+          ],
+          "modifier": "Shift"
+        }
+      ],
+      "annotate": [
+        {
+          "id": "MainWindow.Editor0",
+          "caption": "Shift drags a box out; plain drag still scrubs, which is what the empty space has always been for"
+        }
+      ]
+    },
+    {
+      "id": "curves-group-move",
+      "window": {
+        "w": 900,
+        "h": 620
+      },
+      "setup": [
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 40,
+            "value": 1800
+          }
+        },
+        {
+          "key": {
+            "path": "Emitter/Rate",
+            "frame": 80,
+            "value": 200
+          }
+        },
+        {
+          "editor": {
+            "index": 0,
+            "type": "Curves"
+          }
+        },
+        {
+          "drag": [
+            {
+              "curve": [
+                25,
+                1900
+              ]
+            },
+            {
+              "curve": [
+                95,
+                100
+              ]
+            }
+          ],
+          "modifier": "Shift"
+        },
+        {
+          "drag": [
+            {
+              "curve": [
+                40,
+                1800
+              ]
+            },
+            {
+              "curve": [
+                60,
+                1800
+              ]
+            }
+          ]
+        },
+        {
+          "frame": 80
+        }
+      ],
+      "expect": {
+        "Parameters.Rate": "1001"
+      },
+      "annotate": [
+        {
+          "id": "Parameters.Rate",
+          "caption": "Two keys selected and dragged twenty frames on. Frame 80 lands between them at about a thousand; had only the grabbed key moved it would still read 200"
+        }
+      ]
+    },
+    {
       "id": "readme",
       "window": {
         "w": 1400,
