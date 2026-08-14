@@ -7,6 +7,30 @@ Newest entries at the top.
 
 ---
 
+## 2026-08-13 — Two small ones about the playhead, and a line that was half redundant
+
+The playhead was drawn third, before the axes and before the curves, so both
+painted over it. A curve crosses its own playhead wherever it is doing
+something, so the two pixels saying where "now" is went missing at exactly the
+frames worth looking at. Drawn last now; seventy six pixels of it were being
+covered in a plot with a single curve in it.
+
+Then the zero line, which I had guessed was redundant now that the value grid
+draws a tick at every round step and zero is a multiple of every step. Removing
+it changed 277 pixels, so the guess was wrong -- and the pixels say why. Two
+rows, at x 362 to 493 and 1172 to 1179: the value label gutter on the left and
+the margin on the right. Inside the plot it was pixel for pixel the grid's own
+zero tick. Outside it, it was drawing a line across the gutter, behind the "0"
+label.
+
+So it was redundant where it carried information and wrong where it did not,
+and dropping it is right for a better reason than the one I gave. Worth the two
+minutes: "this is redundant, delete it" and "this is redundant inside the plot
+and stray outside it" are the same edit and different understandings, and only
+one of them would have survived being asked about later.
+
+---
+
 ## 2026-08-13 — The same colours DJV uses for time
 
 The curve editor's playhead was drawn in Border, which was the grid's colour

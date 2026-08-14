@@ -480,18 +480,6 @@ namespace fx
             }
             const RangeF& v = _valueRange;
 
-            // Where zero is, when zero is on screen and means the same thing
-            // for every channel. Normalized, each curve has its own zero and a
-            // single line would be a lie.
-            if (CurveValueMode::Absolute == _valueMode &&
-                v.min() < 0.F && v.max() > 0.F)
-            {
-                const V2F zero = _toPos(0, _range.min(), 0.F);
-                event.render->drawRect(
-                    Box2I(g.min.x, static_cast<int>(zero.y), g.w(), _size.border),
-                    event.style->getColorRole(ColorRole::Border));
-            }
-
             _axesDraw(event);
 
             LineOptions lineOptions;
